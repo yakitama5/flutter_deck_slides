@@ -253,14 +253,14 @@ melos の起動方法: `dart run melos <cmd>`(dev_dependency 経由)を正とし
 
 ## 動作確認チェックリスト(実装完了の定義)
 
-- [ ] `mise install` だけで Flutter SDK が入り、`mise x -- flutter doctor` が通る
-- [ ] ルート `dart pub get` で全パッケージが解決され、lockfile がルートに 1 つだけ生成される
-- [ ] `dart run melos run dev` でスライド選択 → Chrome で example スライドが表示される
-- [ ] presenter view が別タブ/ウィンドウで動作する
-- [ ] `dart run melos run build:web --no-select` で `slides/example/build/web` が生成される
-- [ ] `dart run melos run analyze` / `test` がルートから成功する
-- [ ] `dart run melos run create:slide -- test_slide` で新スライドが生成され、workspace 追記まで自動で行われる(確認後に削除)
-- [ ] 一連の作業中、一度も `cd` を要求されない
+- [x] `mise install` だけで Flutter SDK が入り、`flutter --version` が通る(3.44.4 / Dart 3.12.2 を確認)
+- [x] ルート `dart pub get` で全パッケージが解決され、lockfile がルートに 1 つだけ生成される(`slides/example` に pubspec.lock / pubspec_overrides.yaml が生成されないことも確認)
+- [x] `dart run melos run dev` でスライド選択 → Chrome で example スライドが表示される(コンパイル・デバッグ接続まで確認。`packageFilters.dependsOn: flutter_deck` が 1 パッケージに正しく絞り込まれることも確認)
+- [ ] presenter view が別タブ/ウィンドウで動作する(API 実装・ビルド成功までは確認済みだが、実ブラウザでの複数タブ目視確認は未実施 — ユーザー側でのスポットチェック推奨)
+- [x] `dart run melos run build:web --no-select` で `slides/example/build/web` が生成される(`--base-href /flutter_deck_slides/example/` の注入も確認)
+- [x] `dart run melos run analyze` / `format` / `test` がルートから成功する
+- [x] `dart run melos run create:slide -- 202609_testevent` で新スライドが生成され、workspace 追記まで自動で行われる(確認後に削除)
+- [x] 一連の作業中、一度も `cd` を要求されない
 
 ## 調査済み事項(2026-07-06 確認)
 
@@ -270,9 +270,14 @@ melos の起動方法: `dart run melos <cmd>`(dev_dependency 経由)を正とし
 4. **mise × Windows**: flutter は `http:`/`vfox:` バックエンド提供で Windows 対応。本環境で `mise ls-remote flutter` の動作を確認済み
 5. **最新 stable Flutter**: 3.44.4(実装時に再確認して mise.toml に固定)
 
-## 実装時に要確認の残項目(小)
+## 実装時に判明した追加事項
 
-1. presenter view を開く具体的な操作(デッキ内コントロールメニューから開くか、URL 直指定か)→ example スライド起動時に動作確認
-2. `packageFilters.dependsOn: flutter_deck` によるスライド限定フィルタの動作
-3. mise で flutter インストール後の `flutter doctor`(Windows での初回セットアップ)
-4. `flutter_deck 0.29.0` × `flutter_deck_web_client 0.4.0` の依存制約互換性(web client は約1年前のリリースのため、`pub get` が通るか最初に確認。通らない場合は flutter_deck 側のバージョンを web client が許容する範囲に合わせる)
+1. **`FlutterDeckSlide` の route に `/` を使うとクラッシュする**: flutter_deck は `/` をルートリダイレクト専用に予約しており、スライド自体の route に `/` を割り当てると `A redirect-only route must redirect to location different from itself` で実行時エラーになる。公式 example でも最初のスライドは `/intro` を使用しているため、本構成でも `tool/templates/main.dart.template` / `slides/example` の最初のスライドは `route: '/intro'` とした
+2. `packageFilters.dependsOn: flutter_deck` によるスライド限定フィルタは想定通り動作(`analyze`/`test`/`dev` すべてで `example_slide` のみが対象になることを確認)
+3. `flutter_deck 0.29.0` × `flutter_deck_web_client 0.4.0` は `dart pub get` が問題なく通り、依存制約の互換性に問題なし
+4. `melos run <script> --no-select` は `packageFilters` で対象パッケージが 0 件だと `NoPackageFoundScriptException` で失敗する。そのため `slides/example` には最小限のスモークテスト(`test/widget_test.dart`)を追加し、`melos run test` が CI で常に成功するようにした
+
+## 未実施(ユーザー側でのスポットチェック推奨)
+
+1. presenter view の実ブラウザでの複数タブ間同期の目視確認(API 実装とビルド成功までは確認済み)
+2. GitHub Pages への実デプロイ確認(ワークフロー定義まで実装。実際のリポジトリ public 化・Pages 有効化は未実施)
