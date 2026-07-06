@@ -1,24 +1,41 @@
-name: flutter_deck_slides
-description: "A new Flutter project."
-publish_to: 'none'
-
-version: 1.0.0+1
+name: flutter_deck_slides_workspace
+publish_to: none
 
 environment:
   sdk: ^3.12.2
 
-dependencies:
-  flutter:
-    sdk: flutter
-
-  cupertino_icons: ^1.0.8
+workspace:
+  - slides/example
 
 dev_dependencies:
-  flutter_test:
-    sdk: flutter
+  melos: ^7.3.0
 
-  flutter_lints: ^6.0.0
+melos:
+  scripts:
+    dev:
+      description: スライドを選択して Chrome で起動
+      exec: flutter run -d chrome
+      packageFilters:
+        dependsOn: flutter_deck
 
-flutter:
+    build:web:
+      description: 全スライドを web ビルド(成果物は各パッケージの build/web)
+      run: dart run tool/build_web.dart
 
-  uses-material-design: true
+    analyze:
+      description: 全パッケージを dart analyze
+      exec: dart analyze .
+
+    format:
+      description: 全パッケージを dart format でチェック
+      exec: dart format --output=none --set-exit-if-changed .
+
+    test:
+      description: test ディレクトリを持つパッケージのみ flutter test
+      exec: flutter test
+      packageFilters:
+        dirExists: test
+
+    create:slide:
+      description: "新規スライド雛形を作成 (例: melos run create:slide -- 202609_flutterkaigi)"
+      run: dart run tool/create_slide.dart
