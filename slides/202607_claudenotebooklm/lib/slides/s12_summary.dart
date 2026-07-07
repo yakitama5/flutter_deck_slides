@@ -5,13 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_deck/flutter_deck.dart';
 
+import '../speaker_notes.dart';
 import '../theme.dart';
-
-const _speakerNotes = '''
-まとめです。私たちが今回の取り組みで得た最大の教訓は、「情報を綺麗に1箇所にまとめ直す必要はない」ということです。情報はExcelやGitHubなど、それぞれの最適な場所に散らばったままで構いません。大切なのは、人間がアクセスする窓口をAIによって一本化（SPOC化）し、全工程の文脈を記憶したAI窓口を育てることです。
-そしてそれを実現するために、重厚なAPI連携を作り込むのではなく、既存のGoogle Drive同期などの仕組みに上手く"相乗り"する。このアプローチをとることで、開発コストを最小限に抑えつつ、現場の課題をエレガントに解決することができました。
-皆さんのプロジェクトでも、散在するドキュメントに悩まされている方がいれば、ぜひこの「SPOC窓口を自動で育てる型」を試してみてください。ご清聴ありがとうございました。質疑応答に移ります。
-''';
 
 FlutterDeckSlide buildS12SummarySlide() {
   return FlutterDeckSlide.blank(
@@ -21,7 +16,7 @@ FlutterDeckSlide buildS12SummarySlide() {
       steps: 4,
       header: FlutterDeckHeaderConfiguration(showHeader: false),
       footer: FlutterDeckFooterConfiguration(showFooter: false),
-      speakerNotes: _speakerNotes,
+      speakerNotes: SpeakerNotes.summary,
     ),
     builder: (context) => const _SummaryContent(),
   );

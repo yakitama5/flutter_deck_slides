@@ -4,17 +4,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_deck/flutter_deck.dart';
 
+import '../speaker_notes.dart';
 import '../theme.dart';
 import '../widgets/content_card.dart';
 import '../widgets/drag_hint.dart';
 import '../widgets/flow_edge_painter.dart';
 import '../widgets/service_node.dart';
-
-const _speakerNotes = '''
-このカオスな状況をどう解決するか。ここで今日の最も伝えたいコンセプト、IT用語で言うところの「SPOC（Single Point of Contact：単一の連絡窓口）」の実現についてお話しします。
-私たちのプロジェクトは、いわば「たくさんの島」に分かれています。要件が書かれたExcel島やWord島、パワポ島、日々のQAが流れるSlack島とBacklog島、そして実装が置かれたGitHub島です。これまでは、知りたいことがあるたびに小さな船に乗ってそれぞれの島へ行き情報を探し回っていました。
-私たちが目指したのは、これらの島を無理やり1つの巨大な大陸にまとめることではありません。代わりに、チームのど真ん中に「毎晩、すべての島の様子を見回って最新状況を記憶してくれる、1人の優秀なAIコンシェルジュ」を雇うことにしました。エンジニアはもう島を巡る必要はありません。知りたいことがあれば、目の前にいるAI窓口に聞くだけ。これが、プロジェクト知識のSPOC化です。
-''';
 
 FlutterDeckSlide buildS03ConceptSpocSlide() {
   return FlutterDeckSlide.blank(
@@ -22,7 +17,7 @@ FlutterDeckSlide buildS03ConceptSpocSlide() {
       route: '/concept-spoc',
       title: 'コンセプト：SPOC',
       steps: 4,
-      speakerNotes: _speakerNotes,
+      speakerNotes: SpeakerNotes.conceptSpoc,
     ),
     builder: (context) => const _ConceptSpocContent(),
   );

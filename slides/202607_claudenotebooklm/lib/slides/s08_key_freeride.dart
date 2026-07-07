@@ -4,16 +4,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_deck/flutter_deck.dart';
 
+import '../speaker_notes.dart';
 import '../theme.dart';
 import '../widgets/content_card.dart';
 import '../widgets/drag_hint.dart';
 import '../widgets/service_node.dart';
 import '../widgets/slide_headline.dart';
-
-const _speakerNotes = '''
-技術のキモの2つ目は、「API連携のコードを一切書いていない」という点です。
-NotebookLMには現時点で外部から質問を投げたり、直接データを流し込んだりする公式APIがありません。ここで無理にAPI連携を模索するのではなく、NotebookLMが「Google Driveの特定フォルダをソースとして自動同期できる」という標準機能に目をつけました。ローカルバッチは、単にGoogle Driveデスクトップの同期フォルダ（仮想Gドライブ）にファイルを上書きコピーしているだけです。あとはGoogle Driveのクライアントアプリが勝手にクラウドへ同期し、NotebookLMがそれを勝手に検知して記憶をアップデートします。コードを「作らない」アプローチをとったことで、開発期間は最短、かつ今後の保守コストも完全にゼロに抑えています。
-''';
 
 FlutterDeckSlide buildS08KeyFreerideSlide() {
   return FlutterDeckSlide.blank(
@@ -21,7 +17,7 @@ FlutterDeckSlide buildS08KeyFreerideSlide() {
       route: '/key-freeride',
       title: 'キモ②相乗り連携',
       steps: 3,
-      speakerNotes: _speakerNotes,
+      speakerNotes: SpeakerNotes.keyFreeride,
     ),
     builder: (context) => const _KeyFreerideContent(),
   );

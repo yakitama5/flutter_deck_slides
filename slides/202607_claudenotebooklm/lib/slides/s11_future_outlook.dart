@@ -2,15 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_deck/flutter_deck.dart';
 
+import '../speaker_notes.dart';
 import '../theme.dart';
 import '../widgets/content_card.dart';
 import '../widgets/slide_headline.dart';
-
-const _speakerNotes = '''
-最後に、今後の展望についてです。
-まず、BacklogやSlackのAPIと連携することで、今は一部ローカルバッチが担っている要約・検知の部分も含めて全自動化していきたいと考えています。また、もし社内でNotebookLMのAPI連携が使えるようになれば、Gemini経由の連携もさらに自動化できます。さらに、今はローカルPCで動かしているバッチをGoogle Drive連携を使ってクラウド実行化し、特定のPCに依存しない仕組みにしていきたいです。
-そして何より伝えたいのは、この仕組みは特定のプロジェクトだけのものではないということです。会社全体で促進すれば、他のプロジェクトでも同じように全自動化できる仕組みだと考えています。
-''';
 
 FlutterDeckSlide buildS11FutureOutlookSlide() {
   return FlutterDeckSlide.blank(
@@ -18,7 +13,7 @@ FlutterDeckSlide buildS11FutureOutlookSlide() {
       route: '/future-outlook',
       title: '今後の展望',
       steps: 4,
-      speakerNotes: _speakerNotes,
+      speakerNotes: SpeakerNotes.futureOutlook,
     ),
     builder: (context) => const _FutureOutlookContent(),
   );

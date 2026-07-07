@@ -2,16 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_deck/flutter_deck.dart';
 
+import '../speaker_notes.dart';
 import '../theme.dart';
 import '../widgets/content_card.dart';
 import '../widgets/doc_chip.dart';
 import '../widgets/service_node.dart';
 import '../widgets/slide_headline.dart';
-
-const _speakerNotes = '''
-この「AI窓口（SPOC）」を賢くするために、具体的にどのような資料を食わせているかをご紹介します。今回の仕組みの特徴は、特定の仕様書だけでなく、工程ごとに発生するあらゆるドキュメントを一気通貫で網羅している点です。
-要件定義フェーズの各種Excelやパワポ、Word資料はもちろん、基本設計のDB定義やFigmaのデザイン、BacklogのQAのやり取り。さらに詳細設計や製造フェーズにおいては、自分たちで作成したMarkdownの仕様書やBacklogのQAだけでなく、GitHubのPull Requestでのレビュー指摘内容をClaudeに一度要約させ、そのやり取りのログ自体もMarkdownとして取り込んでいます。前工程で発生した文脈をすべてNotebookLMに流し込むことで、本当に「全工程の経緯をわかっている」コンシェルジュに仕立て上げています。
-''';
 
 FlutterDeckSlide buildS04RagSourcesSlide() {
   return FlutterDeckSlide.blank(
@@ -19,7 +15,7 @@ FlutterDeckSlide buildS04RagSourcesSlide() {
       route: '/rag-sources',
       title: 'RAG化の対象ソース',
       steps: 5,
-      speakerNotes: _speakerNotes,
+      speakerNotes: SpeakerNotes.ragSources,
     ),
     builder: (context) => const _RagSourcesContent(),
   );

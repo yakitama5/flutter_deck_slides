@@ -4,15 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_deck/flutter_deck.dart';
 
+import '../speaker_notes.dart';
 import '../theme.dart';
 import '../widgets/content_card.dart';
 import '../widgets/slide_headline.dart';
-
-const _speakerNotes = '''
-まず、皆さんのプロジェクトで、画面にあるようなこんな光景を見たことはありませんか？
-例えば、「あの仕様どうなったっけ？」と聞いて、「あ、それBacklogのQAで解決したんで、あのチケット見てください！」と言われる。つまり、QAの内容が元の設計資料に全く反映されておらず、資料が陳腐化している状態ですね。
-さらに、新規参画者が入ってきた時に「とりあえずここにある資料全部読んどいて！」と共有フォルダを渡すものの、資料が膨大すぎて到底読む気にならず、どこから手をつければいいか分からない。結果として、「結局どれが最新で正しい仕様なんですか？」と、すべてを知っている有識者に毎回聞きに行く羽目になる。探す・聞く・直すという無駄なコストが日々発生しています。
-''';
 
 FlutterDeckSlide buildS02ProblemChaosSlide() {
   return FlutterDeckSlide.blank(
@@ -20,7 +15,7 @@ FlutterDeckSlide buildS02ProblemChaosSlide() {
       route: '/problem-chaos',
       title: '課題：現場のカオス',
       steps: 4,
-      speakerNotes: _speakerNotes,
+      speakerNotes: SpeakerNotes.problemChaos,
     ),
     builder: (context) => const _ProblemChaosContent(),
   );

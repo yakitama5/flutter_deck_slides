@@ -4,12 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_deck/flutter_deck.dart';
 
+import '../speaker_notes.dart';
 import '../theme.dart';
-
-const _speakerNotes = '''
-皆さんお疲れ様です。本日は「要件・ソースを"生きたナレッジ"に」と題しまして、Claude CodeとNotebookLM、そしてGeminiを組み合わせた、自動RAG化ナレッジパイプラインの構築と、それを1ヶ月運用して得られた知見について共有します。
-本日の発表のゴールは、散らばった社内資産をどうやってAIが扱える形に集約し、開発チームの強力な窓口として育成するか、その具体的な方法を持ち帰っていただくことです。よろしくお願いいたします。
-''';
 
 FlutterDeckSlide buildS01TitleSlide() {
   return FlutterDeckSlide.blank(
@@ -18,7 +14,7 @@ FlutterDeckSlide buildS01TitleSlide() {
       title: 'タイトル',
       header: FlutterDeckHeaderConfiguration(showHeader: false),
       footer: FlutterDeckFooterConfiguration(showFooter: false),
-      speakerNotes: _speakerNotes,
+      speakerNotes: SpeakerNotes.intro,
     ),
     builder: (context) => const _TitleSlideContent(),
   );

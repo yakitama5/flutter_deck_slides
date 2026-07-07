@@ -4,16 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_deck/flutter_deck.dart';
 
+import '../speaker_notes.dart';
 import '../theme.dart';
 import '../widgets/content_card.dart';
 import '../widgets/slide_headline.dart';
-
-const _speakerNotes = '''
-1ヶ月間実際に運用してみた振り返りです。
-実際に回してみて、変更がない日は完全にコストゼロで静かにスキップされるため、運用費の面でも非常に優秀です。最も嬉しかったのは、新しくチームに入ったメンバーが、ドキュメントの場所をいちいち先輩に聞くことなく、NotebookLMを相手に自走して仕様を把握してくれたことです。オンボーディングの速度は明らかに上がりました。
-一方で泥臭いハマりどころもありました。Windows標準のPowerShell 5.1がBOMなしUTF-8をうまく認識せず文字化けし、スクリプトが落ちる問題が発生しました。これは repo外の運用物としてBOM付きで保存することで解決しています。また、原本の表記揺れにAIが引きずられないよう、絶対に書き換えてはいけない「確定事項」をプロンプト側に固定して守らせる、といったプロンプトのチューニングも行いました。
-実際にメンバーからもこんな声が挙がっています。作業者Aからは「NotebookLMに聞くだけで仕様がわかるので、質問する心理的ハードルが下がった」。作業者Bからは「Excelを直接編集しなくていいので、地味に助かっている」というコメントをもらっています。
-''';
 
 FlutterDeckSlide buildS10RetrospectiveSlide() {
   return FlutterDeckSlide.blank(
@@ -21,7 +15,7 @@ FlutterDeckSlide buildS10RetrospectiveSlide() {
       route: '/retrospective',
       title: '振り返り',
       steps: 4,
-      speakerNotes: _speakerNotes,
+      speakerNotes: SpeakerNotes.retrospective,
     ),
     builder: (context) => const _RetrospectiveContent(),
   );

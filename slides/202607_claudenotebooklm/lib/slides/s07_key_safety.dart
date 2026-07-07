@@ -2,15 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_deck/flutter_deck.dart';
 
+import '../speaker_notes.dart';
 import '../theme.dart';
 import '../widgets/content_card.dart';
 import '../widgets/service_node.dart';
 import '../widgets/slide_headline.dart';
-
-const _speakerNotes = '''
-ここからは、このアーキテクチャの設計における技術的な「キモ」を3つ紹介します。1つ目は、「AIにExcelファイルを直接読ませない」という安全設計です。
-ExcelのバイナリのままAIに渡そうとすると、読み込みが不安定になるだけでなく、AIにPythonスクリプトやbashコマンドを実行して解析する権限を与える必要が出てきます。これは無人運用する上で、AIが予期せぬコマンドを実行するリスクがあり非常に危険です。そこで、Pythonのopenpyxlを使って、人間が先に行単位のテキストに「決定的に」ダンプします。こうすることで、Claudeの権限はファイルを「読むこと」と「書き換えること」だけに絞ることができ、無人で動かしても絶対に暴走しない安全な仕組みが作れました。デバッグ性が高いのもメリットです。
-''';
 
 FlutterDeckSlide buildS07KeySafetySlide() {
   return FlutterDeckSlide.blank(
@@ -18,7 +14,7 @@ FlutterDeckSlide buildS07KeySafetySlide() {
       route: '/key-safety',
       title: 'キモ①安全設計',
       steps: 3,
-      speakerNotes: _speakerNotes,
+      speakerNotes: SpeakerNotes.keySafety,
     ),
     builder: (context) => const _KeySafetyContent(),
   );

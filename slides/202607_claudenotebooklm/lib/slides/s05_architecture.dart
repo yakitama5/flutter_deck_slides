@@ -2,16 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_deck/flutter_deck.dart';
 
+import '../speaker_notes.dart';
 import '../theme.dart';
 import '../widgets/flow_edge_painter.dart';
 import '../widgets/service_node.dart';
 import '../widgets/slide_headline.dart';
-
-const _speakerNotes = '''
-この仕組みを支えるコンポーネント全体図と、それぞれのAIエージェントの役割分担です。ツールは1つではなく、特性に合わせて適材適所で使い分けています。
-ローカルバッチは実は3本立てです。①BacklogのQAエクスポートとSlackのやり取りを要約するバッチ、②Dropboxの要件資料を取得して要約するバッチ、そして③Claude Codeの出力をGoogle Driveへ反映するバッチです。
-①と②が要約したテキストを「Claude Code」に渡し、一次ソースの差分を読み解きMarkdownへ構造化・編集する『職人』の役割を担わせます。その成果物を③がDriveに同期します。NotebookLMはチームメンバーが自然言語でQ&Aを行うための『SPOC窓口』です。さらに、NotebookLMはAPIを公開していませんが、Geminiの「Notebooks」連携機能を活用することで、Gemini側から複数のNotebookLMの知識を横断して、マクロな設計レビューや実装計画の作成をやらせています。
-''';
 
 FlutterDeckSlide buildS05ArchitectureSlide() {
   return FlutterDeckSlide.blank(
@@ -19,7 +14,7 @@ FlutterDeckSlide buildS05ArchitectureSlide() {
       route: '/architecture',
       title: '全体像と役割分担',
       steps: 5,
-      speakerNotes: _speakerNotes,
+      speakerNotes: SpeakerNotes.architecture,
     ),
     builder: (context) => const _ArchitectureContent(),
   );

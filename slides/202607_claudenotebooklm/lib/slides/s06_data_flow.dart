@@ -2,14 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_deck/flutter_deck.dart';
 
+import '../speaker_notes.dart';
 import '../theme.dart';
 import '../widgets/content_card.dart';
 import '../widgets/slide_headline.dart';
-
-const _speakerNotes = '''
-データがどのように流れるか、5つのステップで説明します。このフローは毎日の業務時間中、12:00に自動で起動します。
-まず①で、原本Excelのタイムスタンプをstate.jsonという管理ファイルと比較し、変更があるか検知します。変更がなければここで即座に終了するため、APIコストはゼロです。変更があった場合のみ、②でリポジトリ内に原本のスナップショットをコピーし、③でPythonを使ってExcelの全シートをテキストにダンプします。そして④で、そのテキストと現行のMarkdownをClaudeに読み込ませ、変わった事実だけを行単位でピンポイントで反映させます。最後に⑤で、Windows標準のrobocopyを使ってGoogle Driveデスクトップの同期フォルダへコピーし、Google Driveの自動同期によってNotebookLM側へ自動的に取り込まれます。毎日裏でこれが静かに回っています。
-''';
 
 FlutterDeckSlide buildS06DataFlowSlide() {
   return FlutterDeckSlide.blank(
@@ -17,7 +13,7 @@ FlutterDeckSlide buildS06DataFlowSlide() {
       route: '/data-flow',
       title: '5ステップのデータフロー',
       steps: 5,
-      speakerNotes: _speakerNotes,
+      speakerNotes: SpeakerNotes.dataFlow,
     ),
     builder: (context) => const _DataFlowContent(),
   );

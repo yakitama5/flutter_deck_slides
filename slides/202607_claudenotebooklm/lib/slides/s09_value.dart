@@ -2,14 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_deck/flutter_deck.dart';
 
+import '../speaker_notes.dart';
 import '../theme.dart';
 import '../widgets/content_card.dart';
 import '../widgets/slide_headline.dart';
-
-const _speakerNotes = '''
-この仕組みを導入した狙い、そして実際に得られた価値についてまとめます。
-最大の効果は、ナレッジの最新性が「機械的に保証されるようになった」ことです。原本が変わればAIの記憶も自動追従するため、資料のメンテナンス漏れが構造的に起きなくなりました。また、開発時の細かい仕様確認が「有識者へのチャット」から「NotebookLMへの質問」にシフトしたことで、質問された側の有識者が集中を切らされることなく、自身の開発に専念できるようになりました。さらに、すべてをAPIコストの高いClaudeに頼るのではなく、複数工程を横断したマクロなレビューや実装計画の一次出力はGeminiのNotebooks連携に任せることで、トークンコストを大幅に抑えつつ、多角的な品質向上を実現しています。
-''';
 
 FlutterDeckSlide buildS09ValueSlide() {
   return FlutterDeckSlide.blank(
@@ -17,7 +13,7 @@ FlutterDeckSlide buildS09ValueSlide() {
       route: '/value',
       title: '得られた価値',
       steps: 4,
-      speakerNotes: _speakerNotes,
+      speakerNotes: SpeakerNotes.value,
     ),
     builder: (context) => const _ValueContent(),
   );
