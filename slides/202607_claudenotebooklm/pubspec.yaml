@@ -1,0 +1,26 @@
+name: claudenotebooklm_202607
+description: "flutter_deck slide."
+publish_to: 'none'
+resolution: workspace
+
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.12.2
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_deck: ^0.29.0
+  flutter_deck_web_client: ^0.4.0
+  flutter_animate: ^4.5.2
+  confetti: ^0.8.0
+  google_fonts: ^6.2.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true
