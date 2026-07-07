@@ -23,7 +23,7 @@ jobs:
       - uses: jdx/mise-action@v2
 
       - name: Install dependencies
-        run: dart pub get
+        run: flutter pub get
 
       - name: Build web (全スライド)
         run: dart run tool/build_web.dart

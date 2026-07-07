@@ -14,7 +14,7 @@ jobs:
       - uses: jdx/mise-action@v2
 
       - name: Install dependencies
-        run: dart pub get
+        run: flutter pub get
 
       - name: Analyze
         run: dart run melos run analyze --no-select
