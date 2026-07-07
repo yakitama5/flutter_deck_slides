@@ -21,6 +21,12 @@ jobs:
           flutter pub global activate melos
           echo "$HOME/.pub-cache/bin" >> "$GITHUB_PATH"
 
+      - name: Prepare speaker notes (Git管理対象外ファイルをテンプレートから生成)
+        run: |
+          for example in slides/*/lib/speaker_notes.example.dart; do
+            cp "$example" "$(dirname "$example")/speaker_notes.dart"
+          done
+
       - name: Analyze
         run: dart run melos run analyze --no-select
 

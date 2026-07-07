@@ -25,6 +25,12 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
+      - name: Prepare speaker notes (Git管理対象外ファイルをテンプレートから生成)
+        run: |
+          for example in slides/*/lib/speaker_notes.example.dart; do
+            cp "$example" "$(dirname "$example")/speaker_notes.dart"
+          done
+
       - name: Build web (全スライド)
         run: dart run tool/build_web.dart
 
