@@ -1,3 +1,7 @@
+# 発表原稿(企業名・個人名・プロジェクト名を含みうるためGit管理外)
+# lib/speaker_notes.example.dart をコピーして作成すること
+lib/speaker_notes.dart
+
 # Miscellaneous
 *.class
 *.log
