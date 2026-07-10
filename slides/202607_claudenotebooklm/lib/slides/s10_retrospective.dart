@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_deck/flutter_deck.dart';
@@ -84,7 +82,8 @@ class _RetrospectiveContent extends StatelessWidget {
                       revealAt: 3,
                       child: _MemberQuote(
                         name: '作業者A',
-                        quote: 'NotebookLMに聞くだけで仕様がわかるので、質問する心理的ハードルが下がった',
+                        quote:
+                            '他の人のQAの内容も含めてレビューしてくれるのがとてもいい。要件漏れにきづけたので、ここはすごくよかった！',
                       ),
                     ),
                   ),
@@ -94,7 +93,8 @@ class _RetrospectiveContent extends StatelessWidget {
                       revealAt: 4,
                       child: _MemberQuote(
                         name: '作業者B',
-                        quote: 'Excelを直接編集しなくていいので、地味に助かっている',
+                        quote:
+                            'BacklogやSlackの内容も加味してレビューしてもらえるので、見逃していたポイントに気づける',
                       ),
                     ),
                   ),
@@ -186,37 +186,19 @@ class _GoodColumn extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           const Text('無変更日はコスト0の冪等性。', style: TextStyle(fontSize: 22)),
-          const Text('新規参画者の初期仕様把握が劇的に高速化。', style: TextStyle(fontSize: 22)),
+          const Text(
+            'インフォグラフィックや画像生成で認識齟齬が減少。',
+            style: TextStyle(fontSize: 22),
+          ),
+          const Text('動画・音声解説で短時間にすっと理解できる。', style: TextStyle(fontSize: 22)),
         ],
       ),
     );
   }
 }
 
-class _StruggleColumn extends StatefulWidget {
+class _StruggleColumn extends StatelessWidget {
   const _StruggleColumn();
-
-  @override
-  State<_StruggleColumn> createState() => _StruggleColumnState();
-}
-
-class _StruggleColumnState extends State<_StruggleColumn> {
-  bool _garbled = true;
-  Timer? _timer;
-
-  @override
-  void initState() {
-    super.initState();
-    _timer = Timer(400.ms, () {
-      if (mounted) setState(() => _garbled = false);
-    });
-  }
-
-  @override
-  void dispose() {
-    _timer?.cancel();
-    super.dispose();
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -240,11 +222,14 @@ class _StruggleColumnState extends State<_StruggleColumn> {
             style: TextStyle(fontWeight: FontWeight.bold, fontSize: 26),
           ),
           const SizedBox(height: 12),
-          Text(
-            _garbled ? '讌字化け（BOM問題）' : 'PowerShell 5.1 のBOM問題',
-            style: const TextStyle(fontSize: 22),
+          const Text(
+            '現プランはAPI連携不可、手動アップロードのみ。',
+            style: TextStyle(fontSize: 22),
           ),
-          const Text('AIが過剰に書き換えないための確定事項の固定。', style: TextStyle(fontSize: 22)),
+          const Text(
+            'Drive参照は1度50ファイル上限で地味に時間がかかる。',
+            style: TextStyle(fontSize: 22),
+          ),
         ],
       ),
     );

@@ -29,12 +29,12 @@ class _Value {
 
 const _values = [
   _Value(icon: Icons.autorenew, title: '最新性の自動担保', detail: '反映漏れ・陳腐化の構造的防止'),
-  _Value(icon: Icons.savings, title: 'トークン節約と品質向上', detail: 'マクロレビューはGeminiに'),
   _Value(
-    icon: Icons.rocket_launch,
-    title: '問い合わせ高速化',
-    detail: '有識者ボトルネック解消・新規参画者が自走',
+    icon: Icons.travel_explore,
+    title: '横断的な気づき',
+    detail: '他の担当者のQA対応も横断的に把握',
   ),
+  _Value(icon: Icons.savings, title: 'トークン節約と品質向上', detail: 'マクロレビューはGeminiに'),
 ];
 
 class _ValueContent extends StatelessWidget {

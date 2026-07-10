@@ -182,7 +182,7 @@ class _OkLane extends StatelessWidget {
         Icon(Icons.arrow_forward, size: 32),
         ServiceNode(
           label: 'Claude',
-          sublabel: '🔒 読む/書くのみ',
+          sublabel: '🔒 読むのみ',
           icon: Icons.smart_toy,
           color: AppColors.claude,
           width: 200,

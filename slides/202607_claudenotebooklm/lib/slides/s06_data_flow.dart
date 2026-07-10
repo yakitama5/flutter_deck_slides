@@ -32,7 +32,7 @@ class _Step {
 }
 
 const _steps = [
-  _Step(icon: Icons.radar, title: '①変更検知', description: 'state.jsonと比較'),
+  _Step(icon: Icons.radar, title: '①変更検知', description: '管理ファイルと比較'),
   _Step(icon: Icons.file_copy, title: '②原本コピー', description: 'リファレンス残す'),
   _Step(icon: Icons.data_object, title: '③テキスト化', description: 'Pythonダンプ'),
   _Step(icon: Icons.smart_toy, title: '④Claude反映', description: '差分のみピンポイント編集'),

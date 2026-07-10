@@ -225,6 +225,21 @@ class _KeyFreerideContentState extends State<_KeyFreerideContent> {
                           style: FlutterDeckTheme.of(context).textTheme.title,
                         ),
                       ).animate().fadeIn().slideY(begin: 0.2, end: 0),
+                      const SizedBox(height: 12),
+                      ContentCard(
+                            color: AppColors.googleRed.withValues(alpha: 0.06),
+                            borderColor: AppColors.googleRed,
+                            child: Text(
+                              '⚠️ 効くのは更新ファイルのみ。新規ファイルの初期構築はまだ手動',
+                              style: FlutterDeckTheme.of(context)
+                                  .textTheme
+                                  .bodyLarge
+                                  .copyWith(color: AppColors.googleRed),
+                            ),
+                          )
+                          .animate(delay: 150.ms)
+                          .fadeIn()
+                          .slideY(begin: 0.2, end: 0),
                     ],
                   ],
                 );

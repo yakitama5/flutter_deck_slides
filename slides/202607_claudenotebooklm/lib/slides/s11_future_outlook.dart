@@ -39,13 +39,13 @@ const _roadmap = [
   ),
   _Roadmap(
     icon: Icons.auto_stories,
-    title: 'NotebookLM API連携',
-    detail: '会社連携が使えれば全自動化',
+    title: 'NotebookLM Enterprise化',
+    detail: '新規ファイルの取り込みも自動化',
   ),
   _Roadmap(
     icon: Icons.cloud_sync,
-    title: 'Google Drive連携',
-    detail: 'クラウド実行化しPC非依存に',
+    title: 'GASでクラウド実行化',
+    detail: '特定PCに依存しない仕組みへ',
   ),
 ];
 
