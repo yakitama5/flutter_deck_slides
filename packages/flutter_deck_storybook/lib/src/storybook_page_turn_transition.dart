@@ -146,13 +146,9 @@ class _StorybookPageTurnTransition extends StatelessWidget {
                         ? Alignment.centerRight
                         : Alignment.centerLeft,
                     colors: [
-                      Colors.black.withValues(
-                        alpha: 0.22 * shadowStrength,
-                      ),
+                      Colors.black.withValues(alpha: 0.22 * shadowStrength),
                       Colors.transparent,
-                      Colors.white.withValues(
-                        alpha: 0.12 * shadowStrength,
-                      ),
+                      Colors.white.withValues(alpha: 0.12 * shadowStrength),
                     ],
                     stops: const [0, 0.72, 1],
                   ),
