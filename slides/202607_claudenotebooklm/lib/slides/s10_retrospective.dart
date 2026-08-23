@@ -82,8 +82,7 @@ class _RetrospectiveContent extends StatelessWidget {
                       revealAt: 3,
                       child: _MemberQuote(
                         name: '作業者A',
-                        quote:
-                            '他の人のQAの内容も含めてレビューしてくれるのがとてもいい。要件漏れにきづけたので、ここはすごくよかった！',
+                        quote: '他の人のQAの内容も含めてレビューしてくれるのがとてもいい。要件漏れにきづけたので、ここはすごくよかった！',
                       ),
                     ),
                   ),

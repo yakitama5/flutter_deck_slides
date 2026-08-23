@@ -118,9 +118,9 @@ class _DataFlowContent extends StatelessWidget {
                         const SizedBox(height: 8),
                         Text(
                           '変更なし → 即終了（APIコスト ¥0）',
-                          style: FlutterDeckTheme.of(
-                            context,
-                          ).textTheme.bodyMedium,
+                          style: FlutterDeckTheme.of(context)
+                              .textTheme
+                              .bodyMedium,
                         ).animate(delay: 200.ms).fadeIn(),
                       ],
                     ),
