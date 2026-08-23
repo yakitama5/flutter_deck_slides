@@ -4,7 +4,10 @@ import 'package:flutter_deck_storybook/flutter_deck_storybook.dart';
 import 'package:flutter_deck_web_client/flutter_deck_web_client.dart';
 
 final _pageTurnTransition = FlutterDeckTransition.custom(
-  transitionBuilder: StorybookPageTurnTransitionBuilder(usePerspective: true),
+  transitionBuilder: StorybookPageTurnTransitionBuilder(
+    usePerspective: true,
+    enableInkReveal: true,
+  ),
 );
 
 void main() => runApp(const ExampleApp());
@@ -69,23 +72,8 @@ class ExampleApp extends StatelessWidget {
             pageNumber: 2,
             totalPages: 3,
             accentColor: Color(0xFFD07A4A),
-            child: Row(
-              children: [
-                Expanded(child: Icon(Icons.flutter_dash, size: 220)),
-                SizedBox(width: 56),
-                Expanded(
-                  flex: 2,
-                  child: Text(
-                    'ある日、青い小鳥は\n新しい物語を届ける旅に出ました。',
-                    style: TextStyle(
-                      fontSize: 48,
-                      height: 1.55,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-              ],
-            ),
+            contentPadding: EdgeInsets.fromLTRB(48, 42, 48, 54),
+            child: _StoryScene(),
           ),
         ),
         FlutterDeckSlide.blank(
@@ -120,6 +108,121 @@ class ExampleApp extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+class _StoryScene extends StatelessWidget {
+  const _StoryScene();
+
+  @override
+  Widget build(BuildContext context) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(30),
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          const DecoratedBox(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [Color(0xFFBFE9E2), Color(0xFF4383A8)],
+              ),
+            ),
+          ),
+          const Positioned(
+            top: 58,
+            right: 104,
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                color: Color(0xFFFFD46A),
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: Color(0x55FFE7A1),
+                    blurRadius: 38,
+                    spreadRadius: 12,
+                  ),
+                ],
+              ),
+              child: SizedBox.square(dimension: 132),
+            ),
+          ),
+          Positioned(
+            left: -120,
+            right: 360,
+            bottom: -210,
+            height: 470,
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                color: const Color(0xFF315C51),
+                borderRadius: BorderRadius.circular(280),
+              ),
+            ),
+          ),
+          Positioned(
+            left: 560,
+            right: -180,
+            bottom: -190,
+            height: 430,
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                color: const Color(0xFF5D8F65),
+                borderRadius: BorderRadius.circular(260),
+              ),
+            ),
+          ),
+          const Positioned(
+            left: 58,
+            bottom: 148,
+            child: Icon(
+              Icons.park_rounded,
+              color: Color(0xFF214E3D),
+              size: 190,
+            ),
+          ),
+          const Positioned(
+            right: 50,
+            bottom: 126,
+            child: Icon(
+              Icons.park_rounded,
+              color: Color(0xFF2E6549),
+              size: 210,
+            ),
+          ),
+          const Align(
+            alignment: Alignment(0, 0.34),
+            child: Icon(
+              Icons.flutter_dash,
+              color: Color(0xFFF7F0DD),
+              size: 224,
+            ),
+          ),
+          const Positioned(
+            left: 0,
+            right: 0,
+            bottom: 40,
+            child: Text(
+              'ある日、青い小鳥は物語を届ける旅に出ました。',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: Color(0xFFFDF8EA),
+                fontSize: 36,
+                height: 1.4,
+                fontWeight: FontWeight.w700,
+                shadows: [
+                  Shadow(
+                    color: Color(0x660E2B2D),
+                    blurRadius: 12,
+                    offset: Offset(0, 3),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
