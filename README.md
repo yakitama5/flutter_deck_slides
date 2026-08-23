@@ -71,7 +71,7 @@ dart run melos run create:slide -- 202609_flutterkaigi
 `packages/flutter_deck_storybook` が組み込まれています。
 
 - `StorybookPageTurnTransitionBuilder`: 16:9のスライド全体を1枚の紙として扱い、次へ／前への方向に合わせて片側の端を支点にY軸回転するページめくり。Web・ネイティブとも遠近感と陰影を使った3D表示が標準です
-- `StorybookPage`: 紙色、表紙色、アクセント色、余白、ページ番号を変更できる絵本風のページ枠
+- `StorybookPage`: 紙色、表紙色、アクセント色、余白、ページ番号を変更できる絵本風のページ枠。ページがめくれた後は、白紙の上にセピア色の下描きが現れ、中央下寄りから水彩・インクがにじむように完成絵を描き出します
 - 視差効果を減らす設定が有効な環境では、ページ回転をフェードへ自動的に切り替えます
 - 3D描画に問題がある環境では、`usePerspective: false` でスライド＋クロスフェードへ明示的に切り替えられます
 
@@ -79,7 +79,12 @@ dart run melos run create:slide -- 202609_flutterkaigi
 
 ```dart
 final pageTurnTransition = FlutterDeckTransition.custom(
-  transitionBuilder: StorybookPageTurnTransitionBuilder(usePerspective: true),
+  transitionBuilder: StorybookPageTurnTransitionBuilder(
+    usePerspective: true,
+    enableInkReveal: true,
+    inkRevealDuration: Duration(milliseconds: 2750),
+    inkRevealOrigin: Alignment(0, 0.25),
+  ),
 );
 
 FlutterDeckApp(
@@ -88,6 +93,18 @@ FlutterDeckApp(
   ),
   // ...
 );
+```
+
+16:9の完成画像を1枚の紙として使う場合は、`StorybookPage` の余白をなくして画像を全面に配置できます。
+
+```dart
+StorybookPage(
+  outerPadding: EdgeInsets.zero,
+  contentPadding: EdgeInsets.zero,
+  borderRadius: 0,
+  showPageNumber: false,
+  child: Image.asset('assets/page.png', fit: BoxFit.cover),
+)
 ```
 
 ## 発表方法(Presenter View)

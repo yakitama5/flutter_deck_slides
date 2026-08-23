@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'storybook_reveal.dart';
+
 /// A paper-like page surface for storybook-style slide decks.
 class StorybookPage extends StatelessWidget {
   /// Creates a storybook page.
@@ -72,6 +74,7 @@ class StorybookPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final radius = BorderRadius.circular(borderRadius);
     final pageLabel = _pageLabel;
+    final reveal = StorybookRevealScope.maybeOf(context);
 
     return ColoredBox(
       color: coverColor,
@@ -121,40 +124,54 @@ class StorybookPage extends StatelessWidget {
                     ),
                   ),
                 ),
-                Padding(
-                  padding: contentPadding,
-                  child: FittedBox(
-                    fit: BoxFit.contain,
-                    child: SizedBox.fromSize(
-                      size: designSize,
-                      child: DefaultTextStyle.merge(
-                        style: TextStyle(color: inkColor),
-                        child: IconTheme.merge(
-                          data: IconThemeData(color: accentColor),
-                          child: child,
+                StorybookInkReveal(
+                  key: const ValueKey('storybook-ink-reveal'),
+                  sketchProgress: reveal?.sketchProgress ?? 1,
+                  paintProgress: reveal?.paintProgress ?? 1,
+                  revealOrigin:
+                      reveal?.revealOrigin ?? const Alignment(0, 0.25),
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      Padding(
+                        padding: contentPadding,
+                        child: FittedBox(
+                          fit: BoxFit.contain,
+                          child: SizedBox.fromSize(
+                            size: designSize,
+                            child: DefaultTextStyle.merge(
+                              style: TextStyle(color: inkColor),
+                              child: IconTheme.merge(
+                                data: IconThemeData(color: accentColor),
+                                child: child,
+                              ),
+                            ),
+                          ),
                         ),
                       ),
-                    ),
+                      if (showPageNumber && pageLabel != null)
+                        Positioned(
+                          right: 36,
+                          bottom: 24,
+                          child: Semantics(
+                            label: 'ページ $pageLabel',
+                            child: ExcludeSemantics(
+                              child: Text(
+                                pageLabel,
+                                style: Theme.of(context).textTheme.titleMedium
+                                    ?.copyWith(
+                                      color: accentColor.withValues(
+                                        alpha: 0.78,
+                                      ),
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                              ),
+                            ),
+                          ),
+                        ),
+                    ],
                   ),
                 ),
-                if (showPageNumber && pageLabel != null)
-                  Positioned(
-                    right: 36,
-                    bottom: 24,
-                    child: Semantics(
-                      label: 'ページ $pageLabel',
-                      child: ExcludeSemantics(
-                        child: Text(
-                          pageLabel,
-                          style: Theme.of(context).textTheme.titleMedium
-                              ?.copyWith(
-                                color: accentColor.withValues(alpha: 0.78),
-                                fontWeight: FontWeight.w600,
-                              ),
-                        ),
-                      ),
-                    ),
-                  ),
               ],
             ),
           ),
