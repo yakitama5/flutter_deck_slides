@@ -1,6 +1,5 @@
 import 'dart:math' as math;
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_deck/flutter_deck.dart';
 
@@ -17,9 +16,8 @@ class StorybookPageTurnTransitionBuilder extends FlutterDeckTransitionBuilder {
     this.perspective = 0.0014,
     this.maxRotation = math.pi / 2,
     this.reverseOnPrevious = true,
-    bool? usePerspective,
-  }) : usePerspective = usePerspective ?? !kIsWeb,
-       assert(perspective > 0),
+    this.usePerspective = true,
+  }) : assert(perspective > 0),
        assert(maxRotation > 0 && maxRotation <= math.pi / 2);
 
   /// Perspective applied to the page transform.
@@ -33,9 +31,9 @@ class StorybookPageTurnTransitionBuilder extends FlutterDeckTransitionBuilder {
 
   /// Whether to use the perspective-based 3D transition.
   ///
-  /// Defaults to `false` on web so the transition remains reliable when the
-  /// browser falls back to software rendering. Pass `true` to opt into the 3D
-  /// effect on web when the presentation environment is known to support it.
+  /// The full slide is treated as one sheet and rotates around a vertical edge.
+  /// This is enabled by default on every platform, including web. Pass `false`
+  /// to use a slide-and-crossfade fallback on a problematic renderer.
   final bool usePerspective;
 
   int? _lastSlideNumber;
