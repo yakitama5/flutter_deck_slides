@@ -135,37 +135,25 @@ class _StorybookPageTurnTransition extends StatelessWidget {
                   ),
                 ],
               ),
-              child: Stack(
-                fit: StackFit.passthrough,
-                children: [
-                  page!,
-                  Positioned.fill(
-                    child: IgnorePointer(
-                      child: DecoratedBox(
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            begin: direction == _PageTurnDirection.forward
-                                ? Alignment.centerLeft
-                                : Alignment.centerRight,
-                            end: direction == _PageTurnDirection.forward
-                                ? Alignment.centerRight
-                                : Alignment.centerLeft,
-                            colors: [
-                              Colors.black.withValues(
-                                alpha: 0.22 * shadowStrength,
-                              ),
-                              Colors.transparent,
-                              Colors.white.withValues(
-                                alpha: 0.12 * shadowStrength,
-                              ),
-                            ],
-                            stops: const [0, 0.72, 1],
-                          ),
-                        ),
-                      ),
-                    ),
+              child: DecoratedBox(
+                position: DecorationPosition.foreground,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: direction == _PageTurnDirection.forward
+                        ? Alignment.centerLeft
+                        : Alignment.centerRight,
+                    end: direction == _PageTurnDirection.forward
+                        ? Alignment.centerRight
+                        : Alignment.centerLeft,
+                    colors: [
+                      Colors.black.withValues(alpha: 0.22 * shadowStrength),
+                      Colors.transparent,
+                      Colors.white.withValues(alpha: 0.12 * shadowStrength),
+                    ],
+                    stops: const [0, 0.72, 1],
                   ),
-                ],
+                ),
+                child: page!,
               ),
             ),
           ),
