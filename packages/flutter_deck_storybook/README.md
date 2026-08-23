@@ -1,6 +1,6 @@
 # flutter_deck_storybook
 
-`flutter_deck` 向けの絵本風ページと、左右の移動方向に追従する3Dページめくりトランジションです。
+`flutter_deck` 向けの絵本風ページと、左右の移動方向に追従するページめくりトランジションです。ネイティブでは3D回転、Webではソフトウェア描画でも安定するスライド＋クロスフェードを使用します。
 
 ```dart
 final pageTurnTransition = FlutterDeckTransition.custom(
@@ -24,4 +24,4 @@ FlutterDeckApp(
 );
 ```
 
-`StorybookPageTurnTransitionBuilder` は移動方向を覚えるため、デッキ全体で同じインスタンスを再利用してください。OS・ブラウザで「視差効果を減らす」が有効な場合は、自動的にフェードへ切り替わります。
+`StorybookPageTurnTransitionBuilder` は移動方向を覚えるため、デッキ全体で同じインスタンスを再利用してください。Webでも3D回転を使いたい場合は `usePerspective: true` を指定できます。OS・ブラウザで「視差効果を減らす」が有効な場合は、自動的にフェードへ切り替わります。

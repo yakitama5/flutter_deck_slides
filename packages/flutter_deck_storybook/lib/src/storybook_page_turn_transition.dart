@@ -1,11 +1,12 @@
 import 'dart:math' as math;
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_deck/flutter_deck.dart';
 
 enum _PageTurnDirection { forward, backward }
 
-/// A three-dimensional page-turn transition for [FlutterDeckApp].
+/// A page-turn transition for [FlutterDeckApp].
 ///
 /// Reuse a single instance as the deck's global transition. The instance keeps
 /// track of the current slide number so that previous navigation turns the page
@@ -16,7 +17,9 @@ class StorybookPageTurnTransitionBuilder extends FlutterDeckTransitionBuilder {
     this.perspective = 0.0014,
     this.maxRotation = math.pi / 2,
     this.reverseOnPrevious = true,
-  }) : assert(perspective > 0),
+    bool? usePerspective,
+  }) : usePerspective = usePerspective ?? !kIsWeb,
+       assert(perspective > 0),
        assert(maxRotation > 0 && maxRotation <= math.pi / 2);
 
   /// Perspective applied to the page transform.
@@ -27,6 +30,13 @@ class StorybookPageTurnTransitionBuilder extends FlutterDeckTransitionBuilder {
 
   /// Whether previous navigation should turn the page in reverse.
   final bool reverseOnPrevious;
+
+  /// Whether to use the perspective-based 3D transition.
+  ///
+  /// Defaults to `false` on web so the transition remains reliable when the
+  /// browser falls back to software rendering. Pass `true` to opt into the 3D
+  /// effect on web when the presentation environment is known to support it.
+  final bool usePerspective;
 
   int? _lastSlideNumber;
   _PageTurnDirection _direction = _PageTurnDirection.forward;
@@ -40,6 +50,16 @@ class StorybookPageTurnTransitionBuilder extends FlutterDeckTransitionBuilder {
   ) {
     if (reverseOnPrevious) {
       _updateDirection(context.flutterDeck.slideNumber);
+    }
+
+    if (!usePerspective &&
+        !(MediaQuery.maybeOf(context)?.disableAnimations ?? false)) {
+      return _StorybookPlanarPageTurnTransition(
+        animation: animation,
+        secondaryAnimation: secondaryAnimation,
+        direction: _direction,
+        child: child,
+      );
     }
 
     return _StorybookPageTurnTransition(
@@ -63,6 +83,52 @@ class StorybookPageTurnTransitionBuilder extends FlutterDeckTransitionBuilder {
     }
 
     _lastSlideNumber = targetSlideNumber;
+  }
+}
+
+class _StorybookPlanarPageTurnTransition extends StatelessWidget {
+  const _StorybookPlanarPageTurnTransition({
+    required this.animation,
+    required this.secondaryAnimation,
+    required this.direction,
+    required this.child,
+  });
+
+  final Animation<double> animation;
+  final Animation<double> secondaryAnimation;
+  final _PageTurnDirection direction;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final directionSign = direction == _PageTurnDirection.forward ? 1.0 : -1.0;
+    final incomingPosition = animation.drive(
+      Tween<Offset>(
+        begin: Offset(directionSign * 0.12, 0),
+        end: Offset.zero,
+      ).chain(CurveTween(curve: Curves.easeOutCubic)),
+    );
+    final outgoingPosition = secondaryAnimation.drive(
+      Tween<Offset>(
+        begin: Offset.zero,
+        end: Offset(-directionSign * 0.08, 0),
+      ).chain(CurveTween(curve: Curves.easeInCubic)),
+    );
+    final incomingOpacity = animation.drive(CurveTween(curve: Curves.easeOut));
+    final outgoingOpacity = ReverseAnimation(secondaryAnimation)
+        .drive(CurveTween(curve: Curves.easeIn));
+
+    return FadeTransition(
+      key: const ValueKey('storybook-page-turn-planar'),
+      opacity: outgoingOpacity,
+      child: SlideTransition(
+        position: outgoingPosition,
+        child: FadeTransition(
+          opacity: incomingOpacity,
+          child: SlideTransition(position: incomingPosition, child: child),
+        ),
+      ),
+    );
   }
 }
 
