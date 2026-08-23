@@ -70,15 +70,16 @@ dart run melos run create:slide -- 202609_flutterkaigi
 `slides/example` と新規作成されるスライドには、共通パッケージ
 `packages/flutter_deck_storybook` が組み込まれています。
 
-- `StorybookPageTurnTransitionBuilder`: 次へ／前への方向に追従するページめくり。ネイティブではY軸回転・遠近感・陰影、Webでは安定したスライド＋クロスフェードを使用します
+- `StorybookPageTurnTransitionBuilder`: 16:9のスライド全体を1枚の紙として扱い、次へ／前への方向に合わせて片側の端を支点にY軸回転するページめくり。Web・ネイティブとも遠近感と陰影を使った3D表示が標準です
 - `StorybookPage`: 紙色、表紙色、アクセント色、余白、ページ番号を変更できる絵本風のページ枠
 - 視差効果を減らす設定が有効な環境では、ページ回転をフェードへ自動的に切り替えます
+- 3D描画に問題がある環境では、`usePerspective: false` でスライド＋クロスフェードへ明示的に切り替えられます
 
 デッキ全体に適用する場合は、移動方向を追跡できるよう、同じトランジションインスタンスを再利用します。
 
 ```dart
 final pageTurnTransition = FlutterDeckTransition.custom(
-  transitionBuilder: StorybookPageTurnTransitionBuilder(),
+  transitionBuilder: StorybookPageTurnTransitionBuilder(usePerspective: true),
 );
 
 FlutterDeckApp(

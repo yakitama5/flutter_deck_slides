@@ -4,7 +4,7 @@ import 'package:flutter_deck_storybook/flutter_deck_storybook.dart';
 import 'package:flutter_deck_web_client/flutter_deck_web_client.dart';
 
 final _pageTurnTransition = FlutterDeckTransition.custom(
-  transitionBuilder: StorybookPageTurnTransitionBuilder(),
+  transitionBuilder: StorybookPageTurnTransitionBuilder(usePerspective: true),
 );
 
 void main() => runApp(const {{CLASS_NAME}}App());

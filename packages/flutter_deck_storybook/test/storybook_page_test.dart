@@ -20,7 +20,7 @@ void main() {
     expect(find.text('1 / 3'), findsOneWidget);
   });
 
-  testWidgets('page-turn transition produces a finite 3D transform', (
+  testWidgets('page-turn transition rotates one full slide from its edge', (
     tester,
   ) async {
     final animation = AnimationController(vsync: tester, value: 0.5);
@@ -47,14 +47,16 @@ void main() {
 
     final transform = tester.widget<Transform>(find.byType(Transform));
 
+    expect(transitionBuilder.usePerspective, isTrue);
     expect(find.byKey(const Key('page')), findsOneWidget);
+    expect(transform.alignment, Alignment.centerLeft);
     expect(
       transform.transform.storage.every((value) => value.isFinite),
       isTrue,
     );
   });
 
-  testWidgets('page-turn transition provides a planar web fallback', (
+  testWidgets('page-turn transition provides an optional planar fallback', (
     tester,
   ) async {
     final animation = AnimationController(vsync: tester, value: 0.5);
