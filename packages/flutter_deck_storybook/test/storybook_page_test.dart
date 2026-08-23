@@ -80,12 +80,22 @@ void main() {
       ),
     );
 
-    expect(
-      find.byKey(const ValueKey('storybook-page-turn-planar')),
-      findsOneWidget,
+    final planarTransition = find.byKey(
+      const ValueKey('storybook-page-turn-planar'),
     );
-    expect(find.byType(SlideTransition), findsNWidgets(2));
-    expect(find.byType(Transform), findsNothing);
+
+    expect(planarTransition, findsOneWidget);
+    expect(
+      find.descendant(
+        of: planarTransition,
+        matching: find.byType(SlideTransition),
+      ),
+      findsNWidgets(2),
+    );
+    expect(
+      find.descendant(of: planarTransition, matching: find.byType(Transform)),
+      findsNothing,
+    );
   });
 
   testWidgets('page-turn transition falls back to a fade for reduced motion', (
