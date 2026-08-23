@@ -82,7 +82,10 @@ void main() {
       ),
     );
 
-    expect(find.byType(FadeTransition), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('storybook-page-turn-fade')),
+      findsOneWidget,
+    );
     expect(find.byType(Transform), findsNothing);
   });
 }

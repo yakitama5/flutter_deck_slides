@@ -87,6 +87,7 @@ class _StorybookPageTurnTransition extends StatelessWidget {
   Widget build(BuildContext context) {
     if (MediaQuery.maybeOf(context)?.disableAnimations ?? false) {
       return FadeTransition(
+        key: const ValueKey('storybook-page-turn-fade'),
         opacity: animation.drive(CurveTween(curve: Curves.easeOut)),
         child: child,
       );

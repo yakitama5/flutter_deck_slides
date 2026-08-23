@@ -13,6 +13,7 @@ class StorybookPage extends StatelessWidget {
     this.inkColor = const Color(0xFF302620),
     this.outerPadding = const EdgeInsets.all(28),
     this.contentPadding = const EdgeInsets.fromLTRB(72, 56, 72, 64),
+    this.designSize = const Size(1200, 675),
     this.borderRadius = 24,
     this.showPageNumber = true,
     super.key,
@@ -49,6 +50,9 @@ class StorybookPage extends StatelessWidget {
 
   /// Space around [child] inside the paper page.
   final EdgeInsetsGeometry contentPadding;
+
+  /// The logical canvas used for [child] before it is scaled to fit the page.
+  final Size designSize;
 
   /// Corner radius of the paper page.
   final double borderRadius;
@@ -119,11 +123,17 @@ class StorybookPage extends StatelessWidget {
                 ),
                 Padding(
                   padding: contentPadding,
-                  child: DefaultTextStyle.merge(
-                    style: TextStyle(color: inkColor),
-                    child: IconTheme.merge(
-                      data: IconThemeData(color: accentColor),
-                      child: child,
+                  child: FittedBox(
+                    fit: BoxFit.contain,
+                    child: SizedBox.fromSize(
+                      size: designSize,
+                      child: DefaultTextStyle.merge(
+                        style: TextStyle(color: inkColor),
+                        child: IconTheme.merge(
+                          data: IconThemeData(color: accentColor),
+                          child: child,
+                        ),
+                      ),
                     ),
                   ),
                 ),
