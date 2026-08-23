@@ -54,6 +54,40 @@ void main() {
     );
   });
 
+  testWidgets('page-turn transition provides a planar web fallback', (
+    tester,
+  ) async {
+    final animation = AnimationController(vsync: tester, value: 0.5);
+    final secondaryAnimation = AnimationController(vsync: tester);
+    addTearDown(animation.dispose);
+    addTearDown(secondaryAnimation.dispose);
+
+    final transitionBuilder = StorybookPageTurnTransitionBuilder(
+      reverseOnPrevious: false,
+      usePerspective: false,
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Builder(
+          builder: (context) => transitionBuilder.build(
+            context,
+            animation,
+            secondaryAnimation,
+            const ColoredBox(key: Key('page'), color: Colors.white),
+          ),
+        ),
+      ),
+    );
+
+    expect(
+      find.byKey(const ValueKey('storybook-page-turn-planar')),
+      findsOneWidget,
+    );
+    expect(find.byType(SlideTransition), findsNWidgets(2));
+    expect(find.byType(Transform), findsNothing);
+  });
+
   testWidgets('page-turn transition falls back to a fade for reduced motion', (
     tester,
   ) async {
