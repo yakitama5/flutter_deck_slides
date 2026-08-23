@@ -1,9 +1,11 @@
+import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_deck/flutter_deck.dart';
 
 import 'storybook_reveal.dart';
+import 'storybook_sound_effects.dart';
 
 enum _PageTurnDirection { forward, backward }
 
@@ -22,6 +24,7 @@ class StorybookPageTurnTransitionBuilder extends FlutterDeckTransitionBuilder {
     this.enableInkReveal = true,
     this.inkRevealDuration = const Duration(milliseconds: 2750),
     this.inkRevealOrigin = const Alignment(0, 0.25),
+    this.soundEffects,
   }) : assert(perspective > 0),
        assert(maxRotation > 0 && maxRotation <= math.pi / 2),
        assert(inkRevealDuration > Duration.zero);
@@ -58,6 +61,12 @@ class StorybookPageTurnTransitionBuilder extends FlutterDeckTransitionBuilder {
   /// Point from which the watercolor bloom spreads across the page.
   final Alignment inkRevealOrigin;
 
+  /// Optional page-turn and drawing audio cues.
+  ///
+  /// Pass [StorybookSoundEffects] to use the bundled sounds. Leaving this null
+  /// keeps the deck silent. Audio is also skipped when reduced motion is on.
+  final StorybookSoundEffectPlayer? soundEffects;
+
   int? _lastSlideNumber;
   _PageTurnDirection _direction = _PageTurnDirection.forward;
 
@@ -78,7 +87,15 @@ class StorybookPageTurnTransitionBuilder extends FlutterDeckTransitionBuilder {
         animation: animation,
         secondaryAnimation: secondaryAnimation,
         direction: _direction,
-        child: child,
+        child: _StorybookInkSequence(
+          animation: animation,
+          secondaryAnimation: secondaryAnimation,
+          enabled: enableInkReveal,
+          duration: inkRevealDuration,
+          revealOrigin: inkRevealOrigin,
+          soundEffects: soundEffects,
+          child: child,
+        ),
       );
     }
 
@@ -91,6 +108,7 @@ class StorybookPageTurnTransitionBuilder extends FlutterDeckTransitionBuilder {
       enableInkReveal: enableInkReveal,
       inkRevealDuration: inkRevealDuration,
       inkRevealOrigin: inkRevealOrigin,
+      soundEffects: soundEffects,
       child: child,
     );
   }
@@ -165,6 +183,7 @@ class _StorybookPageTurnTransition extends StatelessWidget {
     required this.enableInkReveal,
     required this.inkRevealDuration,
     required this.inkRevealOrigin,
+    required this.soundEffects,
     required this.child,
   });
 
@@ -176,6 +195,7 @@ class _StorybookPageTurnTransition extends StatelessWidget {
   final bool enableInkReveal;
   final Duration inkRevealDuration;
   final Alignment inkRevealOrigin;
+  final StorybookSoundEffectPlayer? soundEffects;
   final Widget child;
 
   @override
@@ -196,6 +216,7 @@ class _StorybookPageTurnTransition extends StatelessWidget {
         enabled: enableInkReveal,
         duration: inkRevealDuration,
         revealOrigin: inkRevealOrigin,
+        soundEffects: soundEffects,
         child: child,
       ),
       builder: (context, page) {
@@ -340,6 +361,7 @@ class _StorybookInkSequence extends StatefulWidget {
     required this.enabled,
     required this.duration,
     required this.revealOrigin,
+    required this.soundEffects,
     required this.child,
   });
 
@@ -348,6 +370,7 @@ class _StorybookInkSequence extends StatefulWidget {
   final bool enabled;
   final Duration duration;
   final Alignment revealOrigin;
+  final StorybookSoundEffectPlayer? soundEffects;
   final Widget child;
 
   @override
@@ -356,9 +379,12 @@ class _StorybookInkSequence extends StatefulWidget {
 
 class _StorybookInkSequenceState extends State<_StorybookInkSequence>
     with SingleTickerProviderStateMixin {
+  static const _drawingCueStart = 0.11;
+
   late final AnimationController _controller;
   var _shouldReveal = false;
   var _incomingTransitionObserved = false;
+  var _drawingCuePlayed = false;
 
   @override
   void initState() {
@@ -368,9 +394,11 @@ class _StorybookInkSequenceState extends State<_StorybookInkSequence>
       duration: widget.duration,
       value: 1,
     );
+    _controller.addListener(_handleRevealTick);
     widget.animation.addListener(_handlePrimaryTick);
     widget.animation.addStatusListener(_handlePrimaryStatus);
     widget.secondaryAnimation.addStatusListener(_handleSecondaryStatus);
+    unawaited(widget.soundEffects?.preload());
     _beginIncomingTransition();
   }
 
@@ -395,8 +423,13 @@ class _StorybookInkSequenceState extends State<_StorybookInkSequence>
     if (oldWidget.enabled != widget.enabled && !widget.enabled) {
       _shouldReveal = false;
       _controller.value = 1;
+      unawaited(widget.soundEffects?.stopDrawing());
     } else if (oldWidget.enabled != widget.enabled) {
       _incomingTransitionObserved = false;
+    }
+    if (oldWidget.soundEffects != widget.soundEffects) {
+      unawaited(oldWidget.soundEffects?.stopDrawing());
+      unawaited(widget.soundEffects?.preload());
     }
 
     _beginIncomingTransition();
@@ -408,15 +441,30 @@ class _StorybookInkSequenceState extends State<_StorybookInkSequence>
 
   void _beginIncomingTransition() {
     if (_incomingTransitionObserved ||
-        !widget.enabled ||
         widget.animation.value >= 1 ||
         widget.animation.status == AnimationStatus.reverse) {
       return;
     }
 
     _incomingTransitionObserved = true;
+    _drawingCuePlayed = false;
+    unawaited(widget.soundEffects?.playPageTurn());
+
+    if (!widget.enabled) return;
+
     _shouldReveal = true;
     _controller.value = 0;
+  }
+
+  void _handleRevealTick() {
+    if (_drawingCuePlayed ||
+        !_shouldReveal ||
+        _controller.value < _drawingCueStart) {
+      return;
+    }
+
+    _drawingCuePlayed = true;
+    unawaited(widget.soundEffects?.playDrawing());
   }
 
   void _handlePrimaryStatus(AnimationStatus status) {
@@ -426,11 +474,15 @@ class _StorybookInkSequenceState extends State<_StorybookInkSequence>
       _controller.forward();
     } else if (status == AnimationStatus.reverse) {
       _controller.stop();
+      unawaited(widget.soundEffects?.stopDrawing());
     }
   }
 
   void _handleSecondaryStatus(AnimationStatus status) {
-    if (status != AnimationStatus.forward || _controller.isCompleted) return;
+    if (status != AnimationStatus.forward) return;
+
+    unawaited(widget.soundEffects?.stopDrawing());
+    if (_controller.isCompleted) return;
 
     _shouldReveal = false;
     _controller.value = 1;
@@ -441,6 +493,7 @@ class _StorybookInkSequenceState extends State<_StorybookInkSequence>
     widget.animation.removeListener(_handlePrimaryTick);
     widget.animation.removeStatusListener(_handlePrimaryStatus);
     widget.secondaryAnimation.removeStatusListener(_handleSecondaryStatus);
+    _controller.removeListener(_handleRevealTick);
     _controller.dispose();
     super.dispose();
   }

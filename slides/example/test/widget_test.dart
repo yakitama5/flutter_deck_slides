@@ -4,6 +4,22 @@ import 'package:flutter_deck_storybook/src/storybook_reveal.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  testWidgets('ExampleApp bundles storybook sounds from the shared package', (
+    tester,
+  ) async {
+    await tester.pumpWidget(const ExampleApp());
+
+    final pageTurn = await rootBundle.load(
+      'packages/flutter_deck_storybook/assets/audio/page-turn.mp3',
+    );
+    final drawing = await rootBundle.load(
+      'packages/flutter_deck_storybook/assets/audio/drawing-on-paper.mp3',
+    );
+
+    expect(pageTurn.lengthInBytes, greaterThan(8000));
+    expect(drawing.lengthInBytes, greaterThan(30000));
+  });
+
   testWidgets('ExampleApp moves through every storybook page', (tester) async {
     await tester.pumpWidget(const ExampleApp());
     await tester.pumpAndSettle();

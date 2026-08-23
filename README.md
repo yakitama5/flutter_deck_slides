@@ -72,18 +72,22 @@ dart run melos run create:slide -- 202609_flutterkaigi
 
 - `StorybookPageTurnTransitionBuilder`: 16:9のスライド全体を1枚の紙として扱い、次へ／前への方向に合わせて片側の端を支点にY軸回転するページめくり。Web・ネイティブとも遠近感と陰影を使った3D表示が標準です
 - `StorybookPage`: 紙色、表紙色、アクセント色、余白、ページ番号を変更できる絵本風のページ枠。ページがめくれた後は、白紙の上にセピア色の下描きが現れ、中央下寄りから水彩・インクがにじむように完成絵を描き出します
+- `StorybookSoundEffects`: ページ回転には乾いた紙音、線画が現れ始める位置には鉛筆と筆の音を同期します。音量変更・一時ミュートが可能で、音声ファイルは共通パッケージ内に同梱されます
 - 視差効果を減らす設定が有効な環境では、ページ回転をフェードへ自動的に切り替えます
 - 3D描画に問題がある環境では、`usePerspective: false` でスライド＋クロスフェードへ明示的に切り替えられます
 
 デッキ全体に適用する場合は、移動方向を追跡できるよう、同じトランジションインスタンスを再利用します。
 
 ```dart
+final storybookSounds = StorybookSoundEffects();
+
 final pageTurnTransition = FlutterDeckTransition.custom(
   transitionBuilder: StorybookPageTurnTransitionBuilder(
     usePerspective: true,
     enableInkReveal: true,
     inkRevealDuration: Duration(milliseconds: 2750),
     inkRevealOrigin: Alignment(0, 0.25),
+    soundEffects: storybookSounds,
   ),
 );
 
@@ -94,6 +98,8 @@ FlutterDeckApp(
   // ...
 );
 ```
+
+Webの効果音は、ブラウザの自動再生制限に従い、矢印キーやタップなどのユーザー操作でページを移動した時に再生されます。音が不要なデッキは `soundEffects` を省略してください。`storybookSounds.enabled = false` で一時ミュートもできます。「視差効果を減らす」が有効な場合は演出と一緒に効果音も停止します。
 
 16:9の完成画像を1枚の紙として使う場合は、`StorybookPage` の余白をなくして画像を全面に配置できます。
 

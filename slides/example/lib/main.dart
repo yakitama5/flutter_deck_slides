@@ -1,19 +1,41 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_deck/flutter_deck.dart';
 import 'package:flutter_deck_storybook/flutter_deck_storybook.dart';
 import 'package:flutter_deck_web_client/flutter_deck_web_client.dart';
 
-final _pageTurnTransition = FlutterDeckTransition.custom(
-  transitionBuilder: StorybookPageTurnTransitionBuilder(
-    usePerspective: true,
-    enableInkReveal: true,
-  ),
-);
-
 void main() => runApp(const ExampleApp());
 
-class ExampleApp extends StatelessWidget {
+class ExampleApp extends StatefulWidget {
   const ExampleApp({super.key});
+
+  @override
+  State<ExampleApp> createState() => _ExampleAppState();
+}
+
+class _ExampleAppState extends State<ExampleApp> {
+  late final StorybookSoundEffects _soundEffects;
+  late final FlutterDeckTransition _pageTurnTransition;
+
+  @override
+  void initState() {
+    super.initState();
+    _soundEffects = StorybookSoundEffects();
+    _pageTurnTransition = FlutterDeckTransition.custom(
+      transitionBuilder: StorybookPageTurnTransitionBuilder(
+        usePerspective: true,
+        enableInkReveal: true,
+        soundEffects: _soundEffects,
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    unawaited(_soundEffects.dispose());
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
