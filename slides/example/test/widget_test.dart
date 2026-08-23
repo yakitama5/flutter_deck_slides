@@ -1,5 +1,6 @@
 import 'package:example_slide/main.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_deck_storybook/src/storybook_reveal.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -10,6 +11,26 @@ void main() {
     expect(find.text('FlutterDeck Storybook'), findsOneWidget);
 
     await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 150));
+
+    StorybookInkReveal developingPage() => tester
+        .widgetList<StorybookInkReveal>(find.byType(StorybookInkReveal))
+        .singleWhere((reveal) => reveal.paintProgress < 1);
+
+    expect(developingPage().sketchProgress, 0);
+    expect(developingPage().paintProgress, 0);
+
+    await tester.pump(const Duration(milliseconds: 400));
+
+    expect(developingPage().sketchProgress, 0);
+    expect(developingPage().paintProgress, 0);
+
+    await tester.pump(const Duration(milliseconds: 400));
+
+    expect(developingPage().sketchProgress, greaterThan(0));
+    expect(developingPage().paintProgress, 0);
+
     await tester.pumpAndSettle();
 
     expect(find.textContaining('ある日、青い小鳥は'), findsOneWidget);

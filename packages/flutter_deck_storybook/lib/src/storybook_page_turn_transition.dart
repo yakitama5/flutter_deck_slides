@@ -357,19 +357,21 @@ class _StorybookInkSequence extends StatefulWidget {
 class _StorybookInkSequenceState extends State<_StorybookInkSequence>
     with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
-  late bool _shouldReveal;
+  var _shouldReveal = false;
+  var _incomingTransitionObserved = false;
 
   @override
   void initState() {
     super.initState();
-    _shouldReveal = widget.enabled && widget.animation.value < 1;
     _controller = AnimationController(
       vsync: this,
       duration: widget.duration,
-      value: _shouldReveal ? 0 : 1,
+      value: 1,
     );
+    widget.animation.addListener(_handlePrimaryTick);
     widget.animation.addStatusListener(_handlePrimaryStatus);
     widget.secondaryAnimation.addStatusListener(_handleSecondaryStatus);
+    _beginIncomingTransition();
   }
 
   @override
@@ -377,8 +379,11 @@ class _StorybookInkSequenceState extends State<_StorybookInkSequence>
     super.didUpdateWidget(oldWidget);
 
     if (oldWidget.animation != widget.animation) {
+      oldWidget.animation.removeListener(_handlePrimaryTick);
       oldWidget.animation.removeStatusListener(_handlePrimaryStatus);
+      widget.animation.addListener(_handlePrimaryTick);
       widget.animation.addStatusListener(_handlePrimaryStatus);
+      _incomingTransitionObserved = false;
     }
     if (oldWidget.secondaryAnimation != widget.secondaryAnimation) {
       oldWidget.secondaryAnimation.removeStatusListener(_handleSecondaryStatus);
@@ -390,13 +395,34 @@ class _StorybookInkSequenceState extends State<_StorybookInkSequence>
     if (oldWidget.enabled != widget.enabled && !widget.enabled) {
       _shouldReveal = false;
       _controller.value = 1;
+    } else if (oldWidget.enabled != widget.enabled) {
+      _incomingTransitionObserved = false;
     }
+
+    _beginIncomingTransition();
+  }
+
+  void _handlePrimaryTick() {
+    _beginIncomingTransition();
+  }
+
+  void _beginIncomingTransition() {
+    if (_incomingTransitionObserved ||
+        !widget.enabled ||
+        widget.animation.value >= 1 ||
+        widget.animation.status == AnimationStatus.reverse) {
+      return;
+    }
+
+    _incomingTransitionObserved = true;
+    _shouldReveal = true;
+    _controller.value = 0;
   }
 
   void _handlePrimaryStatus(AnimationStatus status) {
-    if (!_shouldReveal) return;
-
-    if (status == AnimationStatus.completed) {
+    if (status == AnimationStatus.forward) {
+      _beginIncomingTransition();
+    } else if (status == AnimationStatus.completed && _shouldReveal) {
       _controller.forward();
     } else if (status == AnimationStatus.reverse) {
       _controller.stop();
@@ -412,6 +438,7 @@ class _StorybookInkSequenceState extends State<_StorybookInkSequence>
 
   @override
   void dispose() {
+    widget.animation.removeListener(_handlePrimaryTick);
     widget.animation.removeStatusListener(_handlePrimaryStatus);
     widget.secondaryAnimation.removeStatusListener(_handleSecondaryStatus);
     _controller.dispose();
