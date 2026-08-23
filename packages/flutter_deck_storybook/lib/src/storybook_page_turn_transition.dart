@@ -101,9 +101,7 @@ class _StorybookPlanarPageTurnTransition extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final directionSign = direction == _PageTurnDirection.forward
-        ? 1.0
-        : -1.0;
+    final directionSign = direction == _PageTurnDirection.forward ? 1.0 : -1.0;
     final incomingPosition = animation.drive(
       Tween<Offset>(
         begin: Offset(directionSign * 0.12, 0),
@@ -116,9 +114,7 @@ class _StorybookPlanarPageTurnTransition extends StatelessWidget {
         end: Offset(-directionSign * 0.08, 0),
       ).chain(CurveTween(curve: Curves.easeInCubic)),
     );
-    final incomingOpacity = animation.drive(
-      CurveTween(curve: Curves.easeOut),
-    );
+    final incomingOpacity = animation.drive(CurveTween(curve: Curves.easeOut));
     final outgoingOpacity = ReverseAnimation(secondaryAnimation).drive(
       CurveTween(curve: Curves.easeIn),
     );
