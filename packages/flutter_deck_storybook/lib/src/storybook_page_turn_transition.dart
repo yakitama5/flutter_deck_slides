@@ -115,9 +115,8 @@ class _StorybookPlanarPageTurnTransition extends StatelessWidget {
       ).chain(CurveTween(curve: Curves.easeInCubic)),
     );
     final incomingOpacity = animation.drive(CurveTween(curve: Curves.easeOut));
-    final outgoingOpacity = ReverseAnimation(secondaryAnimation).drive(
-      CurveTween(curve: Curves.easeIn),
-    );
+    final outgoingOpacity = ReverseAnimation(secondaryAnimation)
+        .drive(CurveTween(curve: Curves.easeIn));
 
     return FadeTransition(
       key: const ValueKey('storybook-page-turn-planar'),
