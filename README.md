@@ -60,10 +60,34 @@ dart run melos run create:slide -- 202609_flutterkaigi
 - 実行すると以下が自動で行われます
   1. `flutter create --platforms=web` でプロジェクト生成
   2. `pubspec.yaml` に `resolution: workspace` と `flutter_deck` / `flutter_deck_web_client` を設定
-  3. `flutter_deck` の雛形(タイトル・セクション・クロージングの3枚)で `lib/main.dart` を置換
+  3. `flutter_deck` の絵本風雛形(表紙・本文・結びの3ページ)で `lib/main.dart` を置換
   4. `analysis_options.yaml` をルート共通設定への include に置換
   5. ルート `pubspec.yaml` の `workspace:` リストへ追記(Pub Workspace は glob 非対応のため)
   6. `dart pub get` で bootstrap
+
+## 絵本風ページめくりテンプレート
+
+`slides/example` と新規作成されるスライドには、共通パッケージ
+`packages/flutter_deck_storybook` が組み込まれています。
+
+- `StorybookPageTurnTransitionBuilder`: Y軸回転・遠近感・陰影を組み合わせたページめくり。次へ進むと左方向、前へ戻ると右方向へめくれます
+- `StorybookPage`: 紙色、表紙色、アクセント色、余白、ページ番号を変更できる絵本風のページ枠
+- 視差効果を減らす設定が有効な環境では、ページ回転をフェードへ自動的に切り替えます
+
+デッキ全体に適用する場合は、移動方向を追跡できるよう、同じトランジションインスタンスを再利用します。
+
+```dart
+final pageTurnTransition = FlutterDeckTransition.custom(
+  transitionBuilder: StorybookPageTurnTransitionBuilder(),
+);
+
+FlutterDeckApp(
+  configuration: FlutterDeckConfiguration(
+    transition: pageTurnTransition,
+  ),
+  // ...
+);
+```
 
 ## 発表方法(Presenter View)
 

@@ -10,6 +10,7 @@ final _namePattern = RegExp(r'^(\d{6})_([a-z][a-z0-9]*)$');
 const _flutterDeckVersion = '^0.29.0';
 const _flutterDeckWebClientVersion = '^0.4.0';
 const _flutterLintsVersion = '^6.0.0';
+const _dartSdkConstraint = '^3.13.1';
 
 void main(List<String> arguments) {
   final rawName = arguments.isNotEmpty ? arguments.first : '';
@@ -42,7 +43,9 @@ void main(List<String> arguments) {
     exit(1);
   }
 
-  stdout.writeln('▸ flutter create --platforms=web --project-name $packageName slides/$dirName');
+  stdout.writeln(
+    '▸ flutter create --platforms=web --project-name $packageName slides/$dirName',
+  );
   final createResult = Process.runSync(
     'flutter',
     [
@@ -86,9 +89,13 @@ void main(List<String> arguments) {
   stdout.writeln('  起動: dart run melos run dev');
 }
 
-void _rewritePubspec({required Directory slideDir, required String packageName}) {
+void _rewritePubspec({
+  required Directory slideDir,
+  required String packageName,
+}) {
   final pubspecFile = File('${slideDir.path}/pubspec.yaml');
-  final content = '''
+  final content =
+      '''
 name: $packageName
 description: "flutter_deck slide."
 publish_to: 'none'
@@ -97,12 +104,13 @@ resolution: workspace
 version: 1.0.0+1
 
 environment:
-  sdk: ^3.12.2
+  sdk: $_dartSdkConstraint
 
 dependencies:
   flutter:
     sdk: flutter
   flutter_deck: $_flutterDeckVersion
+  flutter_deck_storybook: any
   flutter_deck_web_client: $_flutterDeckWebClientVersion
 
 dev_dependencies:
@@ -133,12 +141,14 @@ void _rewriteMainDart({
 }
 
 void _rewriteAnalysisOptions({required Directory slideDir}) {
-  File(
-    '${slideDir.path}/analysis_options.yaml',
-  ).writeAsStringSync("include: ../../analysis_options.yaml\n");
+  File('${slideDir.path}/analysis_options.yaml')
+      .writeAsStringSync("include: ../../analysis_options.yaml\n");
 }
 
-void _appendWorkspaceEntry({required Directory repoRoot, required String dirName}) {
+void _appendWorkspaceEntry({
+  required Directory repoRoot,
+  required String dirName,
+}) {
   final rootPubspec = File('${repoRoot.path}/pubspec.yaml');
   final lines = rootPubspec.readAsLinesSync();
   final newEntry = '  - slides/$dirName';
