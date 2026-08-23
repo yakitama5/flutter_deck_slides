@@ -319,9 +319,9 @@ class _ConceptSpocContentState extends State<_ConceptSpocContent>
                                   color: Colors.white,
                                   child: Text(
                                     'SPOC = Single Point of Contact（単一の連絡窓口）',
-                                    style: FlutterDeckTheme.of(
-                                      context,
-                                    ).textTheme.title,
+                                    style: FlutterDeckTheme.of(context)
+                                        .textTheme
+                                        .title,
                                   ),
                                 )
                                 .animate()

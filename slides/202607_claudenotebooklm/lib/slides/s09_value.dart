@@ -82,9 +82,9 @@ class _ValueContent extends StatelessWidget {
                             const SizedBox(height: 8),
                             Text(
                               '無変更日の API コスト',
-                              style: FlutterDeckTheme.of(
-                                context,
-                              ).textTheme.bodyLarge,
+                              style: FlutterDeckTheme.of(context)
+                                  .textTheme
+                                  .bodyLarge,
                             ),
                           ],
                         ),

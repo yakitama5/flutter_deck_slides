@@ -82,9 +82,9 @@ class _SummaryContentState extends State<_SummaryContent> {
                       const SizedBox(height: 48),
                       Text(
                             'ご清聴ありがとうございました',
-                            style: FlutterDeckTheme.of(
-                              context,
-                            ).textTheme.display,
+                            style: FlutterDeckTheme.of(context)
+                                .textTheme
+                                .display,
                           )
                           .animate()
                           .scale(
