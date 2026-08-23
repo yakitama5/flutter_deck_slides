@@ -95,7 +95,7 @@ class _StorybookPageTurnTransition extends StatelessWidget {
 
     return AnimatedBuilder(
       animation: Listenable.merge([animation, secondaryAnimation]),
-      child: RepaintBoundary(child: child),
+      child: child,
       builder: (context, page) {
         final incoming = Curves.easeOutCubic.transform(
           animation.value.clamp(0.0, 1.0),
@@ -118,7 +118,6 @@ class _StorybookPageTurnTransition extends StatelessWidget {
           opacity: pageOpacity,
           child: Transform(
             alignment: alignment,
-            filterQuality: FilterQuality.high,
             transform: Matrix4.identity()
               ..setEntry(3, 2, perspective)
               ..rotateY(angle),
