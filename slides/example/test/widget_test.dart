@@ -18,6 +18,18 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('おしまい'), findsOneWidget);
+    expect(find.textContaining('ある日、青い小鳥は'), findsNothing);
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowLeft);
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('ある日、青い小鳥は'), findsOneWidget);
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowLeft);
+    await tester.pumpAndSettle();
+
+    expect(find.text('FlutterDeck Storybook'), findsOneWidget);
+    expect(find.text('おしまい'), findsNothing);
     expect(tester.takeException(), isNull);
   });
 }
