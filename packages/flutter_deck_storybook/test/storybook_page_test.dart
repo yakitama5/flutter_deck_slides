@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_deck_storybook/flutter_deck_storybook.dart';
 import 'package:flutter_deck_storybook/src/storybook_reveal.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -192,6 +193,80 @@ void main() {
     expect(reveal().paintProgress, 1);
   });
 
+  testWidgets('sound cues stay synchronized with the turn and first lines', (
+    tester,
+  ) async {
+    final animation = AnimationController(
+      vsync: tester,
+      duration: const Duration(milliseconds: 300),
+    );
+    final secondaryAnimation = AnimationController(
+      vsync: tester,
+      duration: const Duration(milliseconds: 300),
+    );
+    final sounds = _RecordingSoundEffects();
+    addTearDown(animation.dispose);
+    addTearDown(secondaryAnimation.dispose);
+
+    final transitionBuilder = StorybookPageTurnTransitionBuilder(
+      reverseOnPrevious: false,
+      soundEffects: sounds,
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Builder(
+          builder: (context) => transitionBuilder.build(
+            context,
+            animation,
+            secondaryAnimation,
+            const StorybookPage(child: SizedBox()),
+          ),
+        ),
+      ),
+    );
+
+    expect(sounds.preloadCalls, 1);
+    expect(sounds.pageTurnCalls, 1);
+    expect(sounds.drawingCalls, 0);
+
+    animation.forward();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.pump(const Duration(milliseconds: 250));
+
+    expect(sounds.drawingCalls, 0);
+
+    await tester.pump(const Duration(milliseconds: 450));
+
+    final reveal = tester.widget<StorybookRevealScope>(
+      find.byType(StorybookRevealScope),
+    );
+    expect(reveal.sketchProgress, greaterThan(0));
+    expect(sounds.drawingCalls, 1);
+
+    secondaryAnimation.forward();
+    await tester.pump();
+
+    expect(sounds.stopDrawingCalls, 1);
+    secondaryAnimation.stop();
+  });
+
+  testWidgets(
+    'bundled storybook sound files are available to the asset cache',
+    (tester) async {
+      await tester.pumpWidget(const MaterialApp(home: SizedBox()));
+
+      final pageTurn = await rootBundle.load('assets/audio/page-turn.mp3');
+      final drawing = await rootBundle.load(
+        'assets/audio/drawing-on-paper.mp3',
+      );
+
+      expect(pageTurn.lengthInBytes, greaterThan(8000));
+      expect(drawing.lengthInBytes, greaterThan(30000));
+    },
+  );
+
   testWidgets('page-turn transition provides an optional planar fallback', (
     tester,
   ) async {
@@ -200,9 +275,11 @@ void main() {
     addTearDown(animation.dispose);
     addTearDown(secondaryAnimation.dispose);
 
+    final sounds = _RecordingSoundEffects();
     final transitionBuilder = StorybookPageTurnTransitionBuilder(
       reverseOnPrevious: false,
       usePerspective: false,
+      soundEffects: sounds,
     );
 
     await tester.pumpWidget(
@@ -234,6 +311,7 @@ void main() {
       find.descendant(of: planarTransition, matching: find.byType(Transform)),
       findsNothing,
     );
+    expect(sounds.pageTurnCalls, 1);
   });
 
   testWidgets('page-turn transition falls back to a fade for reduced motion', (
@@ -244,8 +322,10 @@ void main() {
     addTearDown(animation.dispose);
     addTearDown(secondaryAnimation.dispose);
 
+    final sounds = _RecordingSoundEffects();
     final transitionBuilder = StorybookPageTurnTransitionBuilder(
       reverseOnPrevious: false,
+      soundEffects: sounds,
     );
 
     await tester.pumpWidget(
@@ -269,5 +349,35 @@ void main() {
       findsOneWidget,
     );
     expect(find.byType(Transform), findsNothing);
+    expect(sounds.preloadCalls, 0);
+    expect(sounds.pageTurnCalls, 0);
+    expect(sounds.drawingCalls, 0);
   });
+}
+
+class _RecordingSoundEffects implements StorybookSoundEffectPlayer {
+  var preloadCalls = 0;
+  var pageTurnCalls = 0;
+  var drawingCalls = 0;
+  var stopDrawingCalls = 0;
+
+  @override
+  Future<void> preload() async {
+    preloadCalls++;
+  }
+
+  @override
+  Future<void> playPageTurn() async {
+    pageTurnCalls++;
+  }
+
+  @override
+  Future<void> playDrawing() async {
+    drawingCalls++;
+  }
+
+  @override
+  Future<void> stopDrawing() async {
+    stopDrawingCalls++;
+  }
 }
