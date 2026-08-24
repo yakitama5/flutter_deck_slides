@@ -61,10 +61,15 @@ void main() {
     expect(coverSheet.direction, StorybookPageCurlDirection.backward);
     expect(coverSheet.motion, StorybookPageCurlMotion.coverPrevious);
     expect(coverSheet.progress, inExclusiveRange(0.85, 1));
-    expect(
-      find.byKey(const ValueKey('storybook-page-cover-current-page')),
-      findsOneWidget,
-    );
+    final currentPageClip = tester
+        .widgetList<StorybookCurlReveal>(find.byType(StorybookCurlReveal))
+        .singleWhere(
+          (reveal) =>
+              reveal.clipKey ==
+              const ValueKey('storybook-page-cover-current-page'),
+        );
+    expect(currentPageClip.motion, StorybookPageCurlMotion.coverPrevious);
+    expect(currentPageClip.progress, closeTo(coverSheet.progress, 0.01));
     expect(
       find.byKey(const ValueKey('storybook-page-turn-outgoing-sheet')),
       findsNothing,
