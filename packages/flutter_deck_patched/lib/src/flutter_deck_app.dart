@@ -171,7 +171,6 @@ class _FlutterDeckAppState extends State<FlutterDeckApp> {
   late FlutterDeckRouter _flutterDeckRouter;
   late GoRouter _router;
   var _initialLayoutCompleted = false;
-  late final FocusNode _controlsFocusNode;
 
   late FlutterDeckControlsNotifier _controlsNotifier;
   late FlutterDeckDrawerNotifier _drawerNotifier;
@@ -188,20 +187,15 @@ class _FlutterDeckAppState extends State<FlutterDeckApp> {
   @override
   void initState() {
     super.initState();
-    _controlsFocusNode = FocusNode(debugLabel: 'FlutterDeck controls');
 
     // Flutter can dispatch the initial view-focus event after focus nodes have
     // attached but before their RenderBoxes have completed layout. The default
     // reading-order traversal then reads FocusNode.rect too early, which is
     // reported as a non-fatal "RenderBox was not laid out" error on Web's CPU
-    // renderer. Keep descendants out of focus traversal for that first frame.
+    // renderer. Do not mount the deck's focus tree until that frame completes.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       setState(() => _initialLayoutCompleted = true);
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!mounted) return;
-        _controlsFocusNode.requestFocus();
-      });
     });
 
     _buildRouter();
@@ -287,7 +281,6 @@ class _FlutterDeckAppState extends State<FlutterDeckApp> {
     _presenterController.dispose();
     _imagePreloader.dispose();
     _markerController.dispose();
-    _controlsFocusNode.dispose();
 
     super.dispose();
   }
@@ -333,42 +326,43 @@ class _FlutterDeckAppState extends State<FlutterDeckApp> {
 
   @override
   Widget build(BuildContext context) {
-    return ExcludeFocus(
-      key: const ValueKey('flutter-deck-initial-focus-guard'),
-      excluding: !_initialLayoutCompleted,
-      child: ValueListenableBuilder(
-        valueListenable: _localizationNotifier,
-        builder: (context, locale, _) => ValueListenableBuilder(
-          valueListenable: _themeNotifier,
-          builder: (context, themeMode, _) {
-            final theme = context.darkModeEnabled(themeMode)
-                ? widget.darkTheme ?? FlutterDeckThemeData.dark()
-                : widget.lightTheme ?? FlutterDeckThemeData.light();
+    if (!_initialLayoutCompleted) {
+      return const SizedBox.expand(
+        key: ValueKey('flutter-deck-initial-layout-placeholder'),
+      );
+    }
 
-            return MaterialApp.router(
-              routerConfig: _router,
-              theme: theme.materialTheme,
-              builder: (context, child) {
-                Widget wrappedChild = FlutterDeckControlsListener(
-                  controlsNotifier: _controlsNotifier,
-                  markerNotifier: _markerNotifier,
-                  focusNode: _controlsFocusNode,
-                  child: FlutterDeckTheme(data: theme, child: child!),
-                );
+    return ValueListenableBuilder(
+      valueListenable: _localizationNotifier,
+      builder: (context, locale, _) => ValueListenableBuilder(
+        valueListenable: _themeNotifier,
+        builder: (context, themeMode, _) {
+          final theme = context.darkModeEnabled(themeMode)
+              ? widget.darkTheme ?? FlutterDeckThemeData.dark()
+              : widget.lightTheme ?? FlutterDeckThemeData.light();
 
-                for (final plugin in _flutterDeck.plugins) {
-                  wrappedChild = plugin.wrap(context, wrappedChild);
-                }
+          return MaterialApp.router(
+            routerConfig: _router,
+            theme: theme.materialTheme,
+            builder: (context, child) {
+              Widget wrappedChild = FlutterDeckControlsListener(
+                controlsNotifier: _controlsNotifier,
+                markerNotifier: _markerNotifier,
+                child: FlutterDeckTheme(data: theme, child: child!),
+              );
 
-                return _flutterDeck.wrap(context, child: wrappedChild);
-              },
-              debugShowCheckedModeBanner: false,
-              locale: locale,
-              localizationsDelegates: widget.localizationsDelegates,
-              supportedLocales: widget.supportedLocales,
-            );
-          },
-        ),
+              for (final plugin in _flutterDeck.plugins) {
+                wrappedChild = plugin.wrap(context, wrappedChild);
+              }
+
+              return _flutterDeck.wrap(context, child: wrappedChild);
+            },
+            debugShowCheckedModeBanner: false,
+            locale: locale,
+            localizationsDelegates: widget.localizationsDelegates,
+            supportedLocales: widget.supportedLocales,
+          );
+        },
       ),
     );
   }
