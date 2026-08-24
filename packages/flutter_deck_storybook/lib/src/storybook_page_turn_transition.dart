@@ -22,11 +22,12 @@ class StorybookPageTurnTransitionBuilder extends FlutterDeckTransitionBuilder {
   /// Creates a storybook page-turn transition builder.
   StorybookPageTurnTransitionBuilder({
     this.perspective = 0.00008,
-    this.maxRotation = math.pi / 2,
+    this.maxRotation = math.pi,
     this.pageFlex = 0.56,
     this.pageTwist = 0.035,
     this.meshColumns = 40,
     this.meshRows = 16,
+    this.turnSoundCueProgress = 0.42,
     this.reverseOnPrevious = true,
     this.usePerspective = true,
     this.enableInkReveal = true,
@@ -34,20 +35,23 @@ class StorybookPageTurnTransitionBuilder extends FlutterDeckTransitionBuilder {
     this.inkRevealOrigin = const Alignment(0, 0.25),
     this.soundEffects,
   }) : assert(perspective > 0),
-       assert(maxRotation > 0 && maxRotation <= math.pi / 2),
+       assert(maxRotation > 0 && maxRotation <= math.pi),
        assert(pageFlex >= 0 && pageFlex <= math.pi / 2),
        assert(pageTwist >= 0 && pageTwist <= math.pi / 3),
        assert(meshColumns >= 8 && meshColumns <= 64),
        assert(meshRows >= 2 && meshRows <= 24),
+       assert(turnSoundCueProgress >= 0 && turnSoundCueProgress <= 1),
        assert(inkRevealDuration > Duration.zero);
 
   /// Perspective applied to the page transform.
   final double perspective;
 
   /// Maximum Y-axis rotation in radians.
+  ///
+  /// Values above 90 degrees expose the separately painted white paper back.
   final double maxRotation;
 
-  /// Strength of the midpoint lift and horizontal bend while the paper turns.
+  /// Strength of the horizontal grip ridge and bend while the paper turns.
   final double pageFlex;
 
   /// Phase-changing twist between the top and bottom edges.
@@ -58,6 +62,13 @@ class StorybookPageTurnTransitionBuilder extends FlutterDeckTransitionBuilder {
 
   /// Vertical subdivisions used by the paper mesh.
   final int meshRows;
+
+  /// Raw route progress at which the paper-turn sound starts.
+  ///
+  /// The sheet spends the opening beat shifting into a horizontal grip ridge,
+  /// so playing the sound at route progress zero makes it audibly lead the
+  /// paper. The default starts it just as that ridge becomes visible.
+  final double turnSoundCueProgress;
 
   /// Whether previous navigation should cover the current page with the
   /// previous sheet instead of using the forward turn animation.
@@ -118,6 +129,7 @@ class StorybookPageTurnTransitionBuilder extends FlutterDeckTransitionBuilder {
           enabled: enableInkReveal && _direction == _PageTurnDirection.forward,
           duration: inkRevealDuration,
           revealOrigin: inkRevealOrigin,
+          turnSoundCueProgress: turnSoundCueProgress,
           soundEffects: soundEffects,
           child: child,
         ),
@@ -137,6 +149,7 @@ class StorybookPageTurnTransitionBuilder extends FlutterDeckTransitionBuilder {
       enableInkReveal: enableInkReveal,
       inkRevealDuration: inkRevealDuration,
       inkRevealOrigin: inkRevealOrigin,
+      turnSoundCueProgress: turnSoundCueProgress,
       soundEffects: soundEffects,
       child: child,
     );
@@ -216,6 +229,7 @@ class _StorybookPageTurnTransition extends StatelessWidget {
     required this.enableInkReveal,
     required this.inkRevealDuration,
     required this.inkRevealOrigin,
+    required this.turnSoundCueProgress,
     required this.soundEffects,
     required this.child,
   });
@@ -232,6 +246,7 @@ class _StorybookPageTurnTransition extends StatelessWidget {
   final bool enableInkReveal;
   final Duration inkRevealDuration;
   final Alignment inkRevealOrigin;
+  final double turnSoundCueProgress;
   final StorybookSoundEffectPlayer? soundEffects;
   final Widget child;
 
@@ -253,6 +268,7 @@ class _StorybookPageTurnTransition extends StatelessWidget {
         enabled: enableInkReveal && direction == _PageTurnDirection.forward,
         duration: inkRevealDuration,
         revealOrigin: inkRevealOrigin,
+        turnSoundCueProgress: turnSoundCueProgress,
         soundEffects: soundEffects,
         child: child,
       ),
@@ -261,8 +277,8 @@ class _StorybookPageTurnTransition extends StatelessWidget {
         final rawOutgoing = secondaryAnimation.value.clamp(0.0, 1.0);
         if (direction == _PageTurnDirection.forward) {
           // The reference spends most of the first half shifting and raising
-          // the midpoint. The broad turn accelerates only after that blister
-          // is readable, producing the late hand-driven "flick" of the page.
+          // a horizontal grip ridge. The broad turn accelerates only after the
+          // ridge is readable, producing the late hand-driven page flick.
           final incoming = Curves.easeInCubic.transform(rawIncoming);
           final outgoing = Curves.easeInCubic.transform(rawOutgoing);
           return _buildForwardTurn(
@@ -439,6 +455,7 @@ class _StorybookInkSequence extends StatefulWidget {
     required this.enabled,
     required this.duration,
     required this.revealOrigin,
+    required this.turnSoundCueProgress,
     required this.soundEffects,
     required this.child,
   });
@@ -448,6 +465,7 @@ class _StorybookInkSequence extends StatefulWidget {
   final bool enabled;
   final Duration duration;
   final Alignment revealOrigin;
+  final double turnSoundCueProgress;
   final StorybookSoundEffectPlayer? soundEffects;
   final Widget child;
 
@@ -462,6 +480,7 @@ class _StorybookInkSequenceState extends State<_StorybookInkSequence>
   late final AnimationController _controller;
   var _shouldReveal = false;
   var _incomingTransitionObserved = false;
+  var _turnCuePlayed = false;
   var _drawingCuePlayed = false;
   var _reverseTurnCuePlayed = false;
 
@@ -479,6 +498,7 @@ class _StorybookInkSequenceState extends State<_StorybookInkSequence>
     widget.secondaryAnimation.addStatusListener(_handleSecondaryStatus);
     unawaited(widget.soundEffects?.preload());
     _beginIncomingTransition();
+    _maybePlayTurnCue();
   }
 
   @override
@@ -491,6 +511,7 @@ class _StorybookInkSequenceState extends State<_StorybookInkSequence>
       widget.animation.addListener(_handlePrimaryTick);
       widget.animation.addStatusListener(_handlePrimaryStatus);
       _incomingTransitionObserved = false;
+      _turnCuePlayed = false;
       _reverseTurnCuePlayed = false;
     }
     if (oldWidget.secondaryAnimation != widget.secondaryAnimation) {
@@ -517,6 +538,7 @@ class _StorybookInkSequenceState extends State<_StorybookInkSequence>
 
   void _handlePrimaryTick() {
     _beginIncomingTransition();
+    _maybePlayTurnCue();
   }
 
   void _beginIncomingTransition() {
@@ -527,13 +549,35 @@ class _StorybookInkSequenceState extends State<_StorybookInkSequence>
     }
 
     _incomingTransitionObserved = true;
+    _turnCuePlayed = false;
     _drawingCuePlayed = false;
-    unawaited(widget.soundEffects?.playPageTurn());
 
     if (!widget.enabled) return;
 
     _shouldReveal = true;
     _controller.value = 0;
+  }
+
+  void _maybePlayTurnCue() {
+    if (widget.animation.status == AnimationStatus.reverse) {
+      if (_reverseTurnCuePlayed ||
+          widget.animation.value > 1 - widget.turnSoundCueProgress) {
+        return;
+      }
+
+      _reverseTurnCuePlayed = true;
+      unawaited(widget.soundEffects?.playPageTurn());
+      return;
+    }
+
+    if (!_incomingTransitionObserved ||
+        _turnCuePlayed ||
+        widget.animation.value < widget.turnSoundCueProgress) {
+      return;
+    }
+
+    _turnCuePlayed = true;
+    unawaited(widget.soundEffects?.playPageTurn());
   }
 
   void _handleRevealTick() {
@@ -551,14 +595,13 @@ class _StorybookInkSequenceState extends State<_StorybookInkSequence>
     if (status == AnimationStatus.forward) {
       _reverseTurnCuePlayed = false;
       _beginIncomingTransition();
+      _maybePlayTurnCue();
     } else if (status == AnimationStatus.completed) {
       _reverseTurnCuePlayed = false;
       if (_shouldReveal) _controller.forward();
     } else if (status == AnimationStatus.reverse) {
-      if (!_reverseTurnCuePlayed) {
-        _reverseTurnCuePlayed = true;
-        unawaited(widget.soundEffects?.playPageTurn());
-      }
+      _reverseTurnCuePlayed = false;
+      _maybePlayTurnCue();
       _controller.stop();
       unawaited(widget.soundEffects?.stopDrawing());
     }

@@ -45,6 +45,23 @@ class StorybookCurlSheet extends StatefulWidget {
   final int rows;
   final Widget child;
 
+  /// Whether this frame contains triangles facing the unprinted paper back.
+  ///
+  /// Exposed only for geometry regression tests; production painting uses the
+  /// same orientation check when splitting front and back vertex batches.
+  @visibleForTesting
+  bool get debugHasBackFacingSurface => _StorybookCurlGeometry(
+    progress: progress,
+    direction: direction,
+    motion: motion,
+    perspective: perspective,
+    maxRotation: maxRotation,
+    flex: flex,
+    twist: twist,
+    columns: columns,
+    rows: rows,
+  ).hasBackFacingSurface;
+
   @override
   State<StorybookCurlSheet> createState() => _StorybookCurlSheetState();
 }
@@ -270,7 +287,7 @@ class _StorybookCurlSnapshotPainter extends SnapshotPainter {
       // below; without this shadow the motion reads as another reveal/peel.
       canvas
         ..drawPath(
-          mesh.freeEdge,
+          mesh.visibleEdge,
           Paint()
             ..color = Colors.black.withValues(
               alpha: 0.28 * _geometry.turnEnvelope,
@@ -284,7 +301,7 @@ class _StorybookCurlSnapshotPainter extends SnapshotPainter {
             ..isAntiAlias = true,
         )
         ..drawPath(
-          mesh.freeEdge,
+          mesh.visibleEdge,
           Paint()
             ..color = Colors.black.withValues(
               alpha: 0.14 * _geometry.turnEnvelope,
@@ -295,10 +312,49 @@ class _StorybookCurlSnapshotPainter extends SnapshotPainter {
         );
     }
 
+    if (mesh.frontVertices case final frontVertices?) {
+      canvas.drawVertices(frontVertices, BlendMode.modulate, paint);
+    }
+    if (mesh.backVertices case final backVertices?) {
+      // Past 90 degrees the free section folds towards the viewer, so its
+      // unprinted paper back sits above the still-visible front surface.
+      canvas.drawVertices(
+        backVertices,
+        BlendMode.modulate,
+        Paint()
+          ..color = const Color(0xFFFFFDF8)
+          ..isAntiAlias = true,
+      );
+    }
+    if (!mesh.foldEdge.getBounds().isEmpty) {
+      canvas
+        ..drawPath(
+          mesh.foldEdge,
+          Paint()
+            ..color = Colors.black.withValues(
+              alpha: 0.17 * _geometry.turnEnvelope,
+            )
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = math.max(8, size.width * 0.022)
+            ..maskFilter = MaskFilter.blur(
+              BlurStyle.normal,
+              math.max(5, size.width * 0.014),
+            )
+            ..isAntiAlias = true,
+        )
+        ..drawPath(
+          mesh.foldEdge,
+          Paint()
+            ..color = const Color(0xFFFFFDF8)
+                .withValues(alpha: 0.82 * _geometry.turnEnvelope)
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = math.max(1.0, size.width / 720)
+            ..isAntiAlias = true,
+        );
+    }
     canvas
-      ..drawVertices(mesh.vertices, BlendMode.modulate, paint)
       ..drawPath(
-        mesh.freeEdge,
+        mesh.visibleEdge,
         Paint()
           ..color = const Color(0xFFFFFDF8)
               .withValues(alpha: 0.72 * _geometry.turnEnvelope)
@@ -308,7 +364,7 @@ class _StorybookCurlSnapshotPainter extends SnapshotPainter {
       )
       ..restore();
 
-    mesh.vertices.dispose();
+    mesh.dispose();
   }
 
   @override
@@ -422,68 +478,168 @@ class _StorybookCurlGeometry {
 
   double get turnEnvelope => math.sin(normalizedProgress * math.pi).abs();
 
+  bool get hasBackFacingSurface {
+    for (var row = 0; row < rows; row++) {
+      final v = (row + 0.5) / rows;
+      for (var column = 0; column < columns; column++) {
+        final u = (column + 0.5) / columns;
+        if (math.cos(_localAngle(u, v)) < 0) return true;
+      }
+    }
+    return false;
+  }
+
   _StorybookCurlMesh buildMesh({
     required Offset offset,
     required Size size,
     required Size sourceSize,
   }) {
-    final positions = <Offset>[];
-    final textureCoordinates = <Offset>[];
-    final colors = <Color>[];
-    final indices = <int>[];
-    final edgePoints = <Offset>[];
+    final projectedRows = <List<Offset>>[
+      for (var row = 0; row <= rows; row++) _projectRow(size, row / rows),
+    ];
+    final frontPositions = <Offset>[];
+    final frontTextureCoordinates = <Offset>[];
+    final frontColors = <Color>[];
+    final frontIndices = <int>[];
+    final backPositions = <Offset>[];
+    final backColors = <Color>[];
+    final backIndices = <int>[];
 
-    for (var row = 0; row <= rows; row++) {
-      final v = row / rows;
-      final rowPoints = _projectRow(size, v);
-      for (var column = 0; column <= columns; column++) {
-        final u = column / columns;
-        final point = rowPoints[column] + offset;
-        positions.add(point);
-        textureCoordinates.add(
-          Offset(
-            (direction == StorybookPageCurlDirection.forward ? u : 1 - u) *
-                sourceSize.width,
-            v * sourceSize.height,
-          ),
-        );
-        colors.add(_lightColor(u, v));
-
-        if (column == columns) edgePoints.add(point);
-      }
+    double textureX(double u) {
+      final sourceU = direction == StorybookPageCurlDirection.forward
+          ? u
+          : 1 - u;
+      return sourceU * sourceSize.width;
     }
 
-    final rowLength = columns + 1;
     for (var row = 0; row < rows; row++) {
+      final v0 = row / rows;
+      final v1 = (row + 1) / rows;
       for (var column = 0; column < columns; column++) {
-        final topLeft = row * rowLength + column;
-        final topRight = topLeft + 1;
-        final bottomLeft = topLeft + rowLength;
-        final bottomRight = bottomLeft + 1;
-        indices.addAll([
-          topLeft,
-          bottomLeft,
-          topRight,
-          topRight,
-          bottomLeft,
-          bottomRight,
+        final u0 = column / columns;
+        final u1 = (column + 1) / columns;
+        final points = <Offset>[
+          projectedRows[row][column] + offset,
+          projectedRows[row][column + 1] + offset,
+          projectedRows[row + 1][column] + offset,
+          projectedRows[row + 1][column + 1] + offset,
+        ];
+        final isBackFacing =
+            math.cos(_localAngle((u0 + u1) / 2, (v0 + v1) / 2)) < 0;
+
+        if (isBackFacing) {
+          final base = backPositions.length;
+          backPositions.addAll(points);
+          backColors.addAll([
+            _backLightColor(u0, v0),
+            _backLightColor(u1, v0),
+            _backLightColor(u0, v1),
+            _backLightColor(u1, v1),
+          ]);
+          backIndices.addAll([
+            base,
+            base + 2,
+            base + 1,
+            base + 1,
+            base + 2,
+            base + 3,
+          ]);
+          continue;
+        }
+
+        final base = frontPositions.length;
+        frontPositions.addAll(points);
+        frontTextureCoordinates.addAll([
+          Offset(textureX(u0), v0 * sourceSize.height),
+          Offset(textureX(u1), v0 * sourceSize.height),
+          Offset(textureX(u0), v1 * sourceSize.height),
+          Offset(textureX(u1), v1 * sourceSize.height),
+        ]);
+        frontColors.addAll([
+          _lightColor(u0, v0),
+          _lightColor(u1, v0),
+          _lightColor(u0, v1),
+          _lightColor(u1, v1),
+        ]);
+        frontIndices.addAll([
+          base,
+          base + 2,
+          base + 1,
+          base + 1,
+          base + 2,
+          base + 3,
         ]);
       }
     }
 
-    final vertices = ui.Vertices(
-      VertexMode.triangles,
-      positions,
-      textureCoordinates: textureCoordinates,
-      colors: colors,
-      indices: indices,
-    );
-    final freeEdge = Path()..moveTo(edgePoints.first.dx, edgePoints.first.dy);
-    for (final point in edgePoints.skip(1)) {
-      freeEdge.lineTo(point.dx, point.dy);
+    final visibleEdgePoints = <Offset>[];
+    final foldEdge = Path();
+    var foldStarted = false;
+    for (var row = 0; row <= rows; row++) {
+      final v = row / rows;
+      final projectedRow = projectedRows[row];
+      var visiblePoint = projectedRow.first;
+      for (final point in projectedRow.skip(1)) {
+        final isFurtherIntoPage =
+            direction == StorybookPageCurlDirection.forward
+            ? point.dx > visiblePoint.dx
+            : point.dx < visiblePoint.dx;
+        if (isFurtherIntoPage) visiblePoint = point;
+      }
+      visibleEdgePoints.add(visiblePoint + offset);
+
+      var minimumAngle = double.infinity;
+      var maximumAngle = double.negativeInfinity;
+      var foldColumn = 0;
+      var foldError = double.infinity;
+      for (var column = 1; column <= columns; column++) {
+        final angle = _localAngle((column - 0.5) / columns, v);
+        minimumAngle = math.min(minimumAngle, angle);
+        maximumAngle = math.max(maximumAngle, angle);
+        final error = (angle - math.pi / 2).abs();
+        if (error < foldError) {
+          foldError = error;
+          foldColumn = column;
+        }
+      }
+      if (minimumAngle <= math.pi / 2 && maximumAngle >= math.pi / 2) {
+        final point = projectedRow[foldColumn] + offset;
+        if (foldStarted) {
+          foldEdge.lineTo(point.dx, point.dy);
+        } else {
+          foldEdge.moveTo(point.dx, point.dy);
+          foldStarted = true;
+        }
+      }
     }
 
-    return _StorybookCurlMesh(vertices: vertices, freeEdge: freeEdge);
+    final visibleEdge = Path()
+      ..moveTo(visibleEdgePoints.first.dx, visibleEdgePoints.first.dy);
+    for (final point in visibleEdgePoints.skip(1)) {
+      visibleEdge.lineTo(point.dx, point.dy);
+    }
+
+    return _StorybookCurlMesh(
+      frontVertices: frontPositions.isEmpty
+          ? null
+          : ui.Vertices(
+              VertexMode.triangles,
+              frontPositions,
+              textureCoordinates: frontTextureCoordinates,
+              colors: frontColors,
+              indices: frontIndices,
+            ),
+      backVertices: backPositions.isEmpty
+          ? null
+          : ui.Vertices(
+              VertexMode.triangles,
+              backPositions,
+              colors: backColors,
+              indices: backIndices,
+            ),
+      visibleEdge: visibleEdge,
+      foldEdge: foldEdge,
+    );
   }
 
   Path revealPath(Size size) {
@@ -495,25 +651,19 @@ class _StorybookCurlGeometry {
   }
 
   Path sheetPath(Size size) {
-    final top = _projectRow(size, 0);
-    final bottom = _projectRow(size, 1);
-    final edge = _edgePoints(size);
-    final sheet = Path()..moveTo(top.first.dx, top.first.dy);
-    for (final point in top.skip(1)) {
+    final edge = _visibleEdgePoints(size);
+    final hingeX = _hingeX(size);
+    final sheet = Path()..moveTo(hingeX, 0);
+    for (final point in edge) {
       sheet.lineTo(point.dx, point.dy);
     }
-    for (final point in edge.skip(1)) {
-      sheet.lineTo(point.dx, point.dy);
-    }
-    for (final point in bottom.reversed.skip(1)) {
-      sheet.lineTo(point.dx, point.dy);
-    }
-    sheet.close();
-    return sheet;
+    return sheet
+      ..lineTo(hingeX, size.height)
+      ..close();
   }
 
   Path freeEdgePath(Size size) {
-    final edge = _edgePoints(size);
+    final edge = _visibleEdgePoints(size);
     final path = Path()..moveTo(edge.first.dx, edge.first.dy);
     for (final point in edge.skip(1)) {
       path.lineTo(point.dx, point.dy);
@@ -521,10 +671,22 @@ class _StorybookCurlGeometry {
     return path;
   }
 
-  List<Offset> _edgePoints(Size size) {
+  List<Offset> _visibleEdgePoints(Size size) {
     return [
-      for (var row = 0; row <= rows; row++) _projectRow(size, row / rows).last,
+      for (var row = 0; row <= rows; row++)
+        _visiblePoint(_projectRow(size, row / rows)),
     ];
+  }
+
+  Offset _visiblePoint(List<Offset> rowPoints) {
+    var visiblePoint = rowPoints.first;
+    for (final point in rowPoints.skip(1)) {
+      final isFurtherIntoPage = direction == StorybookPageCurlDirection.forward
+          ? point.dx > visiblePoint.dx
+          : point.dx < visiblePoint.dx;
+      if (isFurtherIntoPage) visiblePoint = point;
+    }
+    return visiblePoint;
   }
 
   List<Offset> _projectRow(Size size, double v) {
@@ -534,12 +696,20 @@ class _StorybookCurlGeometry {
     var depth = 0.0;
 
     for (var column = 1; column <= columns; column++) {
-      final u = (column - 0.5) / columns;
-      final angle = _localAngle(u, v);
+      final segmentU = (column - 0.5) / columns;
+      final vertexU = column / columns;
+      final angle = _localAngle(segmentU, v);
       distanceFromHinge += segmentWidth * math.cos(angle);
       depth += segmentWidth * math.sin(angle);
 
-      final perspectiveScale = 1 + perspective * depth;
+      final horizontalRidgeDepth =
+          size.width *
+          0.10 *
+          _gripEnvelope *
+          _horizontalGrip(vertexU) *
+          _horizontalRidge(v);
+      final projectedDepth = depth + horizontalRidgeDepth;
+      final perspectiveScale = 1 + perspective * projectedDepth;
       final projectedDistance = distanceFromHinge / perspectiveScale;
       final baseY = v * size.height;
       final projectedY =
@@ -561,33 +731,27 @@ class _StorybookCurlGeometry {
     final p = normalizedProgress;
     final envelope = turnEnvelope;
 
-    // A hand does not rotate the complete sheet at once. The supplied
-    // reference first raises a small area at the vertical midpoint close to
-    // the spine. The turn then propagates towards the top, bottom, and free
-    // edge. Delaying the broad rotation by both coordinates preserves that
-    // short, clearly visible "paper blister" before the page travels.
+    // The reference reads like a hand sliding under the horizontal midpoint
+    // of the free edge. Broad rotation therefore propagates inwards from that
+    // edge; the horizontal ridge itself is modelled as depth and lighting,
+    // rather than over-rotating only the middle row into an hourglass shape.
     final verticalDistance = ((v - 0.5).abs() * 2).clamp(0.0, 1.0);
-    final propagationDelay =
-        0.10 * u + 0.18 * math.pow(verticalDistance, 1.35).toDouble();
+    // A page is not a rigid door: the fold created under the free edge travels
+    // horizontally towards the binding. Keeping a sizeable phase difference
+    // across `u` leaves the bound half front-facing while the lifted half has
+    // already passed 90 degrees, which is what exposes the real paper back.
+    // The smaller vertical delay makes the hand-height row lead the corners
+    // without pinching the silhouette into an hourglass.
+    final horizontalTravelDelay = 0.30 * math.pow(1 - u, 1.15).toDouble();
+    final handHeightDelay = 0.04 * math.pow(verticalDistance, 1.45).toDouble();
+    final propagationDelay = horizontalTravelDelay + handHeightDelay;
     final propagatedProgress = ((p - propagationDelay) / (1 - propagationDelay))
         .clamp(0.0, 1.0);
     final broadTurn =
         maxRotation * (0.5 - 0.5 * math.cos(math.pi * propagatedProgress));
 
-    final liftTimeline = (p / 0.78).clamp(0.0, 1.0);
-    final liftEnvelope = math.sin(math.pi * liftTimeline);
-    final liftTravel = _smoothStep(0.02, 0.66, p);
-    final liftCenter = 0.12 + 0.38 * liftTravel;
-    final liftWidth = 0.10 + 0.15 * liftTravel;
-    final horizontalLift = math.exp(
-      -0.5 * math.pow((u - liftCenter) / liftWidth, 2),
-    );
-    final verticalSpread = 0.14 + 0.62 * _smoothStep(0.05, 0.62, p);
-    final verticalLift = math.exp(
-      -0.5 * math.pow((v - 0.5) / verticalSpread, 2),
-    );
-    final spineLift =
-        flex * 1.22 * liftEnvelope * horizontalLift * verticalLift;
+    final gripLift =
+        flex * 0.08 * _gripEnvelope * _horizontalGrip(u) * _horizontalRidge(v);
 
     // Once the central lift has formed, retain a broad C-shaped bend while the
     // lifted ridge travels across the page.
@@ -606,7 +770,7 @@ class _StorybookCurlGeometry {
     final verticalTwist =
         twist * verticalPosition * twistPhase * _smoothStep(0.24, 0.48, p);
 
-    return (broadTurn + spineLift + broadFlex + verticalTwist).clamp(
+    return (broadTurn + gripLift + broadFlex + verticalTwist).clamp(
       0.0,
       maxRotation,
     );
@@ -615,6 +779,29 @@ class _StorybookCurlGeometry {
   double _smoothStep(double edge0, double edge1, double value) {
     final t = ((value - edge0) / (edge1 - edge0)).clamp(0.0, 1.0);
     return t * t * (3 - 2 * t);
+  }
+
+  double get _gripEnvelope {
+    final timeline = (normalizedProgress / 0.82).clamp(0.0, 1.0);
+    return math.sin(math.pi * timeline);
+  }
+
+  double get _gripReach {
+    final travel = _smoothStep(0.02, 0.62, normalizedProgress);
+    return 0.20 + 0.80 * travel;
+  }
+
+  double _horizontalGrip(double u) {
+    final ridgeStart = 1 - _gripReach;
+    return _smoothStep(ridgeStart - 0.06, ridgeStart + 0.18, u);
+  }
+
+  double get _ridgeWidth {
+    return 0.13 + 0.62 * _smoothStep(0.08, 0.40, normalizedProgress);
+  }
+
+  double _horizontalRidge(double v) {
+    return math.exp(-0.5 * math.pow((v - 0.5) / _ridgeWidth, 2));
   }
 
   Color _lightColor(double u, double v) {
@@ -626,9 +813,43 @@ class _StorybookCurlGeometry {
         0.08 *
         turnEnvelope *
         math.exp(-math.pow((1 - u) / 0.075, 2).toDouble());
-    final brightness = (broadShade - movingShade + rimLight).clamp(0.26, 1.0);
+    final ridgePosition = (v - 0.5) / _ridgeWidth;
+    final ridgeSlope =
+        ridgePosition *
+        _horizontalRidge(v) *
+        _horizontalGrip(u) *
+        _gripEnvelope;
+    final ridgeBand = _horizontalRidge(v) * _horizontalGrip(u) * _gripEnvelope;
+    final brightness =
+        (broadShade -
+                movingShade +
+                rimLight -
+                0.07 * ridgeBand -
+                0.20 * ridgeSlope)
+            .clamp(0.26, 1.0);
     final channel = (255 * brightness).round();
     return Color.fromARGB(255, channel, channel, channel);
+  }
+
+  Color _backLightColor(double u, double v) {
+    final angle = _localAngle(u, v);
+    final facing = math.cos(angle).abs();
+    final foldShade = math.exp(
+      -math.pow((angle - math.pi / 2) / 0.26, 2).toDouble(),
+    );
+    final verticalWarmth = 0.025 * turnEnvelope * math.cos((v - 0.5) * math.pi);
+    final brightness =
+        (0.70 +
+                0.30 * math.pow(facing, 0.48) -
+                0.18 * foldShade +
+                verticalWarmth)
+            .clamp(0.42, 1.0);
+    return Color.fromARGB(
+      255,
+      (255 * brightness).round(),
+      (253 * brightness).round(),
+      (248 * brightness).round(),
+    );
   }
 
   @override
@@ -660,10 +881,22 @@ class _StorybookCurlGeometry {
 }
 
 class _StorybookCurlMesh {
-  const _StorybookCurlMesh({required this.vertices, required this.freeEdge});
+  const _StorybookCurlMesh({
+    required this.frontVertices,
+    required this.backVertices,
+    required this.visibleEdge,
+    required this.foldEdge,
+  });
 
-  final ui.Vertices vertices;
-  final Path freeEdge;
+  final ui.Vertices? frontVertices;
+  final ui.Vertices? backVertices;
+  final Path visibleEdge;
+  final Path foldEdge;
+
+  void dispose() {
+    frontVertices?.dispose();
+    backVertices?.dispose();
+  }
 }
 
 const _identityMatrix4 = <double>[
