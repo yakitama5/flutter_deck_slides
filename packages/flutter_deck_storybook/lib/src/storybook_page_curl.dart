@@ -48,7 +48,12 @@ class _StorybookCurlSheetState extends State<StorybookCurlSheet> {
   @override
   void initState() {
     super.initState();
-    _snapshotController = SnapshotController(allowSnapshotting: true);
+    // Let the child complete one ordinary layout/paint pass before asking
+    // SnapshotWidget to turn it into a texture. Web's CPU renderer can reach
+    // the route transition before a freshly inserted slide has a valid
+    // RenderBox size; snapshotting immediately then produces a non-fatal
+    // "RenderBox was not laid out" exception and skips the first curl frame.
+    _snapshotController = SnapshotController();
     _painter = _StorybookCurlSnapshotPainter(
       progress: widget.progress,
       direction: widget.direction,
@@ -59,6 +64,10 @@ class _StorybookCurlSheetState extends State<StorybookCurlSheet> {
       columns: widget.columns,
       rows: widget.rows,
     );
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      _snapshotController.allowSnapshotting = true;
+    });
   }
 
   @override
