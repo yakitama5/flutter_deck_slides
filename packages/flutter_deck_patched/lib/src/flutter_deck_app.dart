@@ -171,6 +171,7 @@ class _FlutterDeckAppState extends State<FlutterDeckApp> {
   late FlutterDeckRouter _flutterDeckRouter;
   late GoRouter _router;
   var _initialLayoutCompleted = false;
+  late final FocusNode _controlsFocusNode;
 
   late FlutterDeckControlsNotifier _controlsNotifier;
   late FlutterDeckDrawerNotifier _drawerNotifier;
@@ -187,6 +188,7 @@ class _FlutterDeckAppState extends State<FlutterDeckApp> {
   @override
   void initState() {
     super.initState();
+    _controlsFocusNode = FocusNode(debugLabel: 'FlutterDeck controls');
 
     // Flutter can dispatch the initial view-focus event after focus nodes have
     // attached but before their RenderBoxes have completed layout. The default
@@ -196,6 +198,10 @@ class _FlutterDeckAppState extends State<FlutterDeckApp> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       setState(() => _initialLayoutCompleted = true);
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        _controlsFocusNode.requestFocus();
+      });
     });
 
     _buildRouter();
@@ -281,6 +287,7 @@ class _FlutterDeckAppState extends State<FlutterDeckApp> {
     _presenterController.dispose();
     _imagePreloader.dispose();
     _markerController.dispose();
+    _controlsFocusNode.dispose();
 
     super.dispose();
   }
@@ -345,6 +352,7 @@ class _FlutterDeckAppState extends State<FlutterDeckApp> {
                 Widget wrappedChild = FlutterDeckControlsListener(
                   controlsNotifier: _controlsNotifier,
                   markerNotifier: _markerNotifier,
+                  focusNode: _controlsFocusNode,
                   child: FlutterDeckTheme(data: theme, child: child!),
                 );
 
