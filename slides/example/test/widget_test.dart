@@ -1,9 +1,31 @@
 import 'package:example_slide/main.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_deck_storybook/src/storybook_reveal.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  testWidgets('ExampleApp enables focus after its first layout frame', (
+    tester,
+  ) async {
+    await tester.pumpWidget(const ExampleApp());
+
+    ExcludeFocus focusGuard() => tester.widget<ExcludeFocus>(
+      find.byKey(const ValueKey('flutter-deck-initial-focus-guard')),
+    );
+
+    expect(focusGuard().excluding, isTrue);
+    expect(tester.takeException(), isNull);
+
+    await tester.pump();
+
+    expect(focusGuard().excluding, isFalse);
+    await tester.pump();
+
+    expect(primaryFocus?.debugLabel, 'FlutterDeck controls');
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('ExampleApp bundles storybook sounds from the shared package', (
     tester,
   ) async {
