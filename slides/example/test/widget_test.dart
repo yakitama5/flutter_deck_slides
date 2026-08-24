@@ -5,24 +5,22 @@ import 'package:flutter_deck_storybook/src/storybook_reveal.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  testWidgets('ExampleApp enables focus after its first layout frame', (
+  testWidgets('ExampleApp mounts its focus tree after the first frame', (
     tester,
   ) async {
     await tester.pumpWidget(const ExampleApp());
 
-    ExcludeFocus focusGuard() => tester.widget<ExcludeFocus>(
-      find.byKey(const ValueKey('flutter-deck-initial-focus-guard')),
+    final placeholder = find.byKey(
+      const ValueKey('flutter-deck-initial-layout-placeholder'),
     );
 
-    expect(focusGuard().excluding, isTrue);
+    expect(placeholder, findsOneWidget);
     expect(tester.takeException(), isNull);
 
     await tester.pump();
 
-    expect(focusGuard().excluding, isFalse);
-    await tester.pump();
-
-    expect(primaryFocus?.debugLabel, 'FlutterDeck controls');
+    expect(placeholder, findsNothing);
+    expect(find.text('FlutterDeck Storybook'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
