@@ -4,6 +4,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_deck/flutter_deck.dart';
 
+import 'storybook_page_curl.dart';
 import 'storybook_reveal.dart';
 import 'storybook_sound_effects.dart';
 
@@ -17,8 +18,12 @@ enum _PageTurnDirection { forward, backward }
 class StorybookPageTurnTransitionBuilder extends FlutterDeckTransitionBuilder {
   /// Creates a storybook page-turn transition builder.
   StorybookPageTurnTransitionBuilder({
-    this.perspective = 0.0014,
+    this.perspective = 0.00008,
     this.maxRotation = math.pi / 2,
+    this.pageFlex = 0.34,
+    this.pageTwist = 0.045,
+    this.meshColumns = 32,
+    this.meshRows = 10,
     this.reverseOnPrevious = true,
     this.usePerspective = true,
     this.enableInkReveal = true,
@@ -27,6 +32,10 @@ class StorybookPageTurnTransitionBuilder extends FlutterDeckTransitionBuilder {
     this.soundEffects,
   }) : assert(perspective > 0),
        assert(maxRotation > 0 && maxRotation <= math.pi / 2),
+       assert(pageFlex >= 0 && pageFlex <= math.pi / 3),
+       assert(pageTwist >= 0 && pageTwist <= math.pi / 3),
+       assert(meshColumns >= 8 && meshColumns <= 64),
+       assert(meshRows >= 2 && meshRows <= 24),
        assert(inkRevealDuration > Duration.zero);
 
   /// Perspective applied to the page transform.
@@ -34,6 +43,18 @@ class StorybookPageTurnTransitionBuilder extends FlutterDeckTransitionBuilder {
 
   /// Maximum Y-axis rotation in radians.
   final double maxRotation;
+
+  /// Horizontal bend applied across the paper while it turns.
+  final double pageFlex;
+
+  /// Phase-changing twist between the top and bottom edges.
+  final double pageTwist;
+
+  /// Horizontal subdivisions used by the paper mesh.
+  final int meshColumns;
+
+  /// Vertical subdivisions used by the paper mesh.
+  final int meshRows;
 
   /// Whether previous navigation should turn the page in reverse.
   final bool reverseOnPrevious;
@@ -105,6 +126,10 @@ class StorybookPageTurnTransitionBuilder extends FlutterDeckTransitionBuilder {
       direction: _direction,
       perspective: perspective,
       maxRotation: maxRotation,
+      pageFlex: pageFlex,
+      pageTwist: pageTwist,
+      meshColumns: meshColumns,
+      meshRows: meshRows,
       enableInkReveal: enableInkReveal,
       inkRevealDuration: inkRevealDuration,
       inkRevealOrigin: inkRevealOrigin,
@@ -180,6 +205,10 @@ class _StorybookPageTurnTransition extends StatelessWidget {
     required this.direction,
     required this.perspective,
     required this.maxRotation,
+    required this.pageFlex,
+    required this.pageTwist,
+    required this.meshColumns,
+    required this.meshRows,
     required this.enableInkReveal,
     required this.inkRevealDuration,
     required this.inkRevealOrigin,
@@ -192,6 +221,10 @@ class _StorybookPageTurnTransition extends StatelessWidget {
   final _PageTurnDirection direction;
   final double perspective;
   final double maxRotation;
+  final double pageFlex;
+  final double pageTwist;
+  final int meshColumns;
+  final int meshRows;
   final bool enableInkReveal;
   final Duration inkRevealDuration;
   final Alignment inkRevealOrigin;
@@ -220,15 +253,15 @@ class _StorybookPageTurnTransition extends StatelessWidget {
         child: child,
       ),
       builder: (context, page) {
-        final incoming = Curves.easeInOutCubic.transform(
+        final incoming = Curves.easeInOutSine.transform(
           animation.value.clamp(0.0, 1.0),
         );
-        final outgoing = Curves.easeInOutCubic.transform(
+        final outgoing = Curves.easeInOutSine.transform(
           secondaryAnimation.value.clamp(0.0, 1.0),
         );
-        final directionSign = direction == _PageTurnDirection.forward
-            ? 1.0
-            : -1.0;
+        final curlDirection = direction == _PageTurnDirection.forward
+            ? StorybookPageCurlDirection.forward
+            : StorybookPageCurlDirection.backward;
 
         final turnsOutWithPrimary =
             animation.status == AnimationStatus.reverse && animation.value < 1;
@@ -246,111 +279,35 @@ class _StorybookPageTurnTransition extends StatelessWidget {
               ? 1 - outgoing
               : incoming;
 
-          return ClipRect(
-            key: const ValueKey('storybook-page-turn-incoming-reveal'),
-            clipper: _IncomingPageRevealClipper(
-              progress: revealProgress,
-              direction: direction,
-              perspective: perspective,
-              maxRotation: maxRotation,
-            ),
-            child: page,
+          return StorybookCurlReveal(
+            clipKey: const ValueKey('storybook-page-turn-incoming-reveal'),
+            progress: revealProgress,
+            direction: curlDirection,
+            perspective: perspective,
+            maxRotation: maxRotation,
+            flex: pageFlex,
+            twist: pageTwist,
+            columns: meshColumns,
+            rows: meshRows,
+            child: page!,
           );
         }
 
         final turnProgress = turnsOutWithPrimary ? 1 - incoming : outgoing;
-        final angle = -directionSign * turnProgress * maxRotation;
-        final shadowStrength = math.sin(turnProgress * math.pi).abs();
-        final alignment = direction == _PageTurnDirection.forward
-            ? Alignment.centerLeft
-            : Alignment.centerRight;
-
-        return Transform(
+        return StorybookCurlSheet(
           key: const ValueKey('storybook-page-turn-outgoing-sheet'),
-          alignment: alignment,
-          transform: Matrix4.identity()
-            ..setEntry(3, 2, perspective)
-            ..rotateY(angle),
-          child: DecoratedBox(
-            decoration: BoxDecoration(
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.34 * shadowStrength),
-                  blurRadius: 42 * shadowStrength,
-                  spreadRadius: 3 * shadowStrength,
-                  offset: Offset(directionSign * 16 * shadowStrength, 4),
-                ),
-              ],
-            ),
-            child: DecoratedBox(
-              position: DecorationPosition.foreground,
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: direction == _PageTurnDirection.forward
-                      ? Alignment.centerLeft
-                      : Alignment.centerRight,
-                  end: direction == _PageTurnDirection.forward
-                      ? Alignment.centerRight
-                      : Alignment.centerLeft,
-                  colors: [
-                    Colors.black.withValues(alpha: 0.22 * shadowStrength),
-                    Colors.transparent,
-                    Colors.white.withValues(alpha: 0.12 * shadowStrength),
-                  ],
-                  stops: const [0, 0.72, 1],
-                ),
-              ),
-              child: page,
-            ),
-          ),
+          progress: turnProgress,
+          direction: curlDirection,
+          perspective: perspective,
+          maxRotation: maxRotation,
+          flex: pageFlex,
+          twist: pageTwist,
+          columns: meshColumns,
+          rows: meshRows,
+          child: page!,
         );
       },
     );
-  }
-}
-
-class _IncomingPageRevealClipper extends CustomClipper<Rect> {
-  const _IncomingPageRevealClipper({
-    required this.progress,
-    required this.direction,
-    required this.perspective,
-    required this.maxRotation,
-  });
-
-  final double progress;
-  final _PageTurnDirection direction;
-  final double perspective;
-  final double maxRotation;
-
-  @override
-  Rect getClip(Size size) {
-    final turnAngle = progress.clamp(0.0, 1.0) * maxRotation;
-    // This is the same perspective divide used by the outgoing Matrix4. Using
-    // only cos(angle) would leave a visible gap between the two page edges.
-    final perspectiveScale = 1 + perspective * size.width * math.sin(turnAngle);
-    final coveredFraction = (math.cos(turnAngle) / perspectiveScale).clamp(
-      0.0,
-      1.0,
-    );
-
-    if (direction == _PageTurnDirection.forward) {
-      return Rect.fromLTRB(
-        size.width * coveredFraction,
-        0,
-        size.width,
-        size.height,
-      );
-    }
-
-    return Rect.fromLTRB(0, 0, size.width * (1 - coveredFraction), size.height);
-  }
-
-  @override
-  bool shouldReclip(covariant _IncomingPageRevealClipper oldClipper) {
-    return progress != oldClipper.progress ||
-        direction != oldClipper.direction ||
-        perspective != oldClipper.perspective ||
-        maxRotation != oldClipper.maxRotation;
   }
 }
 

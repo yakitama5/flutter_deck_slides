@@ -37,6 +37,11 @@ void main() {
     expect(developingPage().sketchProgress, 0);
     expect(developingPage().paintProgress, 0);
 
+    await tester.pump(const Duration(milliseconds: 650));
+
+    expect(developingPage().sketchProgress, 0);
+    expect(developingPage().paintProgress, 0);
+
     await tester.pump(const Duration(milliseconds: 400));
 
     expect(developingPage().sketchProgress, 0);

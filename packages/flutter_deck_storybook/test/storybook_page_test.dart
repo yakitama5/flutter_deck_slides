@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_deck/flutter_deck.dart';
 import 'package:flutter_deck_storybook/flutter_deck_storybook.dart';
+import 'package:flutter_deck_storybook/src/storybook_page_curl.dart';
 import 'package:flutter_deck_storybook/src/storybook_reveal.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -46,7 +48,7 @@ void main() {
     expect(reveal.revealOrigin, const Alignment(0, 0.25));
   });
 
-  testWidgets('page-turn transition rotates one full slide from its edge', (
+  testWidgets('page-turn transition deforms one full slide as a paper mesh', (
     tester,
   ) async {
     final animation = AnimationController(vsync: tester, value: 1);
@@ -75,15 +77,20 @@ void main() {
       ),
     );
 
-    final transform = tester.widget<Transform>(find.byType(Transform));
+    final sheet = tester.widget<StorybookCurlSheet>(
+      find.byKey(const ValueKey('storybook-page-turn-outgoing-sheet')),
+    );
 
     expect(transitionBuilder.usePerspective, isTrue);
     expect(find.byKey(const Key('page')), findsOneWidget);
-    expect(transform.alignment, Alignment.centerLeft);
-    expect(
-      transform.transform.storage.every((value) => value.isFinite),
-      isTrue,
-    );
+    expect(find.byType(SnapshotWidget), findsOneWidget);
+    expect(find.byType(Transform), findsNothing);
+    expect(sheet.direction, StorybookPageCurlDirection.forward);
+    expect(sheet.progress, closeTo(0.5, 0.01));
+    expect(sheet.columns, 32);
+    expect(sheet.rows, 10);
+    expect(sheet.flex, greaterThan(0));
+    expect(sheet.twist, greaterThan(0));
 
     secondaryAnimation.stop();
   });
@@ -123,16 +130,82 @@ void main() {
     );
     expect(find.byType(Opacity), findsNothing);
 
-    final clip = tester.renderObject<RenderClipRect>(
+    final clip = tester.renderObject<RenderClipPath>(
       find.byKey(const ValueKey('storybook-page-turn-incoming-reveal')),
     );
-    final revealedBounds = clip.clipper!.getClip(clip.size);
+    final revealed = clip.clipper!.getClip(clip.size);
 
-    expect(revealedBounds.left, greaterThan(0));
-    expect(revealedBounds.left, lessThan(clip.size.width * 0.6));
-    expect(revealedBounds.right, clip.size.width);
+    expect(
+      revealed.contains(Offset(clip.size.width * 0.9, clip.size.height / 2)),
+      isTrue,
+    );
+    expect(
+      revealed.contains(Offset(clip.size.width * 0.1, clip.size.height / 2)),
+      isFalse,
+    );
+    expect(revealed.contains(Offset(clip.size.width * 0.5, 2)), isTrue);
 
     animation.stop();
+  });
+
+  testWidgets('paper twist changes from a lower-corner to upper-corner lead', (
+    tester,
+  ) async {
+    const clipKey = ValueKey('twist-clip');
+    final transition = StorybookPageTurnTransitionBuilder();
+
+    Future<(double, double)> revealThresholds(double progress) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: StorybookCurlReveal(
+            clipKey: clipKey,
+            progress: progress,
+            direction: StorybookPageCurlDirection.forward,
+            perspective: transition.perspective,
+            maxRotation: transition.maxRotation,
+            flex: transition.pageFlex,
+            twist: transition.pageTwist,
+            columns: transition.meshColumns,
+            rows: transition.meshRows,
+            child: const ColoredBox(color: Colors.white),
+          ),
+        ),
+      );
+
+      final clip = tester.renderObject<RenderClipPath>(find.byKey(clipKey));
+      final path = clip.clipper!.getClip(clip.size);
+
+      double firstRevealedX(double y) {
+        for (var x = 0.0; x <= clip.size.width; x += 1) {
+          if (path.contains(Offset(x, y))) return x;
+        }
+        return clip.size.width;
+      }
+
+      return (
+        firstRevealedX(clip.size.height * 0.15),
+        firstRevealedX(clip.size.height * 0.85),
+      );
+    }
+
+    final early = await revealThresholds(0.18);
+    final late = await revealThresholds(0.68);
+
+    expect(early.$2, lessThan(early.$1));
+    expect(late.$1, lessThan(late.$2));
+  });
+
+  test('custom flutter_deck transition can match the one-second turn', () {
+    final transition = FlutterDeckTransition.custom(
+      duration: const Duration(milliseconds: 1000),
+      transitionBuilder: StorybookPageTurnTransitionBuilder(),
+    );
+
+    expect(transition.duration, const Duration(milliseconds: 1000));
+    expect(
+      transition.reverseDuration ?? transition.duration,
+      const Duration(milliseconds: 1000),
+    );
   });
 
   testWidgets('incoming page stays blank before sketch and ink develop', (
