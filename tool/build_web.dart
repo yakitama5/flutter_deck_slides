@@ -13,18 +13,20 @@ const _basePath = '/flutter_deck_slides';
 void main() {
   final repoRoot = Directory.current;
   final slidesDir = Directory('${repoRoot.path}/slides');
+  final sourceMaps = Platform.environment['FLUTTER_WEB_SOURCE_MAPS'] == 'true';
 
   if (!slidesDir.existsSync()) {
     stderr.writeln('エラー: slides/ ディレクトリが見つかりません。リポジトリルートで実行してください。');
     exit(1);
   }
 
-  final slideDirs = slidesDir
-      .listSync()
-      .whereType<Directory>()
-      .where((d) => File('${d.path}/pubspec.yaml').existsSync())
-      .toList()
-    ..sort((a, b) => a.path.compareTo(b.path));
+  final slideDirs =
+      slidesDir
+          .listSync()
+          .whereType<Directory>()
+          .where((d) => File('${d.path}/pubspec.yaml').existsSync())
+          .toList()
+        ..sort((a, b) => a.path.compareTo(b.path));
 
   if (slideDirs.isEmpty) {
     stdout.writeln('ビルド対象のスライドがありません。');
@@ -40,7 +42,13 @@ void main() {
     stdout.writeln('▸ [$slideName] flutter build web --base-href $baseHref');
     final result = Process.runSync(
       'flutter',
-      ['build', 'web', '--base-href', baseHref],
+      [
+        'build',
+        'web',
+        '--base-href',
+        baseHref,
+        if (sourceMaps) '--source-maps',
+      ],
       workingDirectory: dir.path,
       runInShell: true,
     );
