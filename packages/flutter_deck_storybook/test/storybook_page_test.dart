@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
@@ -88,6 +90,7 @@ void main() {
     expect(sheet.direction, StorybookPageCurlDirection.forward);
     expect(sheet.motion, StorybookPageCurlMotion.turnAway);
     expect(sheet.progress, closeTo(0.145, 0.01));
+    expect(sheet.maxRotation, greaterThan(math.pi / 2));
     expect(sheet.columns, 40);
     expect(sheet.rows, 16);
     expect(sheet.flex, greaterThan(0));
@@ -103,7 +106,7 @@ void main() {
     final animation = AnimationController(
       vsync: tester,
       duration: const Duration(seconds: 1),
-      value: 0.8,
+      value: 0.7,
     )..forward();
     final secondaryAnimation = AnimationController(vsync: tester);
     addTearDown(animation.dispose);
@@ -150,7 +153,7 @@ void main() {
     animation.stop();
   });
 
-  testWidgets('paper first lifts at the spine midpoint before either edge', (
+  testWidgets('horizontal hand ridge starts at the free-edge midpoint', (
     tester,
   ) async {
     const clipKey = ValueKey('twist-clip');
@@ -199,6 +202,25 @@ void main() {
     expect(early.$2, lessThan(early.$3 - 4));
     expect(late.$1, lessThan(early.$1));
     expect(late.$3, lessThan(early.$3));
+  });
+
+  test('the turned sheet exposes its unprinted paper back', () {
+    final transition = StorybookPageTurnTransitionBuilder();
+    StorybookCurlSheet sheetAt(double progress) => StorybookCurlSheet(
+      progress: progress,
+      direction: StorybookPageCurlDirection.forward,
+      motion: StorybookPageCurlMotion.turnAway,
+      perspective: transition.perspective,
+      maxRotation: transition.maxRotation,
+      flex: transition.pageFlex,
+      twist: transition.pageTwist,
+      columns: transition.meshColumns,
+      rows: transition.meshRows,
+      child: const SizedBox(),
+    );
+
+    expect(sheetAt(0.24).debugHasBackFacingSurface, isFalse);
+    expect(sheetAt(0.50).debugHasBackFacingSurface, isTrue);
   });
 
   test('custom flutter_deck transition can match the reference turn', () {
@@ -280,7 +302,7 @@ void main() {
   ) async {
     final animation = AnimationController(
       vsync: tester,
-      duration: const Duration(milliseconds: 300),
+      duration: StorybookPageTurnTransitionBuilder.referenceTurnDuration,
     );
     final secondaryAnimation = AnimationController(
       vsync: tester,
@@ -309,17 +331,25 @@ void main() {
     );
 
     expect(sounds.preloadCalls, 1);
-    expect(sounds.pageTurnCalls, 1);
+    expect(sounds.pageTurnCalls, 0);
     expect(sounds.drawingCalls, 0);
 
     animation.forward();
     await tester.pump();
-    await tester.pump(const Duration(milliseconds: 300));
+    await tester.pump(const Duration(milliseconds: 700));
+
+    expect(sounds.pageTurnCalls, 0);
+
+    await tester.pump(const Duration(milliseconds: 30));
+
+    expect(sounds.pageTurnCalls, 1);
+
+    await tester.pump(const Duration(milliseconds: 970));
     await tester.pump(const Duration(milliseconds: 250));
 
     expect(sounds.drawingCalls, 0);
 
-    await tester.pump(const Duration(milliseconds: 450));
+    await tester.pump(const Duration(milliseconds: 320));
 
     final reveal = tester.widget<StorybookRevealScope>(
       find.byType(StorybookRevealScope),
