@@ -343,8 +343,10 @@ class _StorybookPageTurnTransition extends StatelessWidget {
   }) {
     // FlutterDeck changes slides with GoRouter.go, so both route animations
     // move forward even when the logical slide number decreases. The new
-    // previous page is therefore identified by its primary animation, then
-    // drawn as a sheet travelling from edge-on to flat above the old page.
+    // previous page is therefore identified by its primary animation and
+    // drawn as a sheet travelling from edge-on to flat. GoRouter keeps the
+    // outgoing route painted above it, so that route is clipped by the same
+    // silhouette below to make the incoming sheet visually cover it.
     final isReplacementCover =
         animation.status != AnimationStatus.reverse &&
         animation.value < 1 &&
@@ -370,8 +372,17 @@ class _StorybookPageTurnTransition extends StatelessWidget {
     }
 
     if (isReplacementUnderlay) {
-      return KeyedSubtree(
-        key: const ValueKey('storybook-page-cover-current-page'),
+      return StorybookCurlReveal(
+        clipKey: const ValueKey('storybook-page-cover-current-page'),
+        progress: 1 - outgoing,
+        direction: StorybookPageCurlDirection.backward,
+        motion: StorybookPageCurlMotion.coverPrevious,
+        perspective: perspective,
+        maxRotation: maxRotation,
+        flex: pageFlex,
+        twist: pageTwist,
+        columns: meshColumns,
+        rows: meshRows,
         child: page,
       );
     }
