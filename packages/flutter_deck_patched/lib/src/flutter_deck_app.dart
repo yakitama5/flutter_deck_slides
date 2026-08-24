@@ -170,6 +170,7 @@ class FlutterDeckApp extends StatefulWidget {
 class _FlutterDeckAppState extends State<FlutterDeckApp> {
   late FlutterDeckRouter _flutterDeckRouter;
   late GoRouter _router;
+  var _initialLayoutCompleted = false;
 
   late FlutterDeckControlsNotifier _controlsNotifier;
   late FlutterDeckDrawerNotifier _drawerNotifier;
@@ -186,6 +187,16 @@ class _FlutterDeckAppState extends State<FlutterDeckApp> {
   @override
   void initState() {
     super.initState();
+
+    // Flutter can dispatch the initial view-focus event after focus nodes have
+    // attached but before their RenderBoxes have completed layout. The default
+    // reading-order traversal then reads FocusNode.rect too early, which is
+    // reported as a non-fatal "RenderBox was not laid out" error on Web's CPU
+    // renderer. Keep descendants out of focus traversal for that first frame.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      setState(() => _initialLayoutCompleted = true);
+    });
 
     _buildRouter();
 
@@ -315,37 +326,41 @@ class _FlutterDeckAppState extends State<FlutterDeckApp> {
 
   @override
   Widget build(BuildContext context) {
-    return ValueListenableBuilder(
-      valueListenable: _localizationNotifier,
-      builder: (context, locale, _) => ValueListenableBuilder(
-        valueListenable: _themeNotifier,
-        builder: (context, themeMode, _) {
-          final theme = context.darkModeEnabled(themeMode)
-              ? widget.darkTheme ?? FlutterDeckThemeData.dark()
-              : widget.lightTheme ?? FlutterDeckThemeData.light();
+    return ExcludeFocus(
+      key: const ValueKey('flutter-deck-initial-focus-guard'),
+      excluding: !_initialLayoutCompleted,
+      child: ValueListenableBuilder(
+        valueListenable: _localizationNotifier,
+        builder: (context, locale, _) => ValueListenableBuilder(
+          valueListenable: _themeNotifier,
+          builder: (context, themeMode, _) {
+            final theme = context.darkModeEnabled(themeMode)
+                ? widget.darkTheme ?? FlutterDeckThemeData.dark()
+                : widget.lightTheme ?? FlutterDeckThemeData.light();
 
-          return MaterialApp.router(
-            routerConfig: _router,
-            theme: theme.materialTheme,
-            builder: (context, child) {
-              Widget wrappedChild = FlutterDeckControlsListener(
-                controlsNotifier: _controlsNotifier,
-                markerNotifier: _markerNotifier,
-                child: FlutterDeckTheme(data: theme, child: child!),
-              );
+            return MaterialApp.router(
+              routerConfig: _router,
+              theme: theme.materialTheme,
+              builder: (context, child) {
+                Widget wrappedChild = FlutterDeckControlsListener(
+                  controlsNotifier: _controlsNotifier,
+                  markerNotifier: _markerNotifier,
+                  child: FlutterDeckTheme(data: theme, child: child!),
+                );
 
-              for (final plugin in _flutterDeck.plugins) {
-                wrappedChild = plugin.wrap(context, wrappedChild);
-              }
+                for (final plugin in _flutterDeck.plugins) {
+                  wrappedChild = plugin.wrap(context, wrappedChild);
+                }
 
-              return _flutterDeck.wrap(context, child: wrappedChild);
-            },
-            debugShowCheckedModeBanner: false,
-            locale: locale,
-            localizationsDelegates: widget.localizationsDelegates,
-            supportedLocales: widget.supportedLocales,
-          );
-        },
+                return _flutterDeck.wrap(context, child: wrappedChild);
+              },
+              debugShowCheckedModeBanner: false,
+              locale: locale,
+              localizationsDelegates: widget.localizationsDelegates,
+              supportedLocales: widget.supportedLocales,
+            );
+          },
+        ),
       ),
     );
   }
