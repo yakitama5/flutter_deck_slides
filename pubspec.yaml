@@ -5,6 +5,7 @@ environment:
   sdk: ^3.13.1
 
 workspace:
+  - packages/flutter_deck_patched
   - packages/flutter_deck_storybook
   - slides/example
   - slides/202607_claudenotebooklm

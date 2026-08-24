@@ -70,7 +70,7 @@ dart run melos run create:slide -- 202609_flutterkaigi
 `slides/example` と新規作成されるスライドには、共通パッケージ
 `packages/flutter_deck_storybook` が組み込まれています。
 
-- `StorybookPageTurnTransitionBuilder`: 16:9のスライド全体を1枚の紙として扱い、次へ／前への方向に合わせて片側の端を支点にY軸回転するページめくり。Web・ネイティブとも遠近感と陰影を使った3D表示が標準です
+- `StorybookPageTurnTransitionBuilder`: 16:9のスライド全体を1枚の紙として扱い、32×10の三角形メッシュで紙面を曲げながらめくります。下端が先に動き、後半で上端が追い越す小さなねじれ、移動する照り返し、白紙へ落ちる柔らかな影をWeb・ネイティブで描画します
 - `StorybookPage`: 紙色、表紙色、アクセント色、余白、ページ番号を変更できる絵本風のページ枠。ページがめくれた後は、白紙の上にセピア色の下描きが現れ、中央下寄りから水彩・インクがにじむように完成絵を描き出します
 - `StorybookSoundEffects`: ページ回転には乾いた紙音、線画が現れ始める位置には鉛筆と筆の音を同期します。音量変更・一時ミュートが可能で、音声ファイルは共通パッケージ内に同梱されます
 - 視差効果を減らす設定が有効な環境では、ページ回転をフェードへ自動的に切り替えます
@@ -82,8 +82,11 @@ dart run melos run create:slide -- 202609_flutterkaigi
 final storybookSounds = StorybookSoundEffects();
 
 final pageTurnTransition = FlutterDeckTransition.custom(
+  duration: const Duration(milliseconds: 1000),
   transitionBuilder: StorybookPageTurnTransitionBuilder(
     usePerspective: true,
+    pageFlex: 0.34,
+    pageTwist: 0.045,
     enableInkReveal: true,
     inkRevealDuration: Duration(milliseconds: 2750),
     inkRevealOrigin: Alignment(0, 0.25),

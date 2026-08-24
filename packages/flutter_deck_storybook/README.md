@@ -1,6 +1,6 @@
 # flutter_deck_storybook
 
-`flutter_deck` 向けの絵本風ページと、左右の移動方向に追従するページめくりトランジションです。16:9のスライド全体を1枚の紙として扱い、Web・ネイティブとも片側の端を支点に3D回転します。ページが平らになった後は白紙を短く見せ、薄い下描き、中央下寄りから広がる水彩・インクの順で完成絵を描き出します。必要に応じて、紙をめくる音と鉛筆・筆で描く音も同期できます。
+`flutter_deck` 向けの絵本風ページと、左右の移動方向に追従するページめくりトランジションです。16:9のスライド全体を1枚の紙として扱い、スナップショットを三角形メッシュへ貼って、紙面の曲率・上下の小さなねじれ・移動する照り返し・白紙へ落ちる影をWeb・ネイティブで描画します。ページが平らになった後は白紙を短く見せ、薄い下描き、中央下寄りから広がる水彩・インクの順で完成絵を描き出します。必要に応じて、紙をめくる音と鉛筆・筆で描く音も同期できます。
 
 ```dart
 final storybookSounds = StorybookSoundEffects(
@@ -9,8 +9,11 @@ final storybookSounds = StorybookSoundEffects(
 );
 
 final pageTurnTransition = FlutterDeckTransition.custom(
+  duration: const Duration(milliseconds: 1000),
   transitionBuilder: StorybookPageTurnTransitionBuilder(
     usePerspective: true,
+    pageFlex: 0.34,
+    pageTwist: 0.045,
     enableInkReveal: true,
     inkRevealDuration: Duration(milliseconds: 2750),
     inkRevealOrigin: Alignment(0, 0.25),

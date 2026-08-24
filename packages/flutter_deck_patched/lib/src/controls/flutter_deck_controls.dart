@@ -1,0 +1,483 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_deck/src/controls/actions/actions.dart';
+import 'package:flutter_deck/src/controls/localized_shortcut_labeler.dart';
+import 'package:flutter_deck/src/flutter_deck.dart';
+import 'package:flutter_deck/src/flutter_deck_layout.dart';
+import 'package:flutter_deck/src/theme/flutter_deck_theme.dart';
+
+/// A widget that allows the user to control the slide deck.
+///
+/// The widget renders the following controls:
+///
+/// * Previous button
+/// * Next button
+/// * Slide number button, which also opens the navigation drawer
+/// * Marker controls
+/// * Toggle fullscreen button (when on a supported platform)
+/// * Theme switcher
+/// * Autoplay controls
+///
+/// Controls are only rendered if they are enabled in the global configuration.
+/// Control component visibility is also handled by this widget. The controls
+/// will be hidden after 3 seconds of cursor inactivity.
+///
+/// This widget is automatically added to the widget tree and should not be used
+/// directly by the user.
+class FlutterDeckControls extends StatelessWidget {
+  /// Creates a [FlutterDeckControls].
+  ///
+  /// The [child] argument must not be null.
+  const FlutterDeckControls({required this.child, super.key});
+
+  /// The widget below this widget in the tree.
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final flutterDeck = context.flutterDeck;
+
+    if (!flutterDeck.globalConfiguration.controls.presenterToolbarVisible) {
+      return child;
+    }
+
+    final controlsNotifier = flutterDeck.controlsNotifier;
+
+    return ListenableBuilder(
+      listenable: controlsNotifier,
+      builder: (context, child) => Stack(
+        children: [
+          child!,
+          if (controlsNotifier.controlsVisible)
+            const Align(
+              alignment: AlignmentDirectional.bottomCenter,
+              child: _Controls(),
+            ),
+        ],
+      ),
+      child: child,
+    );
+  }
+}
+
+class _Controls extends StatelessWidget {
+  const _Controls();
+
+  @override
+  Widget build(BuildContext context) {
+    final controlsNotifier = context.flutterDeck.controlsNotifier;
+
+    return Theme(
+      data: ThemeData.light(),
+      child: MouseRegion(
+        onEnter: (_) => controlsNotifier.toggleControlsVisibleDuration(),
+        onExit: (_) => controlsNotifier.toggleControlsVisibleDuration(),
+        child: Builder(
+          builder: (context) => Container(
+            margin: FlutterDeckLayout.slidePadding,
+            padding: const EdgeInsets.all(4),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(32),
+              color: Theme.of(context).colorScheme.surface,
+            ),
+            child: const Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _PreviousButton(),
+                _SlideNumberButton(),
+                _NextButton(),
+                _MarkerControls(),
+                _OptionsMenuButton(),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _PreviousButton extends StatelessWidget {
+  const _PreviousButton();
+
+  @override
+  Widget build(BuildContext context) {
+    final flutterDeck = context.flutterDeck;
+    final controlsNotifier = flutterDeck.controlsNotifier;
+    final shortcuts = flutterDeck.globalConfiguration.controls.shortcuts;
+    final shortcut = shortcuts.previousSlide.toShortcutString(context);
+
+    return ListenableBuilder(
+      listenable: controlsNotifier,
+      builder: (context, child) {
+        final isFirstSlide = flutterDeck.slideNumber == 1;
+        final isFirstStep = flutterDeck.stepNumber == 1;
+        final enabled =
+            !(isFirstSlide && isFirstStep) &&
+            !controlsNotifier.intentDisabled(const GoPreviousIntent());
+
+        return IconButton(
+          icon: const Icon(Icons.keyboard_arrow_left_rounded),
+          tooltip:
+              'Previous'
+              '${shortcuts.enabled && shortcut.isNotEmpty ? ' ($shortcut)' : ''}',
+          onPressed: enabled ? controlsNotifier.previous : null,
+        );
+      },
+    );
+  }
+}
+
+class _NextButton extends StatelessWidget {
+  const _NextButton();
+
+  @override
+  Widget build(BuildContext context) {
+    final flutterDeck = context.flutterDeck;
+    final controlsNotifier = flutterDeck.controlsNotifier;
+    final shortcuts = flutterDeck.globalConfiguration.controls.shortcuts;
+    final shortcut = shortcuts.nextSlide.toShortcutString(context);
+
+    return ListenableBuilder(
+      listenable: controlsNotifier,
+      builder: (context, child) {
+        final isLastSlide =
+            flutterDeck.slideNumber == flutterDeck.router.slides.length;
+        final isLastStep =
+            flutterDeck.stepNumber == flutterDeck.configuration.steps;
+        final enabled =
+            !(isLastSlide && isLastStep) &&
+            !controlsNotifier.intentDisabled(const GoNextIntent());
+
+        return IconButton(
+          icon: const Icon(Icons.keyboard_arrow_right_rounded),
+          tooltip:
+              'Next'
+              '${shortcuts.enabled && shortcut.isNotEmpty ? ' ($shortcut)' : ''}',
+          onPressed: enabled ? controlsNotifier.next : null,
+        );
+      },
+    );
+  }
+}
+
+class _SlideNumberButton extends StatelessWidget {
+  const _SlideNumberButton();
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    final flutterDeck = context.flutterDeck;
+    final controlsNotifier = flutterDeck.controlsNotifier;
+    final router = flutterDeck.router;
+    final shortcuts = flutterDeck.globalConfiguration.controls.shortcuts;
+    final shortcut = shortcuts.toggleNavigationDrawer.toShortcutString(context);
+
+    return ListenableBuilder(
+      listenable: router,
+      builder: (context, child) => ListenableBuilder(
+        listenable: controlsNotifier,
+        builder: (context, child) {
+          final enabled = !controlsNotifier.intentDisabled(
+            const ToggleDrawerIntent(),
+          );
+
+          return IconButton(
+            icon: Text(
+              '${flutterDeck.slideNumber}',
+              style: TextStyle(
+                color: enabled ? theme.iconTheme.color : theme.disabledColor,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            tooltip:
+                'Open navigation drawer'
+                '${shortcuts.enabled && shortcut.isNotEmpty ? ' ($shortcut)' : ''}',
+            onPressed: enabled ? controlsNotifier.toggleDrawer : null,
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _MarkerControls extends StatelessWidget {
+  const _MarkerControls();
+
+  @override
+  Widget build(BuildContext context) {
+    final flutterDeck = context.flutterDeck;
+    final controlsNotifier = flutterDeck.controlsNotifier;
+    final markerNotifier = flutterDeck.markerNotifier;
+    final route = flutterDeck.configuration.route;
+    final shortcuts = flutterDeck.globalConfiguration.controls.shortcuts;
+    final shortcut = shortcuts.toggleMarker.toShortcutString(context);
+
+    return ListenableBuilder(
+      listenable: markerNotifier,
+      builder: (context, child) => markerNotifier.enabled
+          ? Row(
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.edit_off_rounded),
+                  tooltip:
+                      'Turn off marker'
+                      '${shortcuts.enabled && shortcut.isNotEmpty ? ' ($shortcut)' : ''}',
+                  onPressed: controlsNotifier.toggleMarker,
+                ),
+                IconButton(
+                  icon: const Icon(Icons.delete_forever_rounded),
+                  tooltip: 'Clear marker',
+                  onPressed: markerNotifier.pathsForSlide(route).isNotEmpty
+                      ? () => markerNotifier.clear(route)
+                      : null,
+                ),
+              ],
+            )
+          : const SizedBox.shrink(),
+    );
+  }
+}
+
+class _LocalizationMenuButton extends StatelessWidget {
+  const _LocalizationMenuButton();
+
+  @override
+  Widget build(BuildContext context) {
+    final flutterDeck = context.flutterDeck;
+    final localizationNotifier = flutterDeck.localizationNotifier;
+
+    return ValueListenableBuilder(
+      valueListenable: localizationNotifier,
+      builder: (context, locale, _) => SubmenuButton(
+        leadingIcon: const Icon(Icons.language_rounded),
+        menuChildren: [
+          for (final supportedLocale in localizationNotifier.supportedLocales)
+            _MenuSelectionButton(
+              selected: supportedLocale == locale,
+              label: supportedLocale.languageCode,
+              onPressed: () => localizationNotifier.update(supportedLocale),
+            ),
+        ],
+        child: Text('Language: ${locale.languageCode}'),
+      ),
+    );
+  }
+}
+
+class _MenuSelectionButton extends StatelessWidget {
+  const _MenuSelectionButton({
+    required this.label,
+    required this.selected,
+    required this.onPressed,
+  });
+
+  final String label;
+  final bool selected;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return MenuItemButton(
+      leadingIcon: selected
+          ? const Icon(Icons.check_rounded)
+          : const SizedBox(width: 24),
+      trailingIcon: const SizedBox(width: 24),
+      onPressed: onPressed,
+      child: Text(
+        label,
+        style: TextStyle(
+          fontWeight: selected ? FontWeight.bold : FontWeight.normal,
+        ),
+      ),
+    );
+  }
+}
+
+class _MarkerButton extends StatelessWidget {
+  const _MarkerButton();
+
+  @override
+  Widget build(BuildContext context) {
+    final flutterDeck = context.flutterDeck;
+    final controlsNotifier = flutterDeck.controlsNotifier;
+    final shortcuts = flutterDeck.globalConfiguration.controls.shortcuts;
+    final shortcut = shortcuts.toggleMarker.toShortcutString(context);
+
+    return MenuItemButton(
+      leadingIcon: const Icon(Icons.edit_rounded),
+      trailingIcon: shortcuts.enabled && shortcut.isNotEmpty
+          ? Text('($shortcut)')
+          : null,
+      onPressed: controlsNotifier.toggleMarker,
+      child: const Text('Toggle marker'),
+    );
+  }
+}
+
+class _PresenterViewButton extends StatelessWidget {
+  const _PresenterViewButton();
+
+  @override
+  Widget build(BuildContext context) {
+    final presenterController = context.flutterDeck.presenterController;
+
+    return MenuItemButton(
+      leadingIcon: const Icon(Icons.forum_rounded),
+      onPressed: () => presenterController
+        ..init()
+        ..open(),
+      child: const Text('Open presenter view'),
+    );
+  }
+}
+
+class _FullscreenButton extends StatelessWidget {
+  const _FullscreenButton();
+
+  @override
+  Widget build(BuildContext context) {
+    final flutterDeck = context.flutterDeck;
+    final controlsNotifier = flutterDeck.controlsNotifier;
+    final markerNotifier = flutterDeck.markerNotifier;
+
+    return FutureBuilder(
+      future: controlsNotifier.isInFullscreen(),
+      initialData: false,
+      builder: (BuildContext context, AsyncSnapshot<bool> snapshot) {
+        final isInFullscreen = snapshot.data ?? false;
+        final onPressed = isInFullscreen
+            ? controlsNotifier.leaveFullscreen
+            : controlsNotifier.enterFullscreen;
+
+        return ListenableBuilder(
+          listenable: markerNotifier,
+          builder: (context, _) => MenuItemButton(
+            leadingIcon: Icon(
+              isInFullscreen
+                  ? Icons.fullscreen_exit_rounded
+                  : Icons.fullscreen_rounded,
+            ),
+            onPressed: !markerNotifier.enabled ? onPressed : null,
+            child: Text(
+              isInFullscreen ? 'Leave full screen' : 'Enter full screen',
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _ThemeButton extends StatelessWidget {
+  const _ThemeButton();
+
+  @override
+  Widget build(BuildContext context) {
+    final themeNotifier = context.flutterDeck.themeNotifier;
+
+    return ValueListenableBuilder(
+      valueListenable: themeNotifier,
+      builder: (context, themeMode, _) => context.darkModeEnabled(themeMode)
+          ? MenuItemButton(
+              leadingIcon: const Icon(Icons.light_mode_rounded),
+              onPressed: () => themeNotifier.update(ThemeMode.light),
+              child: const Text('Use light mode'),
+            )
+          : MenuItemButton(
+              leadingIcon: const Icon(Icons.dark_mode_rounded),
+              onPressed: () => themeNotifier.update(ThemeMode.dark),
+              child: const Text('Use dark mode'),
+            ),
+    );
+  }
+}
+
+class _OptionsMenuButton extends StatelessWidget {
+  const _OptionsMenuButton();
+
+  @override
+  Widget build(BuildContext context) {
+    final FlutterDeck(
+      :controlsNotifier,
+      :localizationNotifier,
+      :plugins,
+      :presenterController,
+      :router,
+    ) = context.flutterDeck;
+    final canFullscreen = controlsNotifier.canFullscreen();
+    final supportedLocales = localizationNotifier.supportedLocales;
+
+    final additionalMenuItems = [
+      for (final plugin in plugins)
+        ...plugin.buildControls(
+          context,
+          (
+            context, {
+            required label,
+            required onPressed,
+            icon,
+            closeOnActivate,
+          }) => MenuItemButton(
+            leadingIcon: icon,
+            onPressed: onPressed,
+            closeOnActivate: closeOnActivate ?? true,
+            child: Text(label),
+          ),
+        ),
+      if (plugins.isNotEmpty) const _PopupMenuDivider(),
+      if (supportedLocales.length > 1) const _LocalizationMenuButton(),
+      if (presenterController.available && !router.isPresenterView)
+        const _PresenterViewButton(),
+    ];
+
+    return MenuButtonTheme(
+      data: MenuButtonThemeData(
+        style: ButtonStyle(
+          backgroundColor: WidgetStatePropertyAll(
+            Theme.of(context).colorScheme.surface,
+          ),
+        ),
+      ),
+      child: MenuAnchor(
+        builder: (context, controller, child) => IconButton(
+          icon: const Icon(Icons.more_vert_rounded),
+          tooltip: 'Open menu',
+          onPressed: controller.isOpen ? controller.close : controller.open,
+        ),
+        menuChildren: [
+          const _ThemeButton(),
+          const _MarkerButton(),
+          if (canFullscreen) const _FullscreenButton(),
+          if (additionalMenuItems.isNotEmpty) const _PopupMenuDivider(),
+          ...additionalMenuItems,
+        ],
+      ),
+    );
+  }
+}
+
+class _PopupMenuDivider extends StatelessWidget {
+  const _PopupMenuDivider();
+
+  @override
+  Widget build(BuildContext context) {
+    return ColoredBox(
+      color: Theme.of(context).colorScheme.surface,
+      child: const Divider(indent: 12),
+    );
+  }
+}
+
+extension _IterableShortcutActivatorX on Iterable<ShortcutActivator> {
+  String toShortcutString(BuildContext context) {
+    return whereType<MenuSerializableShortcut>()
+        .map(
+          (s) => LocalizedShortcutLabeler.instance.getShortcutLabel(
+            s,
+            MaterialLocalizations.of(context),
+          ),
+        )
+        .join(' / ');
+  }
+}
