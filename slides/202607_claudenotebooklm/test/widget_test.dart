@@ -4,6 +4,9 @@ import 'package:flutter_test/flutter_test.dart';
 void main() {
   testWidgets('ClaudenotebooklmApp builds without error', (tester) async {
     await tester.pumpWidget(const ClaudenotebooklmApp());
-    await tester.pump(const Duration(seconds: 2));
+    await tester.pump();
+    await tester.pumpAndSettle();
+
+    expect(tester.takeException(), isNull);
   });
 }
