@@ -43,53 +43,90 @@ void main() {
     expect(drawing.lengthInBytes, greaterThan(30000));
   });
 
-  testWidgets('previous navigation covers the current page from above', (
-    tester,
-  ) async {
-    await tester.pumpWidget(const ExampleApp());
-    await tester.pumpAndSettle();
+  testWidgets(
+    'previous navigation covers from the left binding without flash',
+    (tester) async {
+      await tester.pumpWidget(const ExampleApp());
+      await tester.pumpAndSettle();
 
-    await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
-    await tester.pumpAndSettle();
-    expect(find.textContaining('ある日、青い小鳥は'), findsOneWidget);
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
+      await tester.pumpAndSettle();
+      expect(find.textContaining('ある日、青い小鳥は'), findsOneWidget);
 
-    await tester.sendKeyEvent(LogicalKeyboardKey.arrowLeft);
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 500));
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowLeft);
+      await tester.pump();
+      await tester.pump();
 
-    final previousPageRoute = ModalRoute.of(
-      tester.element(find.text('FlutterDeck Storybook')),
-    );
-    final currentPageRoute = ModalRoute.of(
-      tester.element(find.textContaining('ある日、青い小鳥は')),
-    );
-    expect(previousPageRoute?.opaque, isFalse);
-    expect(currentPageRoute?.opaque, isFalse);
+      final initialCoverSheet = tester.widget<StorybookCurlSheet>(
+        find.byKey(const ValueKey('storybook-page-cover-incoming-sheet')),
+      );
+      expect(initialCoverSheet.direction, StorybookPageCurlDirection.forward);
+      expect(initialCoverSheet.motion, StorybookPageCurlMotion.coverPrevious);
+      expect(initialCoverSheet.progress, closeTo(1, 0.001));
 
-    final coverSheet = tester.widget<StorybookCurlSheet>(
-      find.byKey(const ValueKey('storybook-page-cover-incoming-sheet')),
-    );
-    expect(coverSheet.direction, StorybookPageCurlDirection.backward);
-    expect(coverSheet.motion, StorybookPageCurlMotion.coverPrevious);
-    expect(coverSheet.progress, inExclusiveRange(0.85, 1));
-    final currentPageClip = tester
-        .widgetList<StorybookCurlReveal>(find.byType(StorybookCurlReveal))
-        .singleWhere(
-          (reveal) =>
-              reveal.clipKey ==
-              const ValueKey('storybook-page-cover-current-page'),
-        );
-    expect(currentPageClip.motion, StorybookPageCurlMotion.coverPrevious);
-    expect(currentPageClip.progress, closeTo(coverSheet.progress, 0.01));
-    expect(
-      find.byKey(const ValueKey('storybook-page-turn-outgoing-sheet')),
-      findsNothing,
-    );
+      final initialSheetClip = tester.widget<ClipPath>(
+        find.byKey(const ValueKey('storybook-page-cover-sheet-clip')),
+      );
+      final initialClipSize = tester.getSize(
+        find.byKey(const ValueKey('storybook-page-cover-sheet-clip')),
+      );
+      final initialBounds = initialSheetClip.clipper!
+          .getClip(initialClipSize)
+          .getBounds();
+      expect(initialBounds.width, lessThan(initialClipSize.width * 0.01));
+      expect(
+        initialSheetClip.clipper!
+            .getClip(initialClipSize)
+            .contains(initialClipSize.center(Offset.zero)),
+        isFalse,
+      );
 
-    await tester.pumpAndSettle();
-    expect(find.text('FlutterDeck Storybook'), findsOneWidget);
-    expect(tester.takeException(), isNull);
-  });
+      await tester.pump(const Duration(milliseconds: 850));
+
+      final previousPageRoute = ModalRoute.of(
+        tester.element(find.text('FlutterDeck Storybook')),
+      );
+      final currentPageRoute = ModalRoute.of(
+        tester.element(find.textContaining('ある日、青い小鳥は')),
+      );
+      expect(previousPageRoute?.opaque, isFalse);
+      expect(currentPageRoute?.opaque, isFalse);
+
+      final coverSheet = tester.widget<StorybookCurlSheet>(
+        find.byKey(const ValueKey('storybook-page-cover-incoming-sheet')),
+      );
+      expect(coverSheet.direction, StorybookPageCurlDirection.forward);
+      expect(coverSheet.motion, StorybookPageCurlMotion.coverPrevious);
+      expect(coverSheet.progress, inExclusiveRange(0.45, 0.55));
+      final sheetClip = tester.widget<ClipPath>(
+        find.byKey(const ValueKey('storybook-page-cover-sheet-clip')),
+      );
+      final clipSize = tester.getSize(
+        find.byKey(const ValueKey('storybook-page-cover-sheet-clip')),
+      );
+      final coverBounds = sheetClip.clipper!.getClip(clipSize).getBounds();
+      expect(coverBounds.left, closeTo(0, 0.01));
+      expect(coverBounds.right, inExclusiveRange(0, clipSize.width));
+      final currentPageClip = tester
+          .widgetList<StorybookCurlReveal>(find.byType(StorybookCurlReveal))
+          .singleWhere(
+            (reveal) =>
+                reveal.clipKey ==
+                const ValueKey('storybook-page-cover-current-page'),
+          );
+      expect(currentPageClip.motion, StorybookPageCurlMotion.coverPrevious);
+      expect(currentPageClip.direction, StorybookPageCurlDirection.forward);
+      expect(currentPageClip.progress, closeTo(coverSheet.progress, 0.01));
+      expect(
+        find.byKey(const ValueKey('storybook-page-turn-outgoing-sheet')),
+        findsNothing,
+      );
+
+      await tester.pumpAndSettle();
+      expect(find.text('FlutterDeck Storybook'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    },
+  );
 
   testWidgets('ExampleApp moves through every storybook page', (tester) async {
     await tester.pumpWidget(const ExampleApp());

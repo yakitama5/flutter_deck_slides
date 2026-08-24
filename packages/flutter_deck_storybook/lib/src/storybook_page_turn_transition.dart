@@ -360,7 +360,9 @@ class _StorybookPageTurnTransition extends StatelessWidget {
     // FlutterDeck changes slides with GoRouter.go, so both route animations
     // move forward even when the logical slide number decreases. The new
     // previous page is therefore identified by its primary animation and
-    // drawn as a sheet travelling from edge-on to flat. GoRouter keeps the
+    // drawn as a sheet travelling from edge-on to flat. The physical binding
+    // remains at the left edge: the previous sheet unfolds from that binding
+    // and covers the current page towards the right. GoRouter keeps the
     // outgoing route painted above it, so that route is clipped by the same
     // silhouette below to make the incoming sheet visually cover it.
     final isReplacementCover =
@@ -375,7 +377,7 @@ class _StorybookPageTurnTransition extends StatelessWidget {
       return StorybookCurlSheet(
         key: const ValueKey('storybook-page-cover-incoming-sheet'),
         progress: 1 - incoming,
-        direction: StorybookPageCurlDirection.backward,
+        direction: StorybookPageCurlDirection.forward,
         motion: StorybookPageCurlMotion.coverPrevious,
         perspective: perspective,
         maxRotation: maxRotation,
@@ -391,7 +393,7 @@ class _StorybookPageTurnTransition extends StatelessWidget {
       return StorybookCurlReveal(
         clipKey: const ValueKey('storybook-page-cover-current-page'),
         progress: 1 - outgoing,
-        direction: StorybookPageCurlDirection.backward,
+        direction: StorybookPageCurlDirection.forward,
         motion: StorybookPageCurlMotion.coverPrevious,
         perspective: perspective,
         maxRotation: maxRotation,
@@ -416,7 +418,7 @@ class _StorybookPageTurnTransition extends StatelessWidget {
       return StorybookCurlSheet(
         key: const ValueKey('storybook-page-cover-incoming-sheet'),
         progress: outgoing,
-        direction: StorybookPageCurlDirection.backward,
+        direction: StorybookPageCurlDirection.forward,
         motion: StorybookPageCurlMotion.coverPrevious,
         perspective: perspective,
         maxRotation: maxRotation,
@@ -432,7 +434,7 @@ class _StorybookPageTurnTransition extends StatelessWidget {
       return StorybookCurlReveal(
         clipKey: const ValueKey('storybook-page-cover-current-page'),
         progress: incoming,
-        direction: StorybookPageCurlDirection.backward,
+        direction: StorybookPageCurlDirection.forward,
         motion: StorybookPageCurlMotion.coverPrevious,
         perspective: perspective,
         maxRotation: maxRotation,
