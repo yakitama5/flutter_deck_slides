@@ -257,13 +257,14 @@ class _StorybookPageTurnTransition extends StatelessWidget {
         child: child,
       ),
       builder: (context, page) {
-        final incoming = Curves.easeInOutSine.transform(
-          animation.value.clamp(0.0, 1.0),
-        );
-        final outgoing = Curves.easeInOutSine.transform(
-          secondaryAnimation.value.clamp(0.0, 1.0),
-        );
+        final rawIncoming = animation.value.clamp(0.0, 1.0);
+        final rawOutgoing = secondaryAnimation.value.clamp(0.0, 1.0);
         if (direction == _PageTurnDirection.forward) {
+          // The reference spends most of the first half shifting and raising
+          // the midpoint. The broad turn accelerates only after that blister
+          // is readable, producing the late hand-driven "flick" of the page.
+          final incoming = Curves.easeInCubic.transform(rawIncoming);
+          final outgoing = Curves.easeInCubic.transform(rawOutgoing);
           return _buildForwardTurn(
             page: page!,
             incoming: incoming,
@@ -271,6 +272,10 @@ class _StorybookPageTurnTransition extends StatelessWidget {
           );
         }
 
+        // A previous page is not the forward peel played backwards. It arrives
+        // above the current page, crosses it, then decelerates as it settles.
+        final incoming = Curves.easeInOutCubic.transform(rawIncoming);
+        final outgoing = Curves.easeInOutCubic.transform(rawOutgoing);
         return _buildBackwardCover(
           page: page!,
           incoming: incoming,

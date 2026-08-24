@@ -53,14 +53,14 @@ void main() {
 
     await tester.sendKeyEvent(LogicalKeyboardKey.arrowLeft);
     await tester.pump();
-    await tester.pump(const Duration(milliseconds: 150));
+    await tester.pump(const Duration(milliseconds: 500));
 
     final coverSheet = tester.widget<StorybookCurlSheet>(
       find.byKey(const ValueKey('storybook-page-cover-incoming-sheet')),
     );
     expect(coverSheet.direction, StorybookPageCurlDirection.backward);
     expect(coverSheet.motion, StorybookPageCurlMotion.coverPrevious);
-    expect(coverSheet.progress, inExclusiveRange(0, 1));
+    expect(coverSheet.progress, inExclusiveRange(0.85, 1));
     expect(
       find.byKey(const ValueKey('storybook-page-cover-current-page')),
       findsOneWidget,
