@@ -9,7 +9,7 @@ final storybookSounds = StorybookSoundEffects(
 );
 
 final pageTurnTransition = FlutterDeckTransition.custom(
-  duration: const Duration(milliseconds: 1000),
+  duration: StorybookPageTurnTransitionBuilder.referenceTurnDuration,
   transitionBuilder: StorybookPageTurnTransitionBuilder(
     usePerspective: true,
     pageFlex: 0.56,
@@ -38,7 +38,7 @@ FlutterDeckApp(
 );
 ```
 
-`StorybookPageTurnTransitionBuilder` は移動方向を覚えるため、デッキ全体で同じインスタンスを再利用してください。インク表現は `StorybookPage` のコンテンツへ適用され、紙面・綴じ目・影は先に表示されます。`enableInkReveal: false` で描画演出のみ無効化できます。
+`StorybookPageTurnTransitionBuilder` は移動方向を覚えるため、デッキ全体で同じインスタンスを再利用してください。`referenceTurnDuration` は参照動画を0.1秒刻みで測った約1.7秒の紙めくり時間です。インク表現は `StorybookPage` のコンテンツへ適用され、紙面・綴じ目・影は先に表示されます。`enableInkReveal: false` で描画演出のみ無効化できます。
 
 `StorybookSoundEffects` は、めくり始めに約0.65秒の紙音、下描きが現れ始める位置に約2.48秒の鉛筆・筆音を合わせます。音声は自作の生成素材で、外部通信は行いません。`enabled = false` で一時ミュートでき、不要なら `soundEffects` を省略すると音声機能自体を使いません。所有する `State` の `dispose` では `StorybookSoundEffects.dispose()` を呼んでください。Webではブラウザの自動再生制限により、URLを開いただけでは鳴らず、矢印キー・タップなどユーザー操作でページを移動した時から再生されます。
 

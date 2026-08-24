@@ -23,7 +23,7 @@ class _{{CLASS_NAME}}AppState extends State<{{CLASS_NAME}}App> {
     super.initState();
     _soundEffects = StorybookSoundEffects();
     _pageTurnTransition = FlutterDeckTransition.custom(
-      duration: const Duration(milliseconds: 1000),
+      duration: StorybookPageTurnTransitionBuilder.referenceTurnDuration,
       transitionBuilder: StorybookPageTurnTransitionBuilder(
         usePerspective: true,
         enableInkReveal: true,

@@ -13,17 +13,20 @@ enum _PageTurnDirection { forward, backward }
 /// A page-turn transition for [FlutterDeckApp].
 ///
 /// Reuse a single instance as the deck's global transition. The instance keeps
-/// track of the current slide number so that previous navigation turns the page
-/// in the opposite direction.
+/// track of the current slide number so that forward navigation turns the
+/// current sheet away while previous navigation covers it with the prior sheet.
 class StorybookPageTurnTransitionBuilder extends FlutterDeckTransitionBuilder {
+  /// Page-turn duration measured from the supplied reference video.
+  static const referenceTurnDuration = Duration(milliseconds: 1700);
+
   /// Creates a storybook page-turn transition builder.
   StorybookPageTurnTransitionBuilder({
     this.perspective = 0.00008,
     this.maxRotation = math.pi / 2,
     this.pageFlex = 0.56,
     this.pageTwist = 0.035,
-    this.meshColumns = 32,
-    this.meshRows = 10,
+    this.meshColumns = 40,
+    this.meshRows = 16,
     this.reverseOnPrevious = true,
     this.usePerspective = true,
     this.enableInkReveal = true,

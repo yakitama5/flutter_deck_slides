@@ -97,7 +97,12 @@ void main() {
     expect(developingPage().sketchProgress, 0);
     expect(developingPage().paintProgress, 0);
 
-    await tester.pump(const Duration(milliseconds: 400));
+    await tester.pump(const Duration(milliseconds: 900));
+
+    expect(developingPage().sketchProgress, 0);
+    expect(developingPage().paintProgress, 0);
+
+    await tester.pump(const Duration(milliseconds: 250));
 
     expect(developingPage().sketchProgress, 0);
     expect(developingPage().paintProgress, 0);

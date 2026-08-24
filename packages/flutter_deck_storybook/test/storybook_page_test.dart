@@ -88,8 +88,8 @@ void main() {
     expect(sheet.direction, StorybookPageCurlDirection.forward);
     expect(sheet.motion, StorybookPageCurlMotion.turnAway);
     expect(sheet.progress, closeTo(0.5, 0.01));
-    expect(sheet.columns, 32);
-    expect(sheet.rows, 10);
+    expect(sheet.columns, 40);
+    expect(sheet.rows, 16);
     expect(sheet.flex, greaterThan(0));
     expect(sheet.twist, greaterThan(0));
     expect(tester.takeException(), isNull);
@@ -201,16 +201,19 @@ void main() {
     expect(late.$3, lessThan(early.$3));
   });
 
-  test('custom flutter_deck transition can match the one-second turn', () {
+  test('custom flutter_deck transition can match the reference turn', () {
     final transition = FlutterDeckTransition.custom(
-      duration: const Duration(milliseconds: 1000),
+      duration: StorybookPageTurnTransitionBuilder.referenceTurnDuration,
       transitionBuilder: StorybookPageTurnTransitionBuilder(),
     );
 
-    expect(transition.duration, const Duration(milliseconds: 1000));
+    expect(
+      transition.duration,
+      StorybookPageTurnTransitionBuilder.referenceTurnDuration,
+    );
     expect(
       transition.reverseDuration ?? transition.duration,
-      const Duration(milliseconds: 1000),
+      StorybookPageTurnTransitionBuilder.referenceTurnDuration,
     );
   });
 
