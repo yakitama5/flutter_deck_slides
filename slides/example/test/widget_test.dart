@@ -21,7 +21,9 @@ void main() {
     await tester.pump();
 
     expect(placeholder, findsNothing);
-    expect(find.text('FlutterDeck Storybook'), findsOneWidget);
+    final coverTitle = find.text('FlutterDeck Storybook');
+    expect(coverTitle, findsOneWidget);
+    expect(ModalRoute.of(tester.element(coverTitle))?.opaque, isFalse);
     expect(tester.takeException(), isNull);
   });
 
@@ -54,6 +56,15 @@ void main() {
     await tester.sendKeyEvent(LogicalKeyboardKey.arrowLeft);
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 500));
+
+    final previousPageRoute = ModalRoute.of(
+      tester.element(find.text('FlutterDeck Storybook')),
+    );
+    final currentPageRoute = ModalRoute.of(
+      tester.element(find.textContaining('ある日、青い小鳥は')),
+    );
+    expect(previousPageRoute?.opaque, isFalse);
+    expect(currentPageRoute?.opaque, isFalse);
 
     final coverSheet = tester.widget<StorybookCurlSheet>(
       find.byKey(const ValueKey('storybook-page-cover-incoming-sheet')),

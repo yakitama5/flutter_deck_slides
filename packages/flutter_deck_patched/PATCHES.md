@@ -9,6 +9,8 @@ Local changes:
 
 - `FlutterDeckTransition.custom` accepts `duration` and `reverseDuration`.
 - `FlutterDeckRouter` forwards those values to `CustomTransitionPage`.
+- Slide routes are non-opaque so custom page-curl transitions can paint the
+  neighbouring paper through their changing silhouette.
 - `FlutterDeckApp` mounts its focusable deck subtree after the first layout
   frame, avoiding Flutter 3.47's initial Web view-focus race.
 - Source is formatted with the repository's Dart 3.13.1 formatter.
