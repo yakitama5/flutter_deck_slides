@@ -20,6 +20,9 @@ void main() {
     await tester.pump();
 
     expect(focusGuard().excluding, isFalse);
+    await tester.pump();
+
+    expect(primaryFocus?.debugLabel, 'FlutterDeck controls');
     expect(tester.takeException(), isNull);
   });
 
