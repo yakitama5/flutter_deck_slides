@@ -1,6 +1,7 @@
 import 'package:example_slide/main.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
+import 'package:flutter_deck_storybook/src/storybook_page_curl.dart';
 import 'package:flutter_deck_storybook/src/storybook_reveal.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -38,6 +39,40 @@ void main() {
 
     expect(pageTurn.lengthInBytes, greaterThan(8000));
     expect(drawing.lengthInBytes, greaterThan(30000));
+  });
+
+  testWidgets('previous navigation covers the current page from above', (
+    tester,
+  ) async {
+    await tester.pumpWidget(const ExampleApp());
+    await tester.pumpAndSettle();
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
+    await tester.pumpAndSettle();
+    expect(find.textContaining('ある日、青い小鳥は'), findsOneWidget);
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowLeft);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 150));
+
+    final coverSheet = tester.widget<StorybookCurlSheet>(
+      find.byKey(const ValueKey('storybook-page-cover-incoming-sheet')),
+    );
+    expect(coverSheet.direction, StorybookPageCurlDirection.backward);
+    expect(coverSheet.motion, StorybookPageCurlMotion.coverPrevious);
+    expect(coverSheet.progress, inExclusiveRange(0, 1));
+    expect(
+      find.byKey(const ValueKey('storybook-page-cover-current-page')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const ValueKey('storybook-page-turn-outgoing-sheet')),
+      findsNothing,
+    );
+
+    await tester.pumpAndSettle();
+    expect(find.text('FlutterDeck Storybook'), findsOneWidget);
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('ExampleApp moves through every storybook page', (tester) async {

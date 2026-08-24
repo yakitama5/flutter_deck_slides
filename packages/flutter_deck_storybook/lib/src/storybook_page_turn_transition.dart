@@ -20,8 +20,8 @@ class StorybookPageTurnTransitionBuilder extends FlutterDeckTransitionBuilder {
   StorybookPageTurnTransitionBuilder({
     this.perspective = 0.00008,
     this.maxRotation = math.pi / 2,
-    this.pageFlex = 0.34,
-    this.pageTwist = 0.045,
+    this.pageFlex = 0.56,
+    this.pageTwist = 0.035,
     this.meshColumns = 32,
     this.meshRows = 10,
     this.reverseOnPrevious = true,
@@ -32,7 +32,7 @@ class StorybookPageTurnTransitionBuilder extends FlutterDeckTransitionBuilder {
     this.soundEffects,
   }) : assert(perspective > 0),
        assert(maxRotation > 0 && maxRotation <= math.pi / 2),
-       assert(pageFlex >= 0 && pageFlex <= math.pi / 3),
+       assert(pageFlex >= 0 && pageFlex <= math.pi / 2),
        assert(pageTwist >= 0 && pageTwist <= math.pi / 3),
        assert(meshColumns >= 8 && meshColumns <= 64),
        assert(meshRows >= 2 && meshRows <= 24),
@@ -44,7 +44,7 @@ class StorybookPageTurnTransitionBuilder extends FlutterDeckTransitionBuilder {
   /// Maximum Y-axis rotation in radians.
   final double maxRotation;
 
-  /// Horizontal bend applied across the paper while it turns.
+  /// Strength of the midpoint lift and horizontal bend while the paper turns.
   final double pageFlex;
 
   /// Phase-changing twist between the top and bottom edges.
@@ -56,7 +56,8 @@ class StorybookPageTurnTransitionBuilder extends FlutterDeckTransitionBuilder {
   /// Vertical subdivisions used by the paper mesh.
   final int meshRows;
 
-  /// Whether previous navigation should turn the page in reverse.
+  /// Whether previous navigation should cover the current page with the
+  /// previous sheet instead of using the forward turn animation.
   final bool reverseOnPrevious;
 
   /// Whether to use the perspective-based 3D transition.
@@ -111,7 +112,7 @@ class StorybookPageTurnTransitionBuilder extends FlutterDeckTransitionBuilder {
         child: _StorybookInkSequence(
           animation: animation,
           secondaryAnimation: secondaryAnimation,
-          enabled: enableInkReveal,
+          enabled: enableInkReveal && _direction == _PageTurnDirection.forward,
           duration: inkRevealDuration,
           revealOrigin: inkRevealOrigin,
           soundEffects: soundEffects,
@@ -246,7 +247,7 @@ class _StorybookPageTurnTransition extends StatelessWidget {
       child: _StorybookInkSequence(
         animation: animation,
         secondaryAnimation: secondaryAnimation,
-        enabled: enableInkReveal,
+        enabled: enableInkReveal && direction == _PageTurnDirection.forward,
         duration: inkRevealDuration,
         revealOrigin: inkRevealOrigin,
         soundEffects: soundEffects,
@@ -259,55 +260,156 @@ class _StorybookPageTurnTransition extends StatelessWidget {
         final outgoing = Curves.easeInOutSine.transform(
           secondaryAnimation.value.clamp(0.0, 1.0),
         );
-        final curlDirection = direction == _PageTurnDirection.forward
-            ? StorybookPageCurlDirection.forward
-            : StorybookPageCurlDirection.backward;
-
-        final turnsOutWithPrimary =
-            animation.status == AnimationStatus.reverse && animation.value < 1;
-        final turnsOutWithSecondary =
-            secondaryAnimation.status == AnimationStatus.forward &&
-            secondaryAnimation.value > 0;
-        final isTurningOut = turnsOutWithPrimary || turnsOutWithSecondary;
-
-        if (!isTurningOut) {
-          // Keep the next sheet flat and expose only the area no longer
-          // covered by the rotating old sheet. This makes the paper itself
-          // uncover the blank page instead of crossfading between two pages.
-          final revealProgress =
-              secondaryAnimation.status == AnimationStatus.reverse
-              ? 1 - outgoing
-              : incoming;
-
-          return StorybookCurlReveal(
-            clipKey: const ValueKey('storybook-page-turn-incoming-reveal'),
-            progress: revealProgress,
-            direction: curlDirection,
-            perspective: perspective,
-            maxRotation: maxRotation,
-            flex: pageFlex,
-            twist: pageTwist,
-            columns: meshColumns,
-            rows: meshRows,
-            child: page!,
+        if (direction == _PageTurnDirection.forward) {
+          return _buildForwardTurn(
+            page: page!,
+            incoming: incoming,
+            outgoing: outgoing,
           );
         }
 
-        final turnProgress = turnsOutWithPrimary ? 1 - incoming : outgoing;
-        return StorybookCurlSheet(
-          key: const ValueKey('storybook-page-turn-outgoing-sheet'),
-          progress: turnProgress,
-          direction: curlDirection,
-          perspective: perspective,
-          maxRotation: maxRotation,
-          flex: pageFlex,
-          twist: pageTwist,
-          columns: meshColumns,
-          rows: meshRows,
-          child: page!,
+        return _buildBackwardCover(
+          page: page!,
+          incoming: incoming,
+          outgoing: outgoing,
         );
       },
     );
+  }
+
+  Widget _buildForwardTurn({
+    required Widget page,
+    required double incoming,
+    required double outgoing,
+  }) {
+    final turnsOutWithPrimary =
+        animation.status == AnimationStatus.reverse && animation.value < 1;
+    final turnsOutWithSecondary =
+        secondaryAnimation.status == AnimationStatus.forward &&
+        secondaryAnimation.value > 0;
+    final isTurningOut = turnsOutWithPrimary || turnsOutWithSecondary;
+
+    if (!isTurningOut) {
+      // The next route is flat below the old sheet. Reveal only the area that
+      // the old sheet has physically uncovered.
+      final revealProgress =
+          secondaryAnimation.status == AnimationStatus.reverse
+          ? 1 - outgoing
+          : incoming;
+
+      return StorybookCurlReveal(
+        clipKey: const ValueKey('storybook-page-turn-incoming-reveal'),
+        progress: revealProgress,
+        direction: StorybookPageCurlDirection.forward,
+        motion: StorybookPageCurlMotion.turnAway,
+        perspective: perspective,
+        maxRotation: maxRotation,
+        flex: pageFlex,
+        twist: pageTwist,
+        columns: meshColumns,
+        rows: meshRows,
+        child: page,
+      );
+    }
+
+    final turnProgress = turnsOutWithPrimary ? 1 - incoming : outgoing;
+    return StorybookCurlSheet(
+      key: const ValueKey('storybook-page-turn-outgoing-sheet'),
+      progress: turnProgress,
+      direction: StorybookPageCurlDirection.forward,
+      motion: StorybookPageCurlMotion.turnAway,
+      perspective: perspective,
+      maxRotation: maxRotation,
+      flex: pageFlex,
+      twist: pageTwist,
+      columns: meshColumns,
+      rows: meshRows,
+      child: page,
+    );
+  }
+
+  Widget _buildBackwardCover({
+    required Widget page,
+    required double incoming,
+    required double outgoing,
+  }) {
+    // FlutterDeck changes slides with GoRouter.go, so both route animations
+    // move forward even when the logical slide number decreases. The new
+    // previous page is therefore identified by its primary animation, then
+    // drawn as a sheet travelling from edge-on to flat above the old page.
+    final isReplacementCover =
+        animation.status != AnimationStatus.reverse &&
+        animation.value < 1 &&
+        secondaryAnimation.status == AnimationStatus.dismissed;
+    final isReplacementUnderlay =
+        animation.status == AnimationStatus.completed &&
+        secondaryAnimation.status == AnimationStatus.forward;
+
+    if (isReplacementCover) {
+      return StorybookCurlSheet(
+        key: const ValueKey('storybook-page-cover-incoming-sheet'),
+        progress: 1 - incoming,
+        direction: StorybookPageCurlDirection.backward,
+        motion: StorybookPageCurlMotion.coverPrevious,
+        perspective: perspective,
+        maxRotation: maxRotation,
+        flex: pageFlex,
+        twist: pageTwist,
+        columns: meshColumns,
+        rows: meshRows,
+        child: page,
+      );
+    }
+
+    if (isReplacementUnderlay) {
+      return KeyedSubtree(
+        key: const ValueKey('storybook-page-cover-current-page'),
+        child: page,
+      );
+    }
+
+    // Also support a real Navigator.pop. In that lifecycle, the previous route
+    // is painted below the current route, so the current route must be clipped
+    // out along the exact silhouette of the covering sheet.
+    final isPoppedCurrentPage =
+        animation.status == AnimationStatus.reverse && animation.value < 1;
+    final isPoppedPreviousPage =
+        secondaryAnimation.status == AnimationStatus.reverse &&
+        secondaryAnimation.value > 0;
+
+    if (isPoppedPreviousPage) {
+      return StorybookCurlSheet(
+        key: const ValueKey('storybook-page-cover-incoming-sheet'),
+        progress: outgoing,
+        direction: StorybookPageCurlDirection.backward,
+        motion: StorybookPageCurlMotion.coverPrevious,
+        perspective: perspective,
+        maxRotation: maxRotation,
+        flex: pageFlex,
+        twist: pageTwist,
+        columns: meshColumns,
+        rows: meshRows,
+        child: page,
+      );
+    }
+
+    if (isPoppedCurrentPage) {
+      return StorybookCurlReveal(
+        clipKey: const ValueKey('storybook-page-cover-current-page'),
+        progress: incoming,
+        direction: StorybookPageCurlDirection.backward,
+        motion: StorybookPageCurlMotion.coverPrevious,
+        perspective: perspective,
+        maxRotation: maxRotation,
+        flex: pageFlex,
+        twist: pageTwist,
+        columns: meshColumns,
+        rows: meshRows,
+        child: page,
+      );
+    }
+
+    return page;
   }
 }
 
@@ -342,6 +444,7 @@ class _StorybookInkSequenceState extends State<_StorybookInkSequence>
   var _shouldReveal = false;
   var _incomingTransitionObserved = false;
   var _drawingCuePlayed = false;
+  var _reverseTurnCuePlayed = false;
 
   @override
   void initState() {
@@ -369,6 +472,7 @@ class _StorybookInkSequenceState extends State<_StorybookInkSequence>
       widget.animation.addListener(_handlePrimaryTick);
       widget.animation.addStatusListener(_handlePrimaryStatus);
       _incomingTransitionObserved = false;
+      _reverseTurnCuePlayed = false;
     }
     if (oldWidget.secondaryAnimation != widget.secondaryAnimation) {
       oldWidget.secondaryAnimation.removeStatusListener(_handleSecondaryStatus);
@@ -426,10 +530,16 @@ class _StorybookInkSequenceState extends State<_StorybookInkSequence>
 
   void _handlePrimaryStatus(AnimationStatus status) {
     if (status == AnimationStatus.forward) {
+      _reverseTurnCuePlayed = false;
       _beginIncomingTransition();
-    } else if (status == AnimationStatus.completed && _shouldReveal) {
-      _controller.forward();
+    } else if (status == AnimationStatus.completed) {
+      _reverseTurnCuePlayed = false;
+      if (_shouldReveal) _controller.forward();
     } else if (status == AnimationStatus.reverse) {
+      if (!_reverseTurnCuePlayed) {
+        _reverseTurnCuePlayed = true;
+        unawaited(widget.soundEffects?.playPageTurn());
+      }
       _controller.stop();
       unawaited(widget.soundEffects?.stopDrawing());
     }
