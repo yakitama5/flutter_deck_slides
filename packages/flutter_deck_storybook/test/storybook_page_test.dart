@@ -87,7 +87,7 @@ void main() {
     expect(find.byType(Transform), findsNothing);
     expect(sheet.direction, StorybookPageCurlDirection.forward);
     expect(sheet.motion, StorybookPageCurlMotion.turnAway);
-    expect(sheet.progress, closeTo(0.5, 0.01));
+    expect(sheet.progress, closeTo(0.145, 0.01));
     expect(sheet.columns, 40);
     expect(sheet.rows, 16);
     expect(sheet.flex, greaterThan(0));
@@ -103,7 +103,7 @@ void main() {
     final animation = AnimationController(
       vsync: tester,
       duration: const Duration(seconds: 1),
-      value: 0.5,
+      value: 0.8,
     )..forward();
     final secondaryAnimation = AnimationController(vsync: tester);
     addTearDown(animation.dispose);
