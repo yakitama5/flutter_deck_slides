@@ -91,6 +91,7 @@ void main() {
     expect(sheet.rows, 10);
     expect(sheet.flex, greaterThan(0));
     expect(sheet.twist, greaterThan(0));
+    expect(tester.takeException(), isNull);
 
     secondaryAnimation.stop();
   });
