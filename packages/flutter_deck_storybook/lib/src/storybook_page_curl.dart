@@ -121,12 +121,40 @@ class _StorybookCurlSheetState extends State<StorybookCurlSheet> {
 
   @override
   Widget build(BuildContext context) {
-    return SnapshotWidget(
+    final snapshot = SnapshotWidget(
       controller: _snapshotController,
       painter: _painter,
       mode: SnapshotMode.permissive,
       autoresize: true,
       child: widget.child,
+    );
+
+    if (widget.motion != StorybookPageCurlMotion.coverPrevious) {
+      return snapshot;
+    }
+
+    // SnapshotWidget intentionally paints its live child once before its first
+    // texture is available. For an incoming covering page that ordinary frame
+    // would expose the destination page across the whole screen for a moment.
+    // Keep every paint path, including that pre-snapshot frame, inside the
+    // physical silhouette of the sheet from the very first route frame.
+    return ClipPath(
+      key: const ValueKey('storybook-page-cover-sheet-clip'),
+      clipper: _StorybookCurlSheetClipper(
+        _StorybookCurlGeometry(
+          progress: widget.progress,
+          direction: widget.direction,
+          motion: widget.motion,
+          perspective: widget.perspective,
+          maxRotation: widget.maxRotation,
+          flex: widget.flex,
+          twist: widget.twist,
+          columns: widget.columns,
+          rows: widget.rows,
+        ),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: snapshot,
     );
   }
 }
@@ -406,6 +434,20 @@ class _StorybookCurlRevealClipper extends CustomClipper<Path> {
 
   @override
   bool shouldReclip(covariant _StorybookCurlRevealClipper oldClipper) {
+    return geometry != oldClipper.geometry;
+  }
+}
+
+class _StorybookCurlSheetClipper extends CustomClipper<Path> {
+  const _StorybookCurlSheetClipper(this.geometry);
+
+  final _StorybookCurlGeometry geometry;
+
+  @override
+  Path getClip(Size size) => geometry.sheetPath(size);
+
+  @override
+  bool shouldReclip(covariant _StorybookCurlSheetClipper oldClipper) {
     return geometry != oldClipper.geometry;
   }
 }
