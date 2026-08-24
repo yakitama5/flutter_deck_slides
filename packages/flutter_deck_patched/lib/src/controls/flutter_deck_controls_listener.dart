@@ -37,7 +37,6 @@ class FlutterDeckControlsListener extends StatelessWidget {
     required this.child,
     required this.controlsNotifier,
     required this.markerNotifier,
-    this.focusNode,
     super.key,
   });
 
@@ -49,9 +48,6 @@ class FlutterDeckControlsListener extends StatelessWidget {
 
   /// The notifier used to control the slide deck's marker.
   final FlutterDeckMarkerNotifier markerNotifier;
-
-  /// Focus node requested by [FlutterDeckApp] after its initial layout.
-  final FocusNode? focusNode;
 
   void _onHorizontalSwipe(DragEndDetails? details) {
     final velocity = details?.primaryVelocity;
@@ -80,8 +76,7 @@ class FlutterDeckControlsListener extends StatelessWidget {
     final controls = context.flutterDeck.globalConfiguration.controls;
 
     Widget widget = Focus(
-      focusNode: focusNode,
-      autofocus: focusNode == null,
+      autofocus: true,
       child: ListenableBuilder(
         listenable: controlsNotifier,
         builder: (context, child) => MouseRegion(
