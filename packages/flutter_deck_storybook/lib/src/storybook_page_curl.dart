@@ -8,6 +8,12 @@ import 'package:flutter/rendering.dart' show PaintingContextCallback;
 /// Direction in which the physical sheet travels.
 enum StorybookPageCurlDirection { forward, backward }
 
+/// Physical role played by the sheet during navigation.
+///
+/// A forward page [turnAway] uncovers the next page below it. A backward
+/// [coverPrevious] page travels over the current page and settles on top.
+enum StorybookPageCurlMotion { turnAway, coverPrevious }
+
 /// Paints a snapshotted page as a flexible, lightly twisted sheet.
 ///
 /// [SnapshotWidget] turns an arbitrary slide into a texture once. The painter
@@ -17,6 +23,7 @@ class StorybookCurlSheet extends StatefulWidget {
   const StorybookCurlSheet({
     required this.progress,
     required this.direction,
+    required this.motion,
     required this.perspective,
     required this.maxRotation,
     required this.flex,
@@ -29,6 +36,7 @@ class StorybookCurlSheet extends StatefulWidget {
 
   final double progress;
   final StorybookPageCurlDirection direction;
+  final StorybookPageCurlMotion motion;
   final double perspective;
   final double maxRotation;
   final double flex;
@@ -57,6 +65,7 @@ class _StorybookCurlSheetState extends State<StorybookCurlSheet> {
     _painter = _StorybookCurlSnapshotPainter(
       progress: widget.progress,
       direction: widget.direction,
+      motion: widget.motion,
       perspective: widget.perspective,
       maxRotation: widget.maxRotation,
       flex: widget.flex,
@@ -76,6 +85,7 @@ class _StorybookCurlSheetState extends State<StorybookCurlSheet> {
     _painter.update(
       progress: widget.progress,
       direction: widget.direction,
+      motion: widget.motion,
       perspective: widget.perspective,
       maxRotation: widget.maxRotation,
       flex: widget.flex,
@@ -109,6 +119,7 @@ class StorybookCurlReveal extends StatelessWidget {
   const StorybookCurlReveal({
     required this.progress,
     required this.direction,
+    required this.motion,
     required this.perspective,
     required this.maxRotation,
     required this.flex,
@@ -122,6 +133,7 @@ class StorybookCurlReveal extends StatelessWidget {
 
   final double progress;
   final StorybookPageCurlDirection direction;
+  final StorybookPageCurlMotion motion;
   final double perspective;
   final double maxRotation;
   final double flex;
@@ -136,6 +148,7 @@ class StorybookCurlReveal extends StatelessWidget {
     final geometry = _StorybookCurlGeometry(
       progress: progress,
       direction: direction,
+      motion: motion,
       perspective: perspective,
       maxRotation: maxRotation,
       flex: flex,
@@ -169,6 +182,7 @@ class _StorybookCurlSnapshotPainter extends SnapshotPainter {
   _StorybookCurlSnapshotPainter({
     required double progress,
     required StorybookPageCurlDirection direction,
+    required StorybookPageCurlMotion motion,
     required double perspective,
     required double maxRotation,
     required double flex,
@@ -178,6 +192,7 @@ class _StorybookCurlSnapshotPainter extends SnapshotPainter {
   }) : _geometry = _StorybookCurlGeometry(
          progress: progress,
          direction: direction,
+         motion: motion,
          perspective: perspective,
          maxRotation: maxRotation,
          flex: flex,
@@ -191,6 +206,7 @@ class _StorybookCurlSnapshotPainter extends SnapshotPainter {
   void update({
     required double progress,
     required StorybookPageCurlDirection direction,
+    required StorybookPageCurlMotion motion,
     required double perspective,
     required double maxRotation,
     required double flex,
@@ -201,6 +217,7 @@ class _StorybookCurlSnapshotPainter extends SnapshotPainter {
     final next = _StorybookCurlGeometry(
       progress: progress,
       direction: direction,
+      motion: motion,
       perspective: perspective,
       maxRotation: maxRotation,
       flex: flex,
@@ -242,9 +259,43 @@ class _StorybookCurlSnapshotPainter extends SnapshotPainter {
       ..filterQuality = FilterQuality.medium
       ..isAntiAlias = true;
 
-    context.canvas
+    final canvas = context.canvas
       ..save()
-      ..clipRect(offset & size)
+      ..clipRect(offset & size);
+
+    if (_geometry.motion == StorybookPageCurlMotion.coverPrevious &&
+        _geometry.turnEnvelope > 0.001) {
+      // During backward navigation this mesh is the previous page travelling
+      // above the current one. Its advancing edge must cast onto the page
+      // below; without this shadow the motion reads as another reveal/peel.
+      canvas
+        ..drawPath(
+          mesh.freeEdge,
+          Paint()
+            ..color = Colors.black.withValues(
+              alpha: 0.28 * _geometry.turnEnvelope,
+            )
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = math.max(22, size.width * 0.115)
+            ..maskFilter = MaskFilter.blur(
+              BlurStyle.normal,
+              math.max(15, size.width * 0.070),
+            )
+            ..isAntiAlias = true,
+        )
+        ..drawPath(
+          mesh.freeEdge,
+          Paint()
+            ..color = Colors.black.withValues(
+              alpha: 0.14 * _geometry.turnEnvelope,
+            )
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = math.max(2, size.width / 650)
+            ..isAntiAlias = true,
+        );
+    }
+
+    canvas
       ..drawVertices(mesh.vertices, BlendMode.modulate, paint)
       ..drawPath(
         mesh.freeEdge,
@@ -269,6 +320,17 @@ class _StorybookCurlSnapshotPainter extends SnapshotPainter {
   ) {
     // Platform views cannot be converted to a texture. Keep them usable instead
     // of failing the whole transition; ordinary Flutter slides use the mesh.
+    // A covering page is clipped to its projected silhouette so that the first
+    // pre-snapshot frame cannot flash as a fully opaque previous page.
+    if (_geometry.motion == StorybookPageCurlMotion.coverPrevious) {
+      context.canvas
+        ..save()
+        ..clipPath(_geometry.sheetPath(size).shift(offset));
+      painter(context, offset);
+      context.canvas.restore();
+      return;
+    }
+
     painter(context, offset);
   }
 
@@ -337,6 +399,7 @@ class _StorybookCurlGeometry {
   const _StorybookCurlGeometry({
     required this.progress,
     required this.direction,
+    required this.motion,
     required this.perspective,
     required this.maxRotation,
     required this.flex,
@@ -347,6 +410,7 @@ class _StorybookCurlGeometry {
 
   final double progress;
   final StorybookPageCurlDirection direction;
+  final StorybookPageCurlMotion motion;
   final double perspective;
   final double maxRotation;
   final double flex;
@@ -423,6 +487,14 @@ class _StorybookCurlGeometry {
   }
 
   Path revealPath(Size size) {
+    return Path.combine(
+      PathOperation.difference,
+      Path()..addRect(Offset.zero & size),
+      sheetPath(size),
+    );
+  }
+
+  Path sheetPath(Size size) {
     final top = _projectRow(size, 0);
     final bottom = _projectRow(size, 1);
     final edge = _edgePoints(size);
@@ -437,17 +509,7 @@ class _StorybookCurlGeometry {
       sheet.lineTo(point.dx, point.dy);
     }
     sheet.close();
-
-    // The incoming route is painted above the outgoing one by Navigator. Cut
-    // the projected sheet silhouette out of the new paper so the curled old
-    // sheet remains visible below it. The areas exposed above and below the
-    // bowed sheet are part of the new page too; leaving them out caused dark
-    // triangular gaps during the first mesh prototype.
-    return Path.combine(
-      PathOperation.difference,
-      Path()..addRect(Offset.zero & size),
-      sheet,
-    );
+    return sheet;
   }
 
   Path freeEdgePath(Size size) {
@@ -497,25 +559,62 @@ class _StorybookCurlGeometry {
 
   double _localAngle(double u, double v) {
     final p = normalizedProgress;
-    final baseAngle = maxRotation * p;
     final envelope = turnEnvelope;
 
-    // The first half of the sheet bends a little more than the free edge. It
-    // produces the broad, soft C/S-shaped flex visible in the reference rather
-    // than rotating the whole page as one rigid rectangle.
-    final horizontalFlex =
-        flex *
-        envelope *
-        (0.78 * math.sin(math.pi * u) + 0.22 * math.sin(2 * math.pi * u));
+    // A hand does not rotate the complete sheet at once. The supplied
+    // reference first raises a small area at the vertical midpoint close to
+    // the spine. The turn then propagates towards the top, bottom, and free
+    // edge. Delaying the broad rotation by both coordinates preserves that
+    // short, clearly visible "paper blister" before the page travels.
+    final verticalDistance = ((v - 0.5).abs() * 2).clamp(0.0, 1.0);
+    final propagationDelay =
+        0.10 * u + 0.18 * math.pow(verticalDistance, 1.35).toDouble();
+    final propagatedProgress = ((p - propagationDelay) / (1 - propagationDelay))
+        .clamp(0.0, 1.0);
+    final broadTurn =
+        maxRotation * (0.5 - 0.5 * math.cos(math.pi * propagatedProgress));
 
-    // The recording shows the bottom edge leading first, followed by the top
-    // edge passing it. A phase-changing twist reproduces that hand-turned feel.
+    final liftTimeline = (p / 0.78).clamp(0.0, 1.0);
+    final liftEnvelope = math.sin(math.pi * liftTimeline);
+    final liftTravel = _smoothStep(0.02, 0.66, p);
+    final liftCenter = 0.12 + 0.38 * liftTravel;
+    final liftWidth = 0.10 + 0.15 * liftTravel;
+    final horizontalLift = math.exp(
+      -0.5 * math.pow((u - liftCenter) / liftWidth, 2),
+    );
+    final verticalSpread = 0.14 + 0.62 * _smoothStep(0.05, 0.62, p);
+    final verticalLift = math.exp(
+      -0.5 * math.pow((v - 0.5) / verticalSpread, 2),
+    );
+    final spineLift =
+        flex * 1.22 * liftEnvelope * horizontalLift * verticalLift;
+
+    // Once the central lift has formed, retain a broad C-shaped bend while the
+    // lifted ridge travels across the page.
+    final broadFlex =
+        flex *
+        0.34 *
+        envelope *
+        _smoothStep(0.20, 0.58, p) *
+        math.sin(math.pi * u);
+
+    // A restrained late twist prevents the sheet from reading as an extruded
+    // vertical strip without stealing the initial motion from the midpoint.
     final verticalPosition = (v - 0.5) * 2;
     final twistPhase =
         0.65 * math.sin(2 * math.pi * p) - 0.35 * math.sin(math.pi * p);
-    final verticalTwist = twist * verticalPosition * twistPhase;
+    final verticalTwist =
+        twist * verticalPosition * twistPhase * _smoothStep(0.24, 0.48, p);
 
-    return (baseAngle + horizontalFlex + verticalTwist).clamp(0.0, maxRotation);
+    return (broadTurn + spineLift + broadFlex + verticalTwist).clamp(
+      0.0,
+      maxRotation,
+    );
+  }
+
+  double _smoothStep(double edge0, double edge1, double value) {
+    final t = ((value - edge0) / (edge1 - edge0)).clamp(0.0, 1.0);
+    return t * t * (3 - 2 * t);
   }
 
   Color _lightColor(double u, double v) {
@@ -537,6 +636,7 @@ class _StorybookCurlGeometry {
     return other is _StorybookCurlGeometry &&
         progress == other.progress &&
         direction == other.direction &&
+        motion == other.motion &&
         perspective == other.perspective &&
         maxRotation == other.maxRotation &&
         flex == other.flex &&
@@ -549,6 +649,7 @@ class _StorybookCurlGeometry {
   int get hashCode => Object.hash(
     progress,
     direction,
+    motion,
     perspective,
     maxRotation,
     flex,

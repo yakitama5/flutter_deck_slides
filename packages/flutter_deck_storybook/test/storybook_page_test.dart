@@ -86,6 +86,7 @@ void main() {
     expect(find.byType(SnapshotWidget), findsOneWidget);
     expect(find.byType(Transform), findsNothing);
     expect(sheet.direction, StorybookPageCurlDirection.forward);
+    expect(sheet.motion, StorybookPageCurlMotion.turnAway);
     expect(sheet.progress, closeTo(0.5, 0.01));
     expect(sheet.columns, 32);
     expect(sheet.rows, 10);
@@ -149,19 +150,20 @@ void main() {
     animation.stop();
   });
 
-  testWidgets('paper twist changes from a lower-corner to upper-corner lead', (
+  testWidgets('paper first lifts at the spine midpoint before either edge', (
     tester,
   ) async {
     const clipKey = ValueKey('twist-clip');
     final transition = StorybookPageTurnTransitionBuilder();
 
-    Future<(double, double)> revealThresholds(double progress) async {
+    Future<(double, double, double)> revealThresholds(double progress) async {
       await tester.pumpWidget(
         MaterialApp(
           home: StorybookCurlReveal(
             clipKey: clipKey,
             progress: progress,
             direction: StorybookPageCurlDirection.forward,
+            motion: StorybookPageCurlMotion.turnAway,
             perspective: transition.perspective,
             maxRotation: transition.maxRotation,
             flex: transition.pageFlex,
@@ -184,16 +186,19 @@ void main() {
       }
 
       return (
-        firstRevealedX(clip.size.height * 0.15),
-        firstRevealedX(clip.size.height * 0.85),
+        firstRevealedX(clip.size.height * 0.10),
+        firstRevealedX(clip.size.height * 0.50),
+        firstRevealedX(clip.size.height * 0.90),
       );
     }
 
-    final early = await revealThresholds(0.18);
-    final late = await revealThresholds(0.68);
+    final early = await revealThresholds(0.23);
+    final late = await revealThresholds(0.62);
 
-    expect(early.$2, lessThan(early.$1));
-    expect(late.$1, lessThan(late.$2));
+    expect(early.$2, lessThan(early.$1 - 4));
+    expect(early.$2, lessThan(early.$3 - 4));
+    expect(late.$1, lessThan(early.$1));
+    expect(late.$3, lessThan(early.$3));
   });
 
   test('custom flutter_deck transition can match the one-second turn', () {
