@@ -107,6 +107,10 @@ class FlutterDeckRouter extends ChangeNotifier {
                   pageBuilder: (context, state) => CustomTransitionPage(
                     key: state.pageKey,
                     restorationId: state.pageKey.value,
+                    // A page curl clips and deforms the route on top, so the
+                    // neighbouring slide must remain paintable through the
+                    // uncovered paper silhouette during the transition.
+                    opaque: false,
                     transitionDuration: slide.configuration.transition.duration,
                     reverseTransitionDuration:
                         slide.configuration.transition.reverseDuration ??
