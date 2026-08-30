@@ -1097,7 +1097,16 @@ class _StorybookBookSheetsScene extends StatelessWidget {
               child: FractionallySizedBox(
                 widthFactor: values.sceneWidthFactor,
                 heightFactor: values.sceneHeightFactor,
-                child: child,
+                // The curl clip follows the moving free edge, but its mesh is
+                // still rectangular at the outer corners. Keep the complete
+                // paper scene inside the physical rounded book silhouette so
+                // a closing sheet cannot expose a white corner band outside
+                // the cover.
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(26),
+                  clipBehavior: Clip.antiAlias,
+                  child: child,
+                ),
               ),
             ),
           ),

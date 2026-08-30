@@ -290,6 +290,17 @@ void main() {
       find.byKey(const ValueKey('storybook-book-closing-paper-bed')),
       findsOneWidget,
     );
+    final closingPaperScene = find.byKey(
+      const ValueKey('storybook-book-closing-paper-scene'),
+    );
+    expect(
+      find.descendant(of: closingPaperScene, matching: find.byType(ClipRRect)),
+      findsOneWidget,
+    );
+    final closingPaperShapeClip = tester.widget<ClipRRect>(
+      find.descendant(of: closingPaperScene, matching: find.byType(ClipRRect)),
+    );
+    expect(closingPaperShapeClip.borderRadius, BorderRadius.circular(26));
     final closingPaperBedRect = tester.getRect(
       find.byKey(const ValueKey('storybook-book-closing-paper-bed')),
     );
