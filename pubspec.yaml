@@ -9,6 +9,7 @@ workspace:
   - packages/flutter_deck_storybook
   - slides/example
   - slides/202607_claudenotebooklm
+  - slides/202608_risukun_super_tenkomori_car
 
 dev_dependencies:
   melos: ^7.3.0
