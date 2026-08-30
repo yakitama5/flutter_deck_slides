@@ -2,6 +2,32 @@ import 'package:flutter/material.dart';
 
 import 'storybook_reveal.dart';
 
+/// Overrides the area surrounding a [StorybookPage] while it is part of a
+/// larger book scene.
+///
+/// Normal pages keep their configured [StorybookPage.coverColor]. Boundary
+/// transitions use a transparent outer color so the persistent tabletop below
+/// the page remains visible while a cover or paper bundle moves above it.
+class StorybookPageBackgroundScope extends InheritedWidget {
+  const StorybookPageBackgroundScope({
+    required this.outerColor,
+    required super.child,
+    super.key,
+  });
+
+  final Color outerColor;
+
+  static StorybookPageBackgroundScope? maybeOf(BuildContext context) {
+    return context
+        .dependOnInheritedWidgetOfExactType<StorybookPageBackgroundScope>();
+  }
+
+  @override
+  bool updateShouldNotify(StorybookPageBackgroundScope oldWidget) {
+    return outerColor != oldWidget.outerColor;
+  }
+}
+
 /// A paper-like page surface for storybook-style slide decks.
 class StorybookPage extends StatelessWidget {
   /// Creates a storybook page.
@@ -75,9 +101,11 @@ class StorybookPage extends StatelessWidget {
     final radius = BorderRadius.circular(borderRadius);
     final pageLabel = _pageLabel;
     final reveal = StorybookRevealScope.maybeOf(context);
+    final backgroundColor =
+        StorybookPageBackgroundScope.maybeOf(context)?.outerColor ?? coverColor;
 
     return ColoredBox(
-      color: coverColor,
+      color: backgroundColor,
       child: Padding(
         padding: outerPadding,
         child: DecoratedBox(

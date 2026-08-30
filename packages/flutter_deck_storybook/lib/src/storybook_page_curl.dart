@@ -31,6 +31,7 @@ class StorybookCurlSheet extends StatefulWidget {
     required this.columns,
     required this.rows,
     required this.child,
+    this.paperOnly = false,
     super.key,
   });
 
@@ -44,6 +45,16 @@ class StorybookCurlSheet extends StatefulWidget {
   final int columns;
   final int rows;
   final Widget child;
+
+  /// Paints a paper-only sheet without creating a texture snapshot.
+  ///
+  /// Book boundary animations use several blank sheets. Those sheets have no
+  /// child artwork to preserve, so rasterizing them can briefly expose a
+  /// renderer fallback while the snapshot is being created. Keeping this
+  /// opt-in leaves ordinary story pages on the snapshot path while making the
+  /// boundary paper deterministic from its very first frame.
+  @visibleForTesting
+  final bool paperOnly;
 
   /// Whether this frame contains triangles facing the unprinted paper back.
   ///
@@ -121,6 +132,48 @@ class _StorybookCurlSheetState extends State<StorybookCurlSheet> {
 
   @override
   Widget build(BuildContext context) {
+    if (widget.paperOnly) {
+      final paper = CustomPaint(
+        painter: _StorybookPaperCurlPainter(
+          _StorybookCurlGeometry(
+            progress: widget.progress,
+            direction: widget.direction,
+            motion: widget.motion,
+            perspective: widget.perspective,
+            maxRotation: widget.maxRotation,
+            flex: widget.flex,
+            twist: widget.twist,
+            columns: widget.columns,
+            rows: widget.rows,
+          ),
+        ),
+        child: const SizedBox.expand(),
+      );
+
+      if (widget.motion != StorybookPageCurlMotion.coverPrevious) {
+        return paper;
+      }
+
+      return ClipPath(
+        key: const ValueKey('storybook-page-cover-sheet-clip'),
+        clipper: _StorybookCurlSheetClipper(
+          _StorybookCurlGeometry(
+            progress: widget.progress,
+            direction: widget.direction,
+            motion: widget.motion,
+            perspective: widget.perspective,
+            maxRotation: widget.maxRotation,
+            flex: widget.flex,
+            twist: widget.twist,
+            columns: widget.columns,
+            rows: widget.rows,
+          ),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: paper,
+      );
+    }
+
     final snapshot = SnapshotWidget(
       controller: _snapshotController,
       painter: _painter,
@@ -173,8 +226,9 @@ class StorybookCurlReveal extends StatelessWidget {
     required this.rows,
     required this.child,
     this.clipKey,
+    this.shadowFactor = 1,
     super.key,
-  });
+  }) : assert(shadowFactor >= 0 && shadowFactor <= 1);
 
   final double progress;
   final StorybookPageCurlDirection direction;
@@ -187,6 +241,13 @@ class StorybookCurlReveal extends StatelessWidget {
   final int rows;
   final Widget child;
   final Key? clipKey;
+
+  /// Scales the fold shadow without changing the paper geometry.
+  ///
+  /// Boundary scenes use a lighter value because their blank paper sheets
+  /// already paint a narrow edge shadow. Keeping the broad default preserves
+  /// the stronger depth cue for ordinary illustrated page turns.
+  final double shadowFactor;
 
   @override
   Widget build(BuildContext context) {
@@ -213,7 +274,10 @@ class StorybookCurlReveal extends StatelessWidget {
           Positioned.fill(
             child: IgnorePointer(
               child: CustomPaint(
-                painter: _StorybookCurlShadowPainter(geometry),
+                painter: _StorybookCurlShadowPainter(
+                  geometry,
+                  shadowFactor: shadowFactor,
+                ),
               ),
             ),
           ),
@@ -453,41 +517,128 @@ class _StorybookCurlSheetClipper extends CustomClipper<Path> {
 }
 
 class _StorybookCurlShadowPainter extends CustomPainter {
-  const _StorybookCurlShadowPainter(this.geometry);
+  const _StorybookCurlShadowPainter(
+    this.geometry, {
+    required this.shadowFactor,
+  });
 
   final _StorybookCurlGeometry geometry;
+  final double shadowFactor;
 
   @override
   void paint(Canvas canvas, Size size) {
     final strength = geometry.turnEnvelope;
-    if (strength <= 0.001) return;
+    final factor = shadowFactor.clamp(0.0, 1.0);
+    if (strength <= 0.001 || factor <= 0.001) return;
 
     final edge = geometry.freeEdgePath(size);
     final width = size.width;
+    final widthFactor = 0.035 + 0.070 * factor;
+    final blurFactor = 0.022 + 0.043 * factor;
     canvas.drawPath(
       edge,
       Paint()
-        ..color = Colors.black.withValues(alpha: 0.24 * strength)
+        ..color = Colors.black.withValues(alpha: 0.24 * strength * factor)
         ..style = PaintingStyle.stroke
-        ..strokeWidth = math.max(20, width * 0.105)
+        ..strokeWidth = math.max(10, width * widthFactor)
         ..maskFilter = MaskFilter.blur(
           BlurStyle.normal,
-          math.max(14, width * 0.065),
+          math.max(6, width * blurFactor),
         )
         ..isAntiAlias = true,
     );
     canvas.drawPath(
       edge,
       Paint()
-        ..color = Colors.black.withValues(alpha: 0.12 * strength)
+        ..color = Colors.black.withValues(alpha: 0.12 * strength * factor)
         ..style = PaintingStyle.stroke
-        ..strokeWidth = math.max(1, width / 800)
+        ..strokeWidth = math.max(1, width / 800 * factor)
         ..isAntiAlias = true,
     );
   }
 
   @override
   bool shouldRepaint(covariant _StorybookCurlShadowPainter oldDelegate) {
+    return geometry != oldDelegate.geometry ||
+        shadowFactor != oldDelegate.shadowFactor;
+  }
+}
+
+/// Paints a blank sheet directly from the curl mesh.
+///
+/// Boundary pages are deliberately content-free. Drawing their paper surface
+/// directly avoids asking [SnapshotWidget] for a texture that has no useful
+/// artwork and, more importantly, guarantees an opaque paper fallback while a
+/// cover is moving over the tabletop.
+class _StorybookPaperCurlPainter extends CustomPainter {
+  const _StorybookPaperCurlPainter(this.geometry);
+
+  final _StorybookCurlGeometry geometry;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (size.isEmpty) return;
+
+    final mesh = geometry.buildMesh(
+      offset: Offset.zero,
+      size: size,
+      sourceSize: size,
+    );
+    canvas
+      ..save()
+      ..clipRect(Offset.zero & size);
+
+    if (geometry.turnEnvelope > 0.001) {
+      canvas.drawPath(
+        mesh.visibleEdge,
+        Paint()
+          ..color = Colors.black.withValues(alpha: 0.08 * geometry.turnEnvelope)
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = math.max(7, size.width * 0.018)
+          ..maskFilter = MaskFilter.blur(
+            BlurStyle.normal,
+            math.max(4, size.width * 0.010),
+          )
+          ..isAntiAlias = true,
+      );
+    }
+
+    if (mesh.frontVertices case final frontVertices?) {
+      canvas.drawVertices(
+        frontVertices,
+        BlendMode.srcOver,
+        Paint()..isAntiAlias = true,
+      );
+    }
+    if (mesh.backVertices case final backVertices?) {
+      canvas.drawVertices(
+        backVertices,
+        BlendMode.srcOver,
+        Paint()..isAntiAlias = true,
+      );
+    }
+
+    if (!mesh.foldEdge.getBounds().isEmpty) {
+      canvas.drawPath(
+        mesh.foldEdge,
+        Paint()
+          ..color = Colors.black.withValues(alpha: 0.08 * geometry.turnEnvelope)
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = math.max(3, size.width * 0.008)
+          ..maskFilter = MaskFilter.blur(
+            BlurStyle.normal,
+            math.max(2, size.width * 0.004),
+          )
+          ..isAntiAlias = true,
+      );
+    }
+
+    canvas.restore();
+    mesh.dispose();
+  }
+
+  @override
+  bool shouldRepaint(covariant _StorybookPaperCurlPainter oldDelegate) {
     return geometry != oldDelegate.geometry;
   }
 }

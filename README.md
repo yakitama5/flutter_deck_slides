@@ -70,7 +70,8 @@ dart run melos run create:slide -- 202609_flutterkaigi
 `slides/example` と新規作成されるスライドには、共通パッケージ
 `packages/flutter_deck_storybook` が組み込まれています。
 
-- `StorybookPageTurnTransitionBuilder`: 16:9のスライド全体を1枚の紙として扱い、40×16の両面三角形メッシュで紙面を曲げます。進む時は右端の横中央へ手を掛けたような横長の隆起を作り、その隆起を内側へ走らせてから加速します。90度を越えた面は絵を反転せず、白い紙裏として描きます。戻る時は旧ページを逆向きに剥がさず、別の時間曲線で前ページを上層から被せ、減速しながら平らに戻します
+- `StorybookPageTurnTransitionBuilder`: 16:9のスライド全体を1枚の紙として扱い、40×16の両面三角形メッシュで紙面を曲げます。進む時は右端の横中央へ手を掛けたような横長の隆起を作り、その隆起を内側へ走らせてから加速します。90度を越えた面は絵を反転せず、白い紙裏として描きます。戻る時は旧ページを逆向きに剥がさず、別の時間曲線で前ページを上層から被せ、減速しながら平らに戻します。`enableBookOpening` / `enableBookClosing` を有効にすると、先頭の前カバーから複数枚をパラパラめくって本文へ入り、末尾の後ろカバーで本を閉じられます
+- `StorybookBookCover`: 本文ページとは別の前カバー・後ろカバーを描画します。本文の薄紙メッシュとは分けた厚紙の平面回転で、開始時は本を少し引いて表示し、終了時はテーブルを含む全体へ引いて着地します。後ろカバーを最後のスライドに置くと、閉じた本を最終フレームとして残せます
 - `StorybookPage`: 紙色、表紙色、アクセント色、余白、ページ番号を変更できる絵本風のページ枠。ページがめくれた後は、白紙の上にセピア色の下描きが現れ、中央下寄りから水彩・インクがにじむように完成絵を描き出します
 - `StorybookSoundEffects`: ページ回転には乾いた紙音、線画が現れ始める位置には鉛筆と筆の音を同期します。音量変更・一時ミュートが可能で、音声ファイルは共通パッケージ内に同梱されます
 - 視差効果を減らす設定が有効な環境では、ページ回転をフェードへ自動的に切り替えます
@@ -88,6 +89,9 @@ final pageTurnTransition = FlutterDeckTransition.custom(
     pageFlex: 0.56,
     pageTwist: 0.035,
     turnSoundCueProgress: 0.42,
+    enableBookOpening: true,
+    enableBookClosing: true,
+    bookPageCount: 5,
     enableInkReveal: true,
     inkRevealDuration: Duration(milliseconds: 2750),
     inkRevealOrigin: Alignment(0, 0.25),
@@ -102,6 +106,10 @@ FlutterDeckApp(
   // ...
 );
 ```
+
+開始・終了の本演出を使う場合は、スライド一覧の先頭に前カバー、末尾に
+`StorybookBookCover(backCover: true)` を置きます。`openingTargetSlideNumber` は既定値の
+2で前カバー直後の本文ページを指し、終了先は既定で最後のスライドです。
 
 Webの効果音は、ブラウザの自動再生制限に従い、矢印キーやタップなどのユーザー操作でページを移動した時に再生されます。音が不要なデッキは `soundEffects` を省略してください。`storybookSounds.enabled = false` で一時ミュートもできます。「視差効果を減らす」が有効な場合は演出と一緒に効果音も停止します。
 
