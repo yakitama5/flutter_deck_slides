@@ -72,8 +72,10 @@ void main() {
 
     expect(frontOpeningStart.hingeAlignment, Alignment.centerLeft);
     expect(backOpeningStart.hingeAlignment, Alignment.centerRight);
-    expect(frontOpeningEnd.rotationY, closeTo(-math.pi / 2, 0.0001));
-    expect(backOpeningEnd.rotationY, closeTo(math.pi / 2, 0.0001));
+    expect(frontOpeningEnd.rotationY, closeTo(math.pi, 0.0001));
+    expect(backOpeningEnd.rotationY, closeTo(-math.pi, 0.0001));
+    expect(frontOpeningEnd.rotationY, greaterThan(0));
+    expect(backOpeningEnd.rotationY, lessThan(0));
     expect(
       frontOpeningStart.cameraScale,
       lessThan(frontOpeningEnd.cameraScale),
@@ -90,8 +92,18 @@ void main() {
       backClosingStart.cameraOffset.dy,
       lessThan(backClosingEnd.cameraOffset.dy),
     );
-    expect(backClosingStart.rotationY, closeTo(math.pi / 2, 0.0001));
+    expect(backClosingStart.rotationY, closeTo(-math.pi, 0.0001));
     expect(backClosingEnd.rotationY, closeTo(0, 0.0001));
+    expect(frontOpeningStart.sceneWidthFactor, closeTo(0.93, 0.0001));
+    expect(frontOpeningEnd.sceneWidthFactor, closeTo(1, 0.0001));
+    expect(frontOpeningStart.sceneHeightFactor, closeTo(0.88, 0.0001));
+    expect(frontOpeningEnd.sceneHeightFactor, closeTo(1, 0.0001));
+
+    final middle = values(StorybookBookCoverMotion.opening, 0.5, false);
+    expect(middle.rotationY, greaterThan(frontOpeningStart.rotationY));
+    expect(middle.rotationY, lessThan(frontOpeningEnd.rotationY));
+    expect(middle.cameraScale, greaterThan(frontOpeningStart.cameraScale));
+    expect(middle.cameraScale, lessThan(frontOpeningEnd.cameraScale));
   });
 
   testWidgets('a cover is a rigid panel without an opacity transition', (
@@ -103,6 +115,26 @@ void main() {
 
     expect(
       find.byKey(const ValueKey('storybook-book-rigid-cover-panel')),
+      findsOneWidget,
+    );
+    expect(find.byType(Opacity), findsNothing);
+  });
+
+  testWidgets('a turned cover exposes its inner board at the hinge turn', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: StorybookBookCoverTransitionScope(
+          motion: StorybookBookCoverMotion.opening,
+          progress: 0.75,
+          child: StorybookBookCover(title: '表紙'),
+        ),
+      ),
+    );
+
+    expect(
+      find.byKey(const ValueKey('storybook-book-rigid-cover-inner-panel')),
       findsOneWidget,
     );
     expect(find.byType(Opacity), findsNothing);

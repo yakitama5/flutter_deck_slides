@@ -42,7 +42,7 @@ class StorybookBookCoverTransitionScope extends InheritedWidget {
 /// The geometry used by a rigid book cover during a boundary transition.
 ///
 /// A cover is a board hinged at the spine. It intentionally has no paper-mesh
-/// values: the only cover deformation is a single Y-axis rotation, while the
+/// values: the only cover deformation is a single Y-axis half-turn, while the
 /// camera values move the whole book scene closer to or farther from the
 /// viewer.
 @immutable
@@ -52,6 +52,8 @@ class StorybookBookCoverMotionValues {
     required this.rotationY,
     required this.cameraScale,
     required this.cameraOffset,
+    this.sceneWidthFactor = 0.93,
+    this.sceneHeightFactor = 0.88,
   });
 
   /// Calculates the rigid-cover and camera values for [progress].
@@ -66,25 +68,26 @@ class StorybookBookCoverMotionValues {
     // handoff look like a late scale jump instead of one continuous shot.
     final cameraProgress = Curves.easeInOutCubic.transform(normalizedProgress);
     final coverProgress = motion == StorybookBookCoverMotion.opening
-        ? Curves.easeInCubic.transform(normalizedProgress)
-        : 1 - Curves.easeOutCubic.transform(normalizedProgress);
+        ? Curves.easeInOutCubic.transform(normalizedProgress)
+        : 1 - Curves.easeInOutCubic.transform(normalizedProgress);
 
     // The front board is hinged on the left spine; the back board is mirrored
-    // on the right spine. With Flutter's camera looking down on the tabletop,
-    // the free edge must travel away from the viewer as it rises. The signs
-    // below therefore mirror the hinge and keep both boards on the same
-    // tabletop-facing side instead of making the free edge balloon toward the
-    // camera.
-    final rotationSign = backCover ? 1.0 : -1.0;
+    // on the right spine. The free edge first rises toward the viewer and then
+    // continues through the edge-on position to the other side of the hinge.
+    // A complete half-turn is important: stopping at 90 degrees makes a rigid
+    // cover disappear instead of reading as a board being opened.
+    final rotationSign = backCover ? -1.0 : 1.0;
     return StorybookBookCoverMotionValues(
       hingeAlignment: backCover ? Alignment.centerRight : Alignment.centerLeft,
-      rotationY: rotationSign * math.pi / 2 * coverProgress,
+      rotationY: rotationSign * math.pi * coverProgress,
       cameraScale: motion == StorybookBookCoverMotion.opening
           ? _lerp(0.74, 1.0, cameraProgress)
           : _lerp(1.0, 0.74, cameraProgress),
       cameraOffset: motion == StorybookBookCoverMotion.opening
           ? Offset(0, _lerp(0.018, 0, cameraProgress))
           : Offset(0, _lerp(0, 0.018, cameraProgress)),
+      sceneWidthFactor: _lerp(0.93, 1.0, cameraProgress),
+      sceneHeightFactor: _lerp(0.88, 1.0, cameraProgress),
     );
   }
 
@@ -99,6 +102,16 @@ class StorybookBookCoverMotionValues {
 
   /// Normalized camera translation applied to the complete book artwork.
   final Offset cameraOffset;
+
+  /// Width of the book scene before the camera scale is applied.
+  ///
+  /// The cover, paper bundle, and route page all use this same interpolated
+  /// bound so a camera move cannot expose a differently sized rectangle at a
+  /// layer handoff.
+  final double sceneWidthFactor;
+
+  /// Height of the book scene before the camera scale is applied.
+  final double sceneHeightFactor;
 
   static double _lerp(double begin, double end, double amount) {
     return begin + (end - begin) * amount;

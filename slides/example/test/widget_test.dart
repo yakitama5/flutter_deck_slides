@@ -160,6 +160,10 @@ void main() {
     expect(openingCover.progress, greaterThan(0));
     expect(openingCover.progress, lessThan(1));
     expect(
+      find.byKey(const ValueKey('storybook-book-front-cover')),
+      findsOneWidget,
+    );
+    expect(
       find.byKey(const ValueKey('storybook-book-opening-sheet-0')),
       findsOneWidget,
     );
@@ -182,6 +186,10 @@ void main() {
               reveal.clipKey == const ValueKey('storybook-book-opening-reveal'),
         );
     expect(openingReveal.shadowFactor, 0);
+    // The destination page stays inside an empty curl until the rigid cover
+    // has passed its edge-on handoff; this prevents a white page rectangle
+    // from replacing the cover during the opening beat.
+    expect(openingReveal.progress, closeTo(0, 0.0001));
     expect(find.byType(Opacity), findsNothing);
     expect(
       tester
@@ -196,6 +204,10 @@ void main() {
 
     await tester.pumpAndSettle();
     expect(find.text('FlutterDeck Storybook'), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('storybook-book-boundary-page-scene')),
+      findsOneWidget,
+    );
     expect(
       find.byKey(const ValueKey('storybook-book-front-cover')),
       findsNothing,
@@ -275,6 +287,10 @@ void main() {
       findsOneWidget,
     );
     expect(
+      find.byKey(const ValueKey('storybook-book-closing-paper-bed')),
+      findsOneWidget,
+    );
+    expect(
       find.byKey(const ValueKey('storybook-book-closing-cover-tabletop')),
       findsNothing,
     );
@@ -283,6 +299,10 @@ void main() {
     await tester.pumpAndSettle();
     expect(
       find.byKey(const ValueKey('storybook-book-back-cover')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const ValueKey('storybook-book-closing-cover')),
       findsOneWidget,
     );
     expect(find.text('おしまい'), findsNothing);

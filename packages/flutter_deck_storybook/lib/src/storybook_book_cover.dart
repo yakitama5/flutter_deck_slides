@@ -59,13 +59,21 @@ class StorybookBookCover extends StatelessWidget {
             backCover: backCover,
           );
     final panel = _buildPanel(coverContent);
+    final showOuterSurface = math.cos(motionValues.rotationY) >= 0;
+    // A rigid board has one visible face at a time. Choosing the face at the
+    // edge-on instant avoids stacking two opaque rectangles and lets the same
+    // transform carry the outer and inner surfaces through the turn.
     final rigidPanel = Transform(
       key: const ValueKey('storybook-book-rigid-cover-panel'),
       alignment: motionValues.hingeAlignment,
       transform: Matrix4.identity()
-        ..setEntry(3, 2, 0.0012)
+        // Keep the rigid board dimensional without allowing the
+        // half-turn's depth to become an unintended camera zoom.
+        ..setEntry(3, 2, 0.00045)
         ..rotateY(motionValues.rotationY),
-      child: panel,
+      child: showOuterSurface || transition == null
+          ? panel
+          : _buildInnerPanel(),
     );
 
     return Stack(
@@ -109,8 +117,8 @@ class StorybookBookCover extends StatelessWidget {
                       // The board is deliberately pulled back at rest. The
                       // camera move, rather than an opacity change, brings it
                       // closer while the rigid cover leaves the spine.
-                      widthFactor: 0.93,
-                      heightFactor: 0.88,
+                      widthFactor: motionValues.sceneWidthFactor,
+                      heightFactor: motionValues.sceneHeightFactor,
                       child: rigidPanel,
                     ),
                   ),
@@ -158,6 +166,33 @@ class StorybookBookCover extends StatelessWidget {
               child: FittedBox(fit: BoxFit.scaleDown, child: coverContent),
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildInnerPanel() {
+    return DecoratedBox(
+      key: const ValueKey('storybook-book-rigid-cover-inner-panel'),
+      decoration: BoxDecoration(
+        color: const Color(0xFFE8D6B9),
+        borderRadius: BorderRadius.circular(28),
+        border: Border.all(
+          color: accentColor.withValues(alpha: 0.34),
+          width: 3,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.12),
+            blurRadius: 12,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: CustomPaint(
+        painter: _StorybookBookCoverInnerPainter(
+          accentColor: accentColor,
+          backCover: backCover,
         ),
       ),
     );
@@ -454,6 +489,49 @@ class _StorybookBookCoverPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _StorybookBookCoverPainter oldDelegate) {
+    return accentColor != oldDelegate.accentColor ||
+        backCover != oldDelegate.backCover;
+  }
+}
+
+class _StorybookBookCoverInnerPainter extends CustomPainter {
+  const _StorybookBookCoverInnerPainter({
+    required this.accentColor,
+    required this.backCover,
+  });
+
+  final Color accentColor;
+  final bool backCover;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final inset = size.shortestSide * 0.045;
+    final border = RRect.fromRectAndRadius(
+      Rect.fromLTWH(
+        inset,
+        inset,
+        size.width - inset * 2,
+        size.height - inset * 2,
+      ),
+      Radius.circular(size.shortestSide * 0.032),
+    );
+    canvas.drawRRect(
+      border,
+      Paint()
+        ..color = accentColor.withValues(alpha: 0.18)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 2,
+    );
+    final spineWidth = size.width * 0.032;
+    final spineLeft = backCover ? size.width - spineWidth : 0.0;
+    canvas.drawRect(
+      Rect.fromLTWH(spineLeft, 0, spineWidth, size.height),
+      Paint()..color = Colors.black.withValues(alpha: 0.08),
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant _StorybookBookCoverInnerPainter oldDelegate) {
     return accentColor != oldDelegate.accentColor ||
         backCover != oldDelegate.backCover;
   }
