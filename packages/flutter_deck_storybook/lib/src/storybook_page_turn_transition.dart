@@ -563,16 +563,34 @@ class _StorybookPageTurnTransition extends StatelessWidget {
         );
       case _BookBoundaryTransition.closing:
         if (isBoundaryOutgoingRoute) {
-          // Keep the outgoing route's real page visible until the cover has
-          // painted over it. Unlike the opening boundary, closing cannot
-          // remount this subtree from the incoming route because FlutterDeck's
-          // slide contains framework-owned GlobalKeys.
+          // The outgoing route owns the opaque scene during closing. Keep the
+          // real page above the paper bed so the bed cannot white-out the page
+          // before the first sheet has moved. The incoming route is painted
+          // above this stack and contributes only the sheet silhouettes and
+          // rigid cover; remounting the page there would reuse FlutterDeck's
+          // framework-owned GlobalKeys.
           return Stack(
             fit: StackFit.expand,
             children: [
               const Positioned.fill(
                 child: StorybookBookTabletop(
                   key: ValueKey('storybook-book-closing-underlay-tabletop'),
+                ),
+              ),
+              Positioned.fill(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: _StorybookBookSheetsScene(
+                    key: const ValueKey(
+                      'storybook-book-closing-underlay-paper-scene',
+                    ),
+                    motion: StorybookBookCoverMotion.closing,
+                    backCover: boundaryBackCover,
+                    progress: outgoing,
+                    child: const _StorybookBookPaperBed(
+                      key: ValueKey('storybook-book-closing-paper-bed'),
+                    ),
+                  ),
                 ),
               ),
               _StorybookBookBoundaryPageScene(
@@ -592,9 +610,34 @@ class _StorybookPageTurnTransition extends StatelessWidget {
         return Stack(
           fit: StackFit.expand,
           children: [
-            // The incoming route is transparent outside its paper and rigid
-            // cover. The outgoing route below provides the continuous page
-            // image while this route closes over it.
+            // The outgoing route below owns the tabletop, paper bed, and real
+            // page. Keeping this route transparent outside the moving sheets
+            // and cover lets that page remain visible until it is physically
+            // covered. Reintroduce the opaque scene only at the terminal frame
+            // after the outgoing route has been removed.
+            if (incoming >= 1)
+              const Positioned.fill(
+                child: StorybookBookTabletop(
+                  key: ValueKey('storybook-book-closing-scene-tabletop'),
+                ),
+              ),
+            if (incoming >= 1)
+              Positioned.fill(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: _StorybookBookSheetsScene(
+                    key: const ValueKey(
+                      'storybook-book-closing-paper-bed-scene',
+                    ),
+                    motion: StorybookBookCoverMotion.closing,
+                    backCover: boundaryBackCover,
+                    progress: incoming,
+                    child: const _StorybookBookPaperBed(
+                      key: ValueKey('storybook-book-closing-paper-bed'),
+                    ),
+                  ),
+                ),
+              ),
             _StorybookBookClosingSheets(
               progress: incoming,
               pageCount: bookPageCount,
@@ -912,41 +955,34 @@ class _StorybookBookClosingSheets extends StatelessWidget {
     return Stack(
       fit: StackFit.expand,
       children: [
-        const Positioned.fill(
-          child: StorybookBookTabletop(
-            key: ValueKey('storybook-book-closing-scene-tabletop'),
-          ),
-        ),
         Positioned.fill(
-          child: _StorybookBookSheetsScene(
-            key: const ValueKey('storybook-book-closing-paper-scene'),
-            motion: StorybookBookCoverMotion.closing,
-            backCover: backCover,
-            progress: progress,
-            child: Stack(
-              fit: StackFit.expand,
-              children: [
-                const Positioned.fill(
-                  child: _StorybookBookPaperBed(
-                    key: ValueKey('storybook-book-closing-paper-bed'),
-                  ),
-                ),
-                for (var index = 0; index < pageCount; index++)
-                  StorybookCurlSheet(
-                    key: ValueKey('storybook-book-closing-sheet-$index'),
-                    progress: _staggeredProgress(closingProgress, index),
-                    direction: pageDirection,
-                    motion: StorybookPageCurlMotion.coverPrevious,
-                    perspective: perspective,
-                    maxRotation: maxRotation,
-                    flex: flex,
-                    twist: twist,
-                    columns: columns,
-                    rows: rows,
-                    paperOnly: true,
-                    child: const _StorybookBookPaperLeaf(),
-                  ),
-              ],
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: _StorybookBookSheetsScene(
+              key: const ValueKey('storybook-book-closing-paper-scene'),
+              motion: StorybookBookCoverMotion.closing,
+              backCover: backCover,
+              progress: progress,
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  for (var index = 0; index < pageCount; index++)
+                    StorybookCurlSheet(
+                      key: ValueKey('storybook-book-closing-sheet-$index'),
+                      progress: _staggeredProgress(closingProgress, index),
+                      direction: pageDirection,
+                      motion: StorybookPageCurlMotion.coverPrevious,
+                      perspective: perspective,
+                      maxRotation: maxRotation,
+                      flex: flex,
+                      twist: twist,
+                      columns: columns,
+                      rows: rows,
+                      paperOnly: true,
+                      child: const _StorybookBookPaperLeaf(),
+                    ),
+                ],
+              ),
             ),
           ),
         ),

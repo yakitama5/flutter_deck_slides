@@ -290,6 +290,16 @@ void main() {
       find.byKey(const ValueKey('storybook-book-closing-paper-bed')),
       findsOneWidget,
     );
+    final closingPaperBedRect = tester.getRect(
+      find.byKey(const ValueKey('storybook-book-closing-paper-bed')),
+    );
+    final closingCoverRect = tester.getRect(
+      find.byKey(const ValueKey('storybook-book-rigid-cover-panel')),
+    );
+    expect(closingPaperBedRect.left, closeTo(closingCoverRect.left, 0.01));
+    expect(closingPaperBedRect.top, closeTo(closingCoverRect.top, 0.01));
+    expect(closingPaperBedRect.right, closeTo(closingCoverRect.right, 0.01));
+    expect(closingPaperBedRect.bottom, closeTo(closingCoverRect.bottom, 0.01));
     expect(
       find.byKey(const ValueKey('storybook-book-closing-cover-tabletop')),
       findsNothing,
