@@ -267,9 +267,18 @@ void main() {
       findsOneWidget,
     );
     expect(
-      find.byKey(const ValueKey('storybook-book-closing-cover-tabletop')),
+      find.byKey(const ValueKey('storybook-book-closing-underlay-tabletop')),
       findsOneWidget,
     );
+    expect(
+      find.byKey(const ValueKey('storybook-book-closing-underlay-page')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const ValueKey('storybook-book-closing-cover-tabletop')),
+      findsNothing,
+    );
+    expect(find.text('おしまい'), findsOneWidget);
 
     await tester.pumpAndSettle();
     expect(
