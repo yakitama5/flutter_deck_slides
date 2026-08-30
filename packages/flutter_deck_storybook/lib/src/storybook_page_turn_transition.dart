@@ -15,6 +15,18 @@ enum _PageTurnDirection { forward, backward }
 
 enum _BookBoundaryTransition { opening, closing }
 
+/// Converts the one boundary timeline into the paper handoff phase.
+///
+/// The rigid cover owns the first beat of the shot. The paper bundle and the
+/// destination page then use this same continuous phase after the cover has
+/// passed its edge-on position; keeping the mapping here prevents a full-page
+/// white rectangle from appearing underneath the cover before the handoff.
+double _bookBoundaryPaperProgress(double progress) {
+  final normalized = progress.clamp(0.0, 1.0);
+  final handoff = ((normalized - 0.52) / 0.48).clamp(0.0, 1.0);
+  return Curves.easeInOutCubic.transform(handoff);
+}
+
 /// A page-turn transition for [FlutterDeckApp].
 ///
 /// Reuse a single instance as the deck's global transition. The instance keeps
@@ -438,10 +450,6 @@ class _StorybookPageTurnTransition extends StatelessWidget {
     required double outgoing,
   }) {
     final isBoundaryOutgoingRoute = ModalRoute.of(context)?.isCurrent == false;
-    if (!isBoundaryOutgoingRoute && incoming >= 1 && outgoing <= 0) {
-      return page;
-    }
-
     final boundaryPage = _StorybookBookBoundaryPageScene(
       key: const ValueKey('storybook-book-boundary-page-scene'),
       motion: boundary == _BookBoundaryTransition.opening
@@ -454,6 +462,7 @@ class _StorybookPageTurnTransition extends StatelessWidget {
         child: _StorybookBoundarySlide(child: page),
       ),
     );
+    final boundaryPaperProgress = _bookBoundaryPaperProgress(incoming);
     final turnsOutWithPrimary =
         animation.status == AnimationStatus.reverse && animation.value < 1;
     final turnsOutWithSecondary =
@@ -487,11 +496,6 @@ class _StorybookPageTurnTransition extends StatelessWidget {
           return Stack(
             fit: StackFit.expand,
             children: [
-              const Positioned.fill(
-                child: StorybookBookTabletop(
-                  key: ValueKey('storybook-book-opening-scene-tabletop'),
-                ),
-              ),
               _StorybookBookOpeningSheets(
                 progress: incoming,
                 pageCount: bookPageCount,
@@ -502,11 +506,12 @@ class _StorybookPageTurnTransition extends StatelessWidget {
                 twist: pageTwist,
                 columns: meshColumns,
                 rows: meshRows,
+                includeTabletop: true,
                 child: boundaryOutgoingChild!,
               ),
               StorybookCurlReveal(
                 clipKey: const ValueKey('storybook-book-opening-reveal'),
-                progress: Curves.easeInOutCubic.transform(incoming),
+                progress: boundaryPaperProgress,
                 direction: boundaryBackCover
                     ? StorybookPageCurlDirection.backward
                     : StorybookPageCurlDirection.forward,
@@ -518,13 +523,10 @@ class _StorybookPageTurnTransition extends StatelessWidget {
                 columns: meshColumns,
                 rows: meshRows,
                 shadowFactor: 0,
-                // Keep the reveal transparent during the cover's first beat.
-                // The scene already paints a persistent tabletop below this
-                // layer; painting a second tabletop inside the curved clip
-                // creates a visible seam that makes the background appear to
-                // bend with the cover. The actual page is introduced only
-                // after the rigid board has visibly left the book.
-                child: incoming < 0.20 ? const SizedBox.expand() : boundaryPage,
+                // The reveal starts on the same delayed paper phase as the
+                // blank sheets below the rigid cover. There is no child swap:
+                // the clip grows continuously from an empty silhouette.
+                child: boundaryPage,
               ),
             ],
           );
@@ -540,7 +542,7 @@ class _StorybookPageTurnTransition extends StatelessWidget {
             ),
             StorybookCurlReveal(
               clipKey: const ValueKey('storybook-book-opening-reveal'),
-              progress: Curves.easeInOutCubic.transform(incoming),
+              progress: boundaryPaperProgress,
               direction: StorybookPageCurlDirection.forward,
               motion: StorybookPageCurlMotion.turnAway,
               perspective: perspective,
@@ -771,6 +773,7 @@ class _StorybookBookOpeningSheets extends StatelessWidget {
     required this.columns,
     required this.rows,
     required this.child,
+    this.includeTabletop = true,
   });
 
   final double progress;
@@ -783,10 +786,11 @@ class _StorybookBookOpeningSheets extends StatelessWidget {
   final int columns;
   final int rows;
   final Widget child;
+  final bool includeTabletop;
 
   @override
   Widget build(BuildContext context) {
-    final openingProgress = Curves.easeInOutCubic.transform(progress);
+    final openingProgress = _bookBoundaryPaperProgress(progress);
     final pageDirection = backCover
         ? StorybookPageCurlDirection.backward
         : StorybookPageCurlDirection.forward;
@@ -794,16 +798,20 @@ class _StorybookBookOpeningSheets extends StatelessWidget {
     return Stack(
       fit: StackFit.expand,
       children: [
-        Positioned.fill(
-          child: StorybookBookTabletop(
-            key: ValueKey('storybook-book-opening-tabletop'),
+        if (includeTabletop)
+          Positioned.fill(
+            child: StorybookBookTabletop(
+              key: ValueKey('storybook-book-opening-tabletop'),
+            ),
           ),
-        ),
-        StorybookBookCoverTransitionScope(
-          key: const ValueKey('storybook-book-opening-cover'),
-          motion: StorybookBookCoverMotion.opening,
-          progress: progress,
-          child: _StorybookBoundarySlide(child: child),
+        Positioned.fill(
+          child: _StorybookBookSheetsScene(
+            key: const ValueKey('storybook-book-opening-paper-bed-scene'),
+            motion: StorybookBookCoverMotion.opening,
+            backCover: backCover,
+            progress: progress,
+            child: const _StorybookBookPaperBed(),
+          ),
         ),
         Positioned.fill(
           child: StorybookCurlReveal(
@@ -846,6 +854,18 @@ class _StorybookBookOpeningSheets extends StatelessWidget {
             ),
           ),
         ),
+        if (progress < 1)
+          StorybookBookCoverTransitionScope(
+            key: const ValueKey('storybook-book-opening-cover'),
+            motion: StorybookBookCoverMotion.opening,
+            progress: progress,
+            // The opening scene owns its tabletop as a sibling below the bed;
+            // letting StorybookBookCover paint a full-screen tabletop here
+            // would hide the paper bed as soon as the rigid board turns
+            // edge-on.
+            includeTabletop: false,
+            child: _StorybookBoundarySlide(child: child),
+          ),
       ],
     );
   }
@@ -892,6 +912,11 @@ class _StorybookBookClosingSheets extends StatelessWidget {
     return Stack(
       fit: StackFit.expand,
       children: [
+        const Positioned.fill(
+          child: StorybookBookTabletop(
+            key: ValueKey('storybook-book-closing-scene-tabletop'),
+          ),
+        ),
         Positioned.fill(
           child: _StorybookBookSheetsScene(
             key: const ValueKey('storybook-book-closing-paper-scene'),
@@ -901,6 +926,11 @@ class _StorybookBookClosingSheets extends StatelessWidget {
             child: Stack(
               fit: StackFit.expand,
               children: [
+                const Positioned.fill(
+                  child: _StorybookBookPaperBed(
+                    key: ValueKey('storybook-book-closing-paper-bed'),
+                  ),
+                ),
                 for (var index = 0; index < pageCount; index++)
                   StorybookCurlSheet(
                     key: ValueKey('storybook-book-closing-sheet-$index'),
@@ -956,6 +986,41 @@ class _StorybookBookPaperLeaf extends StatelessWidget {
   }
 }
 
+/// The persistent block of paper below a boundary cover.
+///
+/// Curling sheets are layered above this surface, but the bed itself remains
+/// in the same camera scene from the first frame. It is hidden by the opaque
+/// cover at rest and closes the visual gap while the cover is edge-on.
+class _StorybookBookPaperBed extends StatelessWidget {
+  const _StorybookBookPaperBed({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFFDF8),
+        borderRadius: BorderRadius.circular(26),
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color(0xFFFFFEFB), Color(0xFFF0E7D8)],
+        ),
+        border: Border.all(
+          color: const Color(0xFFB69A76).withValues(alpha: 0.28),
+          width: 2,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.16),
+            blurRadius: 18,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 /// Places the blank paper bundle in the same camera scene as the rigid cover.
 /// The tabletop remains outside this transform, so it stays visible around the
 /// book for the whole boundary animation.
@@ -994,8 +1059,8 @@ class _StorybookBookSheetsScene extends StatelessWidget {
             scale: values.cameraScale,
             child: Center(
               child: FractionallySizedBox(
-                widthFactor: 0.93,
-                heightFactor: 0.88,
+                widthFactor: values.sceneWidthFactor,
+                heightFactor: values.sceneHeightFactor,
                 child: child,
               ),
             ),
@@ -1046,7 +1111,13 @@ class _StorybookBookBoundaryPageScene extends StatelessWidget {
         key: const ValueKey('storybook-book-boundary-page-scale'),
         alignment: Alignment.center,
         scale: values.cameraScale,
-        child: child,
+        child: Center(
+          child: FractionallySizedBox(
+            widthFactor: values.sceneWidthFactor,
+            heightFactor: values.sceneHeightFactor,
+            child: child,
+          ),
+        ),
       ),
     );
   }
@@ -1066,10 +1137,18 @@ class _StorybookBoundarySlide extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final deckTheme = FlutterDeckTheme.of(context);
     return Theme(
       data: Theme.of(context)
           .copyWith(scaffoldBackgroundColor: Colors.transparent),
-      child: child,
+      child: FlutterDeckTheme(
+        data: deckTheme.copyWith(
+          slideTheme: deckTheme.slideTheme.copyWith(
+            backgroundColor: Colors.transparent,
+          ),
+        ),
+        child: child,
+      ),
     );
   }
 }
