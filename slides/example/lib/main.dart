@@ -27,6 +27,9 @@ class _ExampleAppState extends State<ExampleApp> {
       transitionBuilder: StorybookPageTurnTransitionBuilder(
         usePerspective: true,
         enableInkReveal: true,
+        enableBookOpening: true,
+        enableBookClosing: true,
+        bookPageCount: 5,
         soundEffects: _soundEffects,
       ),
     );
@@ -49,6 +52,19 @@ class _ExampleAppState extends State<ExampleApp> {
         transition: _pageTurnTransition,
       ),
       slides: [
+        FlutterDeckSlide.blank(
+          configuration: const FlutterDeckSlideConfiguration(
+            route: '/front-cover',
+            header: FlutterDeckHeaderConfiguration(showHeader: false),
+            footer: FlutterDeckFooterConfiguration(showFooter: false),
+          ),
+          builder: (context) => const StorybookBookCover(
+            title: 'FlutterDeck Storybook',
+            subtitle: '矢印キーで、本を開いてみよう。',
+            coverColor: Color(0xFF214E4B),
+            accentColor: Color(0xFFE7C978),
+          ),
+        ),
         FlutterDeckSlide.blank(
           configuration: const FlutterDeckSlideConfiguration(
             route: '/cover',
@@ -128,6 +144,18 @@ class _ExampleAppState extends State<ExampleApp> {
                 ],
               ),
             ),
+          ),
+        ),
+        FlutterDeckSlide.blank(
+          configuration: const FlutterDeckSlideConfiguration(
+            route: '/back-cover',
+            header: FlutterDeckHeaderConfiguration(showHeader: false),
+            footer: FlutterDeckFooterConfiguration(showFooter: false),
+          ),
+          builder: (context) => const StorybookBookCover(
+            backCover: true,
+            coverColor: Color(0xFF3B2B28),
+            accentColor: Color(0xFFE0B968),
           ),
         ),
       ],
