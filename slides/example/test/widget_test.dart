@@ -1,6 +1,7 @@
 import 'package:example_slide/main.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
+import 'package:flutter_deck_storybook/flutter_deck_storybook.dart';
 import 'package:flutter_deck_storybook/src/storybook_book_cover_transition.dart';
 import 'package:flutter_deck_storybook/src/storybook_page_curl.dart';
 import 'package:flutter_deck_storybook/src/storybook_reveal.dart';
@@ -47,6 +48,95 @@ void main() {
     expect(pageTurn.lengthInBytes, greaterThan(8000));
     expect(drawing.lengthInBytes, greaterThan(30000));
   });
+
+  testWidgets(
+    'boundary transitions keep one tabletop owner at reference frames',
+    (tester) async {
+      await tester.pumpWidget(const ExampleApp());
+      await tester.pumpAndSettle();
+
+      void expectOpeningTabletopOwner() {
+        expect(find.byType(StorybookBookTabletop), findsOneWidget);
+        final openingTabletopCount =
+            find
+                .byKey(const ValueKey('storybook-book-tabletop'))
+                .evaluate()
+                .length +
+            find
+                .byKey(const ValueKey('storybook-book-opening-tabletop'))
+                .evaluate()
+                .length +
+            find
+                .byKey(const ValueKey('storybook-book-opening-scene-tabletop'))
+                .evaluate()
+                .length;
+        expect(openingTabletopCount, 1);
+        expect(
+          find.byKey(const ValueKey('storybook-book-opening-cover-tabletop')),
+          findsNothing,
+        );
+        expect(find.byType(Opacity), findsNothing);
+      }
+
+      void expectClosingTabletopOwner({required bool settled}) {
+        expect(
+          find.byKey(
+            const ValueKey('storybook-book-closing-underlay-tabletop'),
+          ),
+          settled ? findsNothing : findsOneWidget,
+        );
+        expect(
+          find.byKey(const ValueKey('storybook-book-closing-cover-tabletop')),
+          settled ? findsOneWidget : findsNothing,
+        );
+        expect(
+          find.byKey(const ValueKey('storybook-book-closing-scene-tabletop')),
+          findsNothing,
+        );
+        expect(find.byType(Opacity), findsNothing);
+      }
+
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
+      // Let Navigator mount the transition, then treat this first rendered
+      // frame as the zero-millisecond reference frame.
+      await tester.pump();
+      await tester.pump(Duration.zero);
+      expectOpeningTabletopOwner();
+      for (final elapsed in [350, 400, 600, 350]) {
+        await tester.pump(Duration(milliseconds: elapsed));
+        expectOpeningTabletopOwner();
+      }
+      await tester.pumpAndSettle();
+
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
+      await tester.pumpAndSettle();
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
+      await tester.pumpAndSettle();
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
+      await tester.pump();
+      expectClosingTabletopOwner(settled: false);
+      for (final elapsed in [350, 400, 600, 350]) {
+        await tester.pump(Duration(milliseconds: elapsed));
+        expectClosingTabletopOwner(settled: false);
+      }
+      await tester.pumpAndSettle();
+      expectClosingTabletopOwner(settled: true);
+
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowLeft);
+      await tester.pumpAndSettle();
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowLeft);
+      await tester.pumpAndSettle();
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowLeft);
+      await tester.pumpAndSettle();
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowLeft);
+      await tester.pumpAndSettle();
+      expect(
+        find.byKey(const ValueKey('storybook-book-front-cover')),
+        findsOneWidget,
+      );
+      expect(tester.takeException(), isNull);
+    },
+  );
 
   testWidgets(
     'previous navigation covers from the left binding without flash',
@@ -324,6 +414,17 @@ void main() {
     );
     expect(
       find.byKey(const ValueKey('storybook-book-closing-cover')),
+      findsOneWidget,
+    );
+    // The settled cover takes over the tabletop only after the outgoing route
+    // has finished. This keeps the two route layers from darkening the
+    // translucent tabletop grain for a handoff frame.
+    expect(
+      find.byKey(const ValueKey('storybook-book-closing-underlay-tabletop')),
+      findsNothing,
+    );
+    expect(
+      find.byKey(const ValueKey('storybook-book-closing-cover-tabletop')),
       findsOneWidget,
     );
     expect(find.text('おしまい'), findsNothing);

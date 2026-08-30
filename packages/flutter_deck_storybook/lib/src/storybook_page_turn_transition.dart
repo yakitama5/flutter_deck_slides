@@ -478,17 +478,27 @@ class _StorybookPageTurnTransition extends StatelessWidget {
             // competing with the table and rigid cover above it.
             return const SizedBox.expand();
           }
-          return _StorybookBookOpeningSheets(
-            progress: outgoing,
-            pageCount: bookPageCount,
-            backCover: boundaryBackCover,
-            perspective: perspective,
-            maxRotation: maxRotation,
-            flex: pageFlex,
-            twist: pageTwist,
-            columns: meshColumns,
-            rows: meshRows,
-            child: page,
+          return Stack(
+            fit: StackFit.expand,
+            children: [
+              const Positioned.fill(
+                child: StorybookBookTabletop(
+                  key: ValueKey('storybook-book-opening-scene-tabletop'),
+                ),
+              ),
+              _StorybookBookOpeningSheets(
+                progress: outgoing,
+                pageCount: bookPageCount,
+                backCover: boundaryBackCover,
+                perspective: perspective,
+                maxRotation: maxRotation,
+                flex: pageFlex,
+                twist: pageTwist,
+                columns: meshColumns,
+                rows: meshRows,
+                child: page,
+              ),
+            ],
           );
         }
 
@@ -496,6 +506,11 @@ class _StorybookPageTurnTransition extends StatelessWidget {
           return Stack(
             fit: StackFit.expand,
             children: [
+              const Positioned.fill(
+                child: StorybookBookTabletop(
+                  key: ValueKey('storybook-book-opening-tabletop'),
+                ),
+              ),
               _StorybookBookOpeningSheets(
                 progress: incoming,
                 pageCount: bookPageCount,
@@ -506,7 +521,6 @@ class _StorybookPageTurnTransition extends StatelessWidget {
                 twist: pageTwist,
                 columns: meshColumns,
                 rows: meshRows,
-                includeTabletop: true,
                 child: boundaryOutgoingChild!,
               ),
               StorybookCurlReveal(
@@ -562,6 +576,24 @@ class _StorybookPageTurnTransition extends StatelessWidget {
           ],
         );
       case _BookBoundaryTransition.closing:
+        if (!isBoundaryOutgoingRoute &&
+            animation.status == AnimationStatus.completed &&
+            secondaryAnimation.status == AnimationStatus.dismissed &&
+            incoming >= 1 &&
+            outgoing <= 0) {
+          // The outgoing route owns the tabletop for the whole moving shot.
+          // Once that route has finished handing off, keep the exact same
+          // camera values on the settled cover and let it become the new sole
+          // tabletop owner. Do not add a second full-screen tabletop in the
+          // handoff frame: its translucent grain would darken for one frame.
+          return StorybookBookCoverTransitionScope(
+            key: const ValueKey('storybook-book-closing-cover'),
+            motion: StorybookBookCoverMotion.closing,
+            progress: 1,
+            child: _StorybookBoundarySlide(child: page),
+          );
+        }
+
         if (isBoundaryOutgoingRoute) {
           // The outgoing route owns the opaque scene during closing. Keep the
           // real page above the paper bed so the bed cannot white-out the page
@@ -611,33 +643,8 @@ class _StorybookPageTurnTransition extends StatelessWidget {
           fit: StackFit.expand,
           children: [
             // The outgoing route below owns the tabletop, paper bed, and real
-            // page. Keeping this route transparent outside the moving sheets
-            // and cover lets that page remain visible until it is physically
-            // covered. Reintroduce the opaque scene only at the terminal frame
-            // after the outgoing route has been removed.
-            if (incoming >= 1)
-              const Positioned.fill(
-                child: StorybookBookTabletop(
-                  key: ValueKey('storybook-book-closing-scene-tabletop'),
-                ),
-              ),
-            if (incoming >= 1)
-              Positioned.fill(
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: _StorybookBookSheetsScene(
-                    key: const ValueKey(
-                      'storybook-book-closing-paper-bed-scene',
-                    ),
-                    motion: StorybookBookCoverMotion.closing,
-                    backCover: boundaryBackCover,
-                    progress: incoming,
-                    child: const _StorybookBookPaperBed(
-                      key: ValueKey('storybook-book-closing-paper-bed'),
-                    ),
-                  ),
-                ),
-              ),
+            // page until the transition is completed. The settled cover above
+            // takes over with the same camera values in the completed frame.
             _StorybookBookClosingSheets(
               progress: incoming,
               pageCount: bookPageCount,
@@ -816,7 +823,6 @@ class _StorybookBookOpeningSheets extends StatelessWidget {
     required this.columns,
     required this.rows,
     required this.child,
-    this.includeTabletop = true,
   });
 
   final double progress;
@@ -829,7 +835,6 @@ class _StorybookBookOpeningSheets extends StatelessWidget {
   final int columns;
   final int rows;
   final Widget child;
-  final bool includeTabletop;
 
   @override
   Widget build(BuildContext context) {
@@ -841,12 +846,6 @@ class _StorybookBookOpeningSheets extends StatelessWidget {
     return Stack(
       fit: StackFit.expand,
       children: [
-        if (includeTabletop)
-          Positioned.fill(
-            child: StorybookBookTabletop(
-              key: ValueKey('storybook-book-opening-tabletop'),
-            ),
-          ),
         Positioned.fill(
           child: _StorybookBookSheetsScene(
             key: const ValueKey('storybook-book-opening-paper-bed-scene'),
