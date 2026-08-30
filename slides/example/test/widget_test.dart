@@ -1,6 +1,7 @@
 import 'package:example_slide/main.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
+import 'package:flutter_deck_storybook/src/storybook_book_cover_transition.dart';
 import 'package:flutter_deck_storybook/src/storybook_page_curl.dart';
 import 'package:flutter_deck_storybook/src/storybook_reveal.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -21,6 +22,10 @@ void main() {
     await tester.pump();
 
     expect(placeholder, findsNothing);
+    expect(
+      find.byKey(const ValueKey('storybook-book-front-cover')),
+      findsOneWidget,
+    );
     final coverTitle = find.text('FlutterDeck Storybook');
     expect(coverTitle, findsOneWidget);
     expect(ModalRoute.of(tester.element(coverTitle))?.opaque, isFalse);
@@ -48,6 +53,13 @@ void main() {
     (tester) async {
       await tester.pumpWidget(const ExampleApp());
       await tester.pumpAndSettle();
+
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
+      await tester.pumpAndSettle();
+      expect(
+        find.byKey(const ValueKey('storybook-book-front-cover')),
+        findsNothing,
+      );
 
       await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
       await tester.pumpAndSettle();
@@ -132,7 +144,62 @@ void main() {
     await tester.pumpWidget(const ExampleApp());
     await tester.pumpAndSettle();
 
+    expect(
+      find.byKey(const ValueKey('storybook-book-front-cover')),
+      findsOneWidget,
+    );
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 150));
+
+    final openingCover = tester.widget<StorybookBookCoverTransitionScope>(
+      find.byKey(const ValueKey('storybook-book-opening-cover')),
+    );
+    expect(openingCover.motion, StorybookBookCoverMotion.opening);
+    expect(openingCover.progress, greaterThan(0));
+    expect(openingCover.progress, lessThan(1));
+    expect(
+      find.byKey(const ValueKey('storybook-book-opening-sheet-0')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const ValueKey('storybook-book-opening-sheet-4')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const ValueKey('storybook-page-turn-outgoing-sheet')),
+      findsNothing,
+    );
+    expect(
+      find.byKey(const ValueKey('storybook-book-opening-tabletop')),
+      findsOneWidget,
+    );
+    final openingReveal = tester
+        .widgetList<StorybookCurlReveal>(find.byType(StorybookCurlReveal))
+        .singleWhere(
+          (reveal) =>
+              reveal.clipKey == const ValueKey('storybook-book-opening-reveal'),
+        );
+    expect(openingReveal.shadowFactor, 0);
+    expect(find.byType(Opacity), findsNothing);
+    expect(
+      tester
+          .widgetList<StorybookCurlSheet>(find.byType(StorybookCurlSheet))
+          .every((sheet) => sheet.paperOnly),
+      isTrue,
+    );
+    expect(
+      find.byKey(const ValueKey('storybook-book-camera-scale')),
+      findsOneWidget,
+    );
+
+    await tester.pumpAndSettle();
     expect(find.text('FlutterDeck Storybook'), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('storybook-book-front-cover')),
+      findsNothing,
+    );
 
     await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
     await tester.pump();
@@ -175,6 +242,47 @@ void main() {
     expect(find.text('おしまい'), findsOneWidget);
     expect(find.textContaining('ある日、青い小鳥は'), findsNothing);
 
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 150));
+
+    final closingCover = tester.widget<StorybookBookCoverTransitionScope>(
+      find.byKey(const ValueKey('storybook-book-closing-cover')),
+    );
+    expect(closingCover.motion, StorybookBookCoverMotion.closing);
+    expect(closingCover.progress, lessThan(1));
+    expect(
+      find.byKey(const ValueKey('storybook-book-closing-sheet-0')),
+      findsOneWidget,
+    );
+    expect(find.byType(Opacity), findsNothing);
+    expect(
+      tester
+          .widgetList<StorybookCurlSheet>(find.byType(StorybookCurlSheet))
+          .every((sheet) => sheet.paperOnly),
+      isTrue,
+    );
+    expect(
+      find.byKey(const ValueKey('storybook-book-camera-scale')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const ValueKey('storybook-book-closing-cover-tabletop')),
+      findsOneWidget,
+    );
+
+    await tester.pumpAndSettle();
+    expect(
+      find.byKey(const ValueKey('storybook-book-back-cover')),
+      findsOneWidget,
+    );
+    expect(find.text('おしまい'), findsNothing);
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowLeft);
+    await tester.pumpAndSettle();
+
+    expect(find.text('おしまい'), findsOneWidget);
+
     await tester.sendKeyEvent(LogicalKeyboardKey.arrowLeft);
     await tester.pumpAndSettle();
 
@@ -184,6 +292,14 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('FlutterDeck Storybook'), findsOneWidget);
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowLeft);
+    await tester.pumpAndSettle();
+
+    expect(
+      find.byKey(const ValueKey('storybook-book-front-cover')),
+      findsOneWidget,
+    );
     expect(find.text('おしまい'), findsNothing);
     expect(tester.takeException(), isNull);
   });

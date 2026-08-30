@@ -5,6 +5,7 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_deck/flutter_deck.dart';
 import 'package:flutter_deck_storybook/flutter_deck_storybook.dart';
+import 'package:flutter_deck_storybook/src/storybook_book_cover_transition.dart';
 import 'package:flutter_deck_storybook/src/storybook_page_curl.dart';
 import 'package:flutter_deck_storybook/src/storybook_reveal.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -25,6 +26,110 @@ void main() {
 
     expect(find.text('ものがたり'), findsOneWidget);
     expect(find.text('1 / 3'), findsOneWidget);
+  });
+
+  testWidgets('book covers render without page content or page numbers', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: Stack(
+          children: [
+            StorybookBookCover(key: ValueKey('front'), title: '本の表紙'),
+            StorybookBookCover(key: ValueKey('back'), backCover: true),
+          ],
+        ),
+      ),
+    );
+
+    expect(find.byKey(const ValueKey('front')), findsOneWidget);
+    expect(find.byKey(const ValueKey('back')), findsOneWidget);
+    expect(find.text('本の表紙'), findsOneWidget);
+    expect(find.textContaining(' / '), findsNothing);
+  });
+
+  test('rigid covers use mirrored hinges, rotation, and camera moves', () {
+    StorybookBookCoverMotionValues values(
+      StorybookBookCoverMotion motion,
+      double progress,
+      bool backCover,
+    ) => StorybookBookCoverMotionValues.forCover(
+      motion: motion,
+      progress: progress,
+      backCover: backCover,
+    );
+
+    final frontOpeningStart = values(
+      StorybookBookCoverMotion.opening,
+      0,
+      false,
+    );
+    final frontOpeningEnd = values(StorybookBookCoverMotion.opening, 1, false);
+    final backOpeningStart = values(StorybookBookCoverMotion.opening, 0, true);
+    final backOpeningEnd = values(StorybookBookCoverMotion.opening, 1, true);
+    final backClosingStart = values(StorybookBookCoverMotion.closing, 0, true);
+    final backClosingEnd = values(StorybookBookCoverMotion.closing, 1, true);
+
+    expect(frontOpeningStart.hingeAlignment, Alignment.centerLeft);
+    expect(backOpeningStart.hingeAlignment, Alignment.centerRight);
+    expect(frontOpeningEnd.rotationY, closeTo(-math.pi / 2, 0.0001));
+    expect(backOpeningEnd.rotationY, closeTo(math.pi / 2, 0.0001));
+    expect(
+      frontOpeningStart.cameraScale,
+      lessThan(frontOpeningEnd.cameraScale),
+    );
+    expect(
+      frontOpeningStart.cameraOffset.dy,
+      greaterThan(frontOpeningEnd.cameraOffset.dy),
+    );
+    expect(
+      backClosingStart.cameraScale,
+      greaterThan(backClosingEnd.cameraScale),
+    );
+    expect(
+      backClosingStart.cameraOffset.dy,
+      lessThan(backClosingEnd.cameraOffset.dy),
+    );
+    expect(backClosingStart.rotationY, closeTo(math.pi / 2, 0.0001));
+    expect(backClosingEnd.rotationY, closeTo(0, 0.0001));
+  });
+
+  testWidgets('a cover is a rigid panel without an opacity transition', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      const MaterialApp(home: StorybookBookCover(title: '表紙')),
+    );
+
+    expect(
+      find.byKey(const ValueKey('storybook-book-rigid-cover-panel')),
+      findsOneWidget,
+    );
+    expect(find.byType(Opacity), findsNothing);
+  });
+
+  testWidgets('a closing rigid cover keeps the tabletop behind the board', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: StorybookBookCoverTransitionScope(
+          motion: StorybookBookCoverMotion.closing,
+          progress: 0.35,
+          child: StorybookBookCover(backCover: true),
+        ),
+      ),
+    );
+
+    expect(
+      find.byKey(const ValueKey('storybook-book-closing-cover-tabletop')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const ValueKey('storybook-book-rigid-cover-panel')),
+      findsOneWidget,
+    );
+    expect(find.byType(Opacity), findsNothing);
   });
 
   testWidgets('StorybookPage applies reveal animation values to its artwork', (
