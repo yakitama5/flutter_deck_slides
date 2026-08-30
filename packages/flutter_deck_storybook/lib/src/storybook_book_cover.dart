@@ -50,7 +50,7 @@ class StorybookBookCover extends StatelessWidget {
                 ? Alignment.centerRight
                 : Alignment.centerLeft,
             rotationY: 0,
-            cameraScale: 0.90,
+            cameraScale: 0.74,
             cameraOffset: Offset.zero,
           )
         : StorybookBookCoverMotionValues.forCover(
@@ -80,20 +80,14 @@ class StorybookBookCover extends StatelessWidget {
               key: ValueKey('storybook-book-tabletop'),
             ),
           )
-        else if (transition.motion == StorybookBookCoverMotion.opening)
-          const Positioned.fill(
+        else if (transition.includeTabletop)
+          Positioned.fill(
             child: StorybookBookTabletop(
-              key: ValueKey('storybook-book-opening-cover-tabletop'),
-            ),
-          )
-        else
-          // The parent boundary scene already contains the paper bundle. A
-          // closing cover must leave the tabletop visible behind its rigid
-          // board; leaving the camera rectangle transparent would expose the
-          // Scaffold's dark background as a false black book-shaped frame.
-          const Positioned.fill(
-            child: StorybookBookTabletop(
-              key: ValueKey('storybook-book-closing-cover-tabletop'),
+              key: ValueKey(
+                transition.motion == StorybookBookCoverMotion.opening
+                    ? 'storybook-book-opening-cover-tabletop'
+                    : 'storybook-book-closing-cover-tabletop',
+              ),
             ),
           ),
         Positioned.fill(
@@ -115,8 +109,8 @@ class StorybookBookCover extends StatelessWidget {
                       // The board is deliberately pulled back at rest. The
                       // camera move, rather than an opacity change, brings it
                       // closer while the rigid cover leaves the spine.
-                      widthFactor: 0.78,
-                      heightFactor: 0.76,
+                      widthFactor: 0.93,
+                      heightFactor: 0.88,
                       child: rigidPanel,
                     ),
                   ),

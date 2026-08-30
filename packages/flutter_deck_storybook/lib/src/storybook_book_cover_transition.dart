@@ -10,12 +10,19 @@ class StorybookBookCoverTransitionScope extends InheritedWidget {
   const StorybookBookCoverTransitionScope({
     required this.motion,
     required this.progress,
+    this.includeTabletop = true,
     required super.child,
     super.key,
   });
 
   final StorybookBookCoverMotion motion;
   final double progress;
+
+  /// Whether this cover layer owns the full-screen tabletop.
+  ///
+  /// The incoming side of a closing route leaves this off so the already
+  /// mounted outgoing route can provide the page and tabletop below it.
+  final bool includeTabletop;
 
   static StorybookBookCoverTransitionScope? maybeOf(BuildContext context) {
     return context
@@ -26,7 +33,9 @@ class StorybookBookCoverTransitionScope extends InheritedWidget {
 
   @override
   bool updateShouldNotify(StorybookBookCoverTransitionScope oldWidget) {
-    return motion != oldWidget.motion || progress != oldWidget.progress;
+    return motion != oldWidget.motion ||
+        progress != oldWidget.progress ||
+        includeTabletop != oldWidget.includeTabletop;
   }
 }
 
@@ -52,11 +61,10 @@ class StorybookBookCoverMotionValues {
     required bool backCover,
   }) {
     final normalizedProgress = progress.clamp(0.0, 1.0);
-    final cameraProgress = motion == StorybookBookCoverMotion.opening
-        ? Curves.easeInOutCubic.transform(normalizedProgress)
-        : Curves.easeInOutCubic.transform(
-            ((normalizedProgress - 0.68) / 0.32).clamp(0.0, 1.0),
-          );
+    // The camera must travel for the whole boundary transition. Delaying the
+    // closing move until the cover is almost shut makes the page-to-cover
+    // handoff look like a late scale jump instead of one continuous shot.
+    final cameraProgress = Curves.easeInOutCubic.transform(normalizedProgress);
     final coverProgress = motion == StorybookBookCoverMotion.opening
         ? Curves.easeInCubic.transform(normalizedProgress)
         : 1 - Curves.easeOutCubic.transform(normalizedProgress);
@@ -72,11 +80,11 @@ class StorybookBookCoverMotionValues {
       hingeAlignment: backCover ? Alignment.centerRight : Alignment.centerLeft,
       rotationY: rotationSign * math.pi / 2 * coverProgress,
       cameraScale: motion == StorybookBookCoverMotion.opening
-          ? _lerp(0.90, 1.04, cameraProgress)
-          : _lerp(1.04, 0.90, cameraProgress),
+          ? _lerp(0.74, 1.0, cameraProgress)
+          : _lerp(1.0, 0.74, cameraProgress),
       cameraOffset: motion == StorybookBookCoverMotion.opening
-          ? Offset(0, _lerp(0.022, -0.006, cameraProgress))
-          : Offset(0, _lerp(-0.006, 0.022, cameraProgress)),
+          ? Offset(0, _lerp(0.018, 0, cameraProgress))
+          : Offset(0, _lerp(0, 0.018, cameraProgress)),
     );
   }
 
