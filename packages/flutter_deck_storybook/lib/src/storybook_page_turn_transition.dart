@@ -4,11 +4,16 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_deck/flutter_deck.dart';
 
+import 'storybook_book_cover.dart';
+import 'storybook_book_cover_transition.dart';
 import 'storybook_page_curl.dart';
+import 'storybook_page.dart';
 import 'storybook_reveal.dart';
 import 'storybook_sound_effects.dart';
 
 enum _PageTurnDirection { forward, backward }
+
+enum _BookBoundaryTransition { opening, closing }
 
 /// A page-turn transition for [FlutterDeckApp].
 ///
@@ -33,6 +38,11 @@ class StorybookPageTurnTransitionBuilder extends FlutterDeckTransitionBuilder {
     this.enableInkReveal = true,
     this.inkRevealDuration = const Duration(milliseconds: 2750),
     this.inkRevealOrigin = const Alignment(0, 0.25),
+    this.enableBookOpening = false,
+    this.enableBookClosing = false,
+    this.openingTargetSlideNumber = 2,
+    this.closingTargetSlideNumber,
+    this.bookPageCount = 5,
     this.soundEffects,
   }) : assert(perspective > 0),
        assert(maxRotation > 0 && maxRotation <= math.pi),
@@ -41,7 +51,10 @@ class StorybookPageTurnTransitionBuilder extends FlutterDeckTransitionBuilder {
        assert(meshColumns >= 8 && meshColumns <= 64),
        assert(meshRows >= 2 && meshRows <= 24),
        assert(turnSoundCueProgress >= 0 && turnSoundCueProgress <= 1),
-       assert(inkRevealDuration > Duration.zero);
+       assert(inkRevealDuration > Duration.zero),
+       assert(openingTargetSlideNumber >= 2),
+       assert(closingTargetSlideNumber == null || closingTargetSlideNumber > 1),
+       assert(bookPageCount >= 2 && bookPageCount <= 8);
 
   /// Perspective applied to the page transform.
   final double perspective;
@@ -97,6 +110,30 @@ class StorybookPageTurnTransitionBuilder extends FlutterDeckTransitionBuilder {
   /// Point from which the watercolor bloom spreads across the page.
   final Alignment inkRevealOrigin;
 
+  /// Whether the first transition from a front cover should open a book.
+  ///
+  /// The cover is expected to be slide 1 and the first real page to be slide 2
+  /// (or [openingTargetSlideNumber]). It is disabled by default so existing
+  /// decks that do not add boundary-cover slides keep their current behavior.
+  final bool enableBookOpening;
+
+  /// Whether the transition into the final cover should close the book.
+  ///
+  /// The final cover is the last slide unless [closingTargetSlideNumber] is
+  /// supplied explicitly.
+  final bool enableBookClosing;
+
+  /// Slide number at which the opening animation ends.
+  final int openingTargetSlideNumber;
+
+  /// Optional slide number at which the closing animation ends.
+  ///
+  /// When null, the last slide in the current router is used.
+  final int? closingTargetSlideNumber;
+
+  /// Number of staggered paper sheets used by the book boundary animations.
+  final int bookPageCount;
+
   /// Optional page-turn and drawing audio cues.
   ///
   /// Pass [StorybookSoundEffects] to use the bundled sounds. Leaving this null
@@ -105,6 +142,7 @@ class StorybookPageTurnTransitionBuilder extends FlutterDeckTransitionBuilder {
 
   int? _lastSlideNumber;
   _PageTurnDirection _direction = _PageTurnDirection.forward;
+  Widget? _settledChild;
 
   @override
   Widget build(
@@ -113,8 +151,30 @@ class StorybookPageTurnTransitionBuilder extends FlutterDeckTransitionBuilder {
     Animation<double> secondaryAnimation,
     Widget child,
   ) {
-    if (reverseOnPrevious) {
-      _updateDirection(context.flutterDeck.slideNumber);
+    final deckProvider =
+        (reverseOnPrevious || enableBookOpening || enableBookClosing)
+        ? context.dependOnInheritedWidgetOfExactType<FlutterDeckProvider>()
+        : null;
+    final slideNumber = deckProvider?.flutterDeck.slideNumber;
+    final slideCount = deckProvider?.flutterDeck.router.slides.length;
+
+    if (deckProvider != null && slideNumber != null) {
+      _updateDirection(slideNumber);
+    }
+
+    final boundary = _boundaryTransition(
+      slideNumber: slideNumber,
+      slideCount: slideCount,
+    );
+    final boundaryBackCover = boundary == null
+        ? false
+        : _boundaryUsesBackCover(boundary);
+
+    final boundaryOutgoingChild = _settledChild;
+    if (animation.status == AnimationStatus.completed &&
+        secondaryAnimation.status == AnimationStatus.dismissed &&
+        boundary != _BookBoundaryTransition.opening) {
+      _settledChild = child;
     }
 
     if (!usePerspective &&
@@ -126,7 +186,10 @@ class StorybookPageTurnTransitionBuilder extends FlutterDeckTransitionBuilder {
         child: _StorybookInkSequence(
           animation: animation,
           secondaryAnimation: secondaryAnimation,
-          enabled: enableInkReveal && _direction == _PageTurnDirection.forward,
+          enabled:
+              enableInkReveal &&
+              _direction == _PageTurnDirection.forward &&
+              boundary != _BookBoundaryTransition.closing,
           duration: inkRevealDuration,
           revealOrigin: inkRevealOrigin,
           turnSoundCueProgress: turnSoundCueProgress,
@@ -149,6 +212,10 @@ class StorybookPageTurnTransitionBuilder extends FlutterDeckTransitionBuilder {
       enableInkReveal: enableInkReveal,
       inkRevealDuration: inkRevealDuration,
       inkRevealOrigin: inkRevealOrigin,
+      boundary: boundary,
+      boundaryBackCover: boundaryBackCover,
+      boundaryOutgoingChild: boundaryOutgoingChild,
+      bookPageCount: bookPageCount,
       turnSoundCueProgress: turnSoundCueProgress,
       soundEffects: soundEffects,
       child: child,
@@ -166,6 +233,46 @@ class StorybookPageTurnTransitionBuilder extends FlutterDeckTransitionBuilder {
     }
 
     _lastSlideNumber = targetSlideNumber;
+  }
+
+  _BookBoundaryTransition? _boundaryTransition({
+    required int? slideNumber,
+    required int? slideCount,
+  }) {
+    if (slideNumber == null) {
+      return null;
+    }
+
+    final closingSlideNumber = closingTargetSlideNumber ?? slideCount;
+    if (_direction == _PageTurnDirection.forward) {
+      if (enableBookOpening && slideNumber == openingTargetSlideNumber) {
+        return _BookBoundaryTransition.opening;
+      }
+
+      if (enableBookClosing &&
+          closingSlideNumber != null &&
+          slideNumber == closingSlideNumber) {
+        return _BookBoundaryTransition.closing;
+      }
+    } else {
+      if (enableBookOpening && slideNumber == openingTargetSlideNumber - 1) {
+        return _BookBoundaryTransition.closing;
+      }
+
+      if (enableBookClosing &&
+          closingSlideNumber != null &&
+          slideNumber == closingSlideNumber - 1) {
+        return _BookBoundaryTransition.opening;
+      }
+    }
+
+    return null;
+  }
+
+  bool _boundaryUsesBackCover(_BookBoundaryTransition boundary) {
+    return boundary == _BookBoundaryTransition.opening
+        ? _direction == _PageTurnDirection.backward
+        : _direction == _PageTurnDirection.forward;
   }
 }
 
@@ -229,6 +336,10 @@ class _StorybookPageTurnTransition extends StatelessWidget {
     required this.enableInkReveal,
     required this.inkRevealDuration,
     required this.inkRevealOrigin,
+    required this.boundary,
+    required this.boundaryBackCover,
+    required this.boundaryOutgoingChild,
+    required this.bookPageCount,
     required this.turnSoundCueProgress,
     required this.soundEffects,
     required this.child,
@@ -246,6 +357,10 @@ class _StorybookPageTurnTransition extends StatelessWidget {
   final bool enableInkReveal;
   final Duration inkRevealDuration;
   final Alignment inkRevealOrigin;
+  final _BookBoundaryTransition? boundary;
+  final bool boundaryBackCover;
+  final Widget? boundaryOutgoingChild;
+  final int bookPageCount;
   final double turnSoundCueProgress;
   final StorybookSoundEffectPlayer? soundEffects;
   final Widget child;
@@ -265,7 +380,10 @@ class _StorybookPageTurnTransition extends StatelessWidget {
       child: _StorybookInkSequence(
         animation: animation,
         secondaryAnimation: secondaryAnimation,
-        enabled: enableInkReveal && direction == _PageTurnDirection.forward,
+        enabled:
+            enableInkReveal &&
+            direction == _PageTurnDirection.forward &&
+            boundary != _BookBoundaryTransition.closing,
         duration: inkRevealDuration,
         revealOrigin: inkRevealOrigin,
         turnSoundCueProgress: turnSoundCueProgress,
@@ -275,6 +393,16 @@ class _StorybookPageTurnTransition extends StatelessWidget {
       builder: (context, page) {
         final rawIncoming = animation.value.clamp(0.0, 1.0);
         final rawOutgoing = secondaryAnimation.value.clamp(0.0, 1.0);
+
+        if (boundary case final boundaryTransition?) {
+          return _buildBookBoundaryTransition(
+            boundary: boundaryTransition,
+            page: page!,
+            incoming: rawIncoming,
+            outgoing: rawOutgoing,
+          );
+        }
+
         if (direction == _PageTurnDirection.forward) {
           // The reference spends most of the first half shifting and raising
           // a horizontal grip ridge. The broad turn accelerates only after the
@@ -299,6 +427,181 @@ class _StorybookPageTurnTransition extends StatelessWidget {
         );
       },
     );
+  }
+
+  Widget _buildBookBoundaryTransition({
+    required _BookBoundaryTransition boundary,
+    required Widget page,
+    required double incoming,
+    required double outgoing,
+  }) {
+    if (incoming >= 1 && outgoing <= 0) {
+      return page;
+    }
+
+    final boundaryPage = Stack(
+      fit: StackFit.expand,
+      children: [
+        const Positioned.fill(
+          child: StorybookBookTabletop(
+            key: ValueKey('storybook-book-boundary-tabletop'),
+          ),
+        ),
+        Positioned.fill(
+          child: StorybookBookTabletopFrame(
+            child: StorybookPageBackgroundScope(
+              outerColor: Colors.transparent,
+              child: page,
+            ),
+          ),
+        ),
+      ],
+    );
+
+    final turnsOutWithPrimary =
+        animation.status == AnimationStatus.reverse && animation.value < 1;
+    final turnsOutWithSecondary =
+        secondaryAnimation.status == AnimationStatus.forward &&
+        secondaryAnimation.value > 0;
+    final isTurningOut = turnsOutWithPrimary || turnsOutWithSecondary;
+
+    switch (boundary) {
+      case _BookBoundaryTransition.opening:
+        if (isTurningOut) {
+          if (boundaryOutgoingChild != null) {
+            // The incoming route owns the visible boundary scene. Keeping the
+            // outgoing route empty prevents its Scaffold background from
+            // competing with the table and rigid cover above it.
+            return const SizedBox.expand();
+          }
+          return _StorybookBookOpeningSheets(
+            progress: outgoing,
+            pageCount: bookPageCount,
+            backCover: boundaryBackCover,
+            perspective: perspective,
+            maxRotation: maxRotation,
+            flex: pageFlex,
+            twist: pageTwist,
+            columns: meshColumns,
+            rows: meshRows,
+            child: page,
+          );
+        }
+
+        if (boundaryOutgoingChild != null) {
+          return Stack(
+            fit: StackFit.expand,
+            children: [
+              const Positioned.fill(
+                child: StorybookBookTabletop(
+                  key: ValueKey('storybook-book-opening-scene-tabletop'),
+                ),
+              ),
+              _StorybookBookOpeningSheets(
+                progress: incoming,
+                pageCount: bookPageCount,
+                backCover: boundaryBackCover,
+                perspective: perspective,
+                maxRotation: maxRotation,
+                flex: pageFlex,
+                twist: pageTwist,
+                columns: meshColumns,
+                rows: meshRows,
+                child: boundaryOutgoingChild!,
+              ),
+              StorybookCurlReveal(
+                clipKey: const ValueKey('storybook-book-opening-reveal'),
+                progress: Curves.easeInOutCubic.transform(incoming),
+                direction: boundaryBackCover
+                    ? StorybookPageCurlDirection.backward
+                    : StorybookPageCurlDirection.forward,
+                motion: StorybookPageCurlMotion.turnAway,
+                perspective: perspective,
+                maxRotation: maxRotation,
+                flex: pageFlex,
+                twist: pageTwist,
+                columns: meshColumns,
+                rows: meshRows,
+                shadowFactor: 0,
+                // Keep the reveal transparent during the cover's first beat.
+                // The scene already paints a persistent tabletop below this
+                // layer; painting a second tabletop inside the curved clip
+                // creates a visible seam that makes the background appear to
+                // bend with the cover. The actual page is introduced only
+                // after the rigid board has visibly left the book.
+                child: incoming < 0.35 ? const SizedBox.expand() : boundaryPage,
+              ),
+            ],
+          );
+        }
+
+        return Stack(
+          fit: StackFit.expand,
+          children: [
+            const Positioned.fill(
+              child: StorybookBookTabletop(
+                key: ValueKey('storybook-book-opening-scene-tabletop'),
+              ),
+            ),
+            StorybookCurlReveal(
+              clipKey: const ValueKey('storybook-book-opening-reveal'),
+              progress: Curves.easeInOutCubic.transform(incoming),
+              direction: StorybookPageCurlDirection.forward,
+              motion: StorybookPageCurlMotion.turnAway,
+              perspective: perspective,
+              maxRotation: maxRotation,
+              flex: pageFlex,
+              twist: pageTwist,
+              columns: meshColumns,
+              rows: meshRows,
+              shadowFactor: 0,
+              // Keep the route-owned outer background transparent even when
+              // the outgoing route has not produced a settled child yet. The
+              // tabletop must remain visible through the reveal silhouette;
+              // otherwise the route's dark cover color appears as a black
+              // border during the first opening frames.
+              child: boundaryPage,
+            ),
+          ],
+        );
+      case _BookBoundaryTransition.closing:
+        if (isTurningOut) {
+          return Stack(
+            fit: StackFit.expand,
+            children: [
+              const Positioned.fill(
+                child: StorybookBookTabletop(
+                  key: ValueKey('storybook-book-closing-underlay-tabletop'),
+                ),
+              ),
+              boundaryPage,
+            ],
+          );
+        }
+
+        return Stack(
+          fit: StackFit.expand,
+          children: [
+            const Positioned.fill(
+              child: StorybookBookTabletop(
+                key: ValueKey('storybook-book-closing-scene-tabletop'),
+              ),
+            ),
+            _StorybookBookClosingSheets(
+              progress: incoming,
+              pageCount: bookPageCount,
+              backCover: boundaryBackCover,
+              perspective: perspective,
+              maxRotation: maxRotation,
+              flex: pageFlex,
+              twist: pageTwist,
+              columns: meshColumns,
+              rows: meshRows,
+              child: page,
+            ),
+          ],
+        );
+    }
   }
 
   Widget _buildForwardTurn({
@@ -447,6 +750,257 @@ class _StorybookPageTurnTransition extends StatelessWidget {
     }
 
     return page;
+  }
+}
+
+class _StorybookBookOpeningSheets extends StatelessWidget {
+  const _StorybookBookOpeningSheets({
+    required this.progress,
+    required this.pageCount,
+    required this.backCover,
+    required this.perspective,
+    required this.maxRotation,
+    required this.flex,
+    required this.twist,
+    required this.columns,
+    required this.rows,
+    required this.child,
+  });
+
+  final double progress;
+  final int pageCount;
+  final bool backCover;
+  final double perspective;
+  final double maxRotation;
+  final double flex;
+  final double twist;
+  final int columns;
+  final int rows;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final openingProgress = Curves.easeInOutCubic.transform(progress);
+    final pageDirection = backCover
+        ? StorybookPageCurlDirection.backward
+        : StorybookPageCurlDirection.forward;
+
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        Positioned.fill(
+          child: StorybookBookTabletop(
+            key: ValueKey('storybook-book-opening-tabletop'),
+          ),
+        ),
+        StorybookBookCoverTransitionScope(
+          key: const ValueKey('storybook-book-opening-cover'),
+          motion: StorybookBookCoverMotion.opening,
+          progress: progress,
+          child: child,
+        ),
+        Positioned.fill(
+          child: StorybookCurlReveal(
+            clipKey: const ValueKey('storybook-book-opening-paper-reveal'),
+            progress: openingProgress,
+            direction: pageDirection,
+            motion: StorybookPageCurlMotion.turnAway,
+            perspective: perspective,
+            maxRotation: maxRotation,
+            flex: flex,
+            twist: twist,
+            columns: columns,
+            rows: rows,
+            shadowFactor: 0,
+            child: _StorybookBookSheetsScene(
+              key: const ValueKey('storybook-book-opening-paper-scene'),
+              motion: StorybookBookCoverMotion.opening,
+              backCover: backCover,
+              progress: progress,
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  for (var index = 0; index < pageCount; index++)
+                    StorybookCurlSheet(
+                      key: ValueKey('storybook-book-opening-sheet-$index'),
+                      progress: _staggeredProgress(openingProgress, index),
+                      direction: pageDirection,
+                      motion: StorybookPageCurlMotion.turnAway,
+                      perspective: perspective,
+                      maxRotation: maxRotation,
+                      flex: flex,
+                      twist: twist,
+                      columns: columns,
+                      rows: rows,
+                      paperOnly: true,
+                      child: const _StorybookBookPaperLeaf(),
+                    ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  double _staggeredProgress(double value, int index) {
+    final delay = 0.055 * (index + 1);
+    final localProgress = ((value - delay) / (1 - delay)).clamp(0.0, 1.0);
+    return Curves.easeInCubic.transform(localProgress);
+  }
+}
+
+class _StorybookBookClosingSheets extends StatelessWidget {
+  const _StorybookBookClosingSheets({
+    required this.progress,
+    required this.pageCount,
+    required this.backCover,
+    required this.perspective,
+    required this.maxRotation,
+    required this.flex,
+    required this.twist,
+    required this.columns,
+    required this.rows,
+    required this.child,
+  });
+
+  final double progress;
+  final int pageCount;
+  final bool backCover;
+  final double perspective;
+  final double maxRotation;
+  final double flex;
+  final double twist;
+  final int columns;
+  final int rows;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final closingProgress = Curves.easeOutCubic.transform(progress);
+    final pageDirection = backCover
+        ? StorybookPageCurlDirection.backward
+        : StorybookPageCurlDirection.forward;
+
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        Positioned.fill(
+          child: StorybookBookTabletop(
+            key: ValueKey('storybook-book-closing-tabletop'),
+          ),
+        ),
+        Positioned.fill(
+          child: _StorybookBookSheetsScene(
+            key: const ValueKey('storybook-book-closing-paper-scene'),
+            motion: StorybookBookCoverMotion.closing,
+            backCover: backCover,
+            progress: progress,
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                for (var index = 0; index < pageCount; index++)
+                  StorybookCurlSheet(
+                    key: ValueKey('storybook-book-closing-sheet-$index'),
+                    progress: _staggeredProgress(closingProgress, index),
+                    direction: pageDirection,
+                    motion: StorybookPageCurlMotion.coverPrevious,
+                    perspective: perspective,
+                    maxRotation: maxRotation,
+                    flex: flex,
+                    twist: twist,
+                    columns: columns,
+                    rows: rows,
+                    paperOnly: true,
+                    child: const _StorybookBookPaperLeaf(),
+                  ),
+              ],
+            ),
+          ),
+        ),
+        StorybookBookCoverTransitionScope(
+          key: const ValueKey('storybook-book-closing-cover'),
+          motion: StorybookBookCoverMotion.closing,
+          progress: progress,
+          child: child,
+        ),
+      ],
+    );
+  }
+
+  double _staggeredProgress(double value, int index) {
+    final delay = 0.055 * (pageCount - index);
+    final localProgress = ((value - delay) / (1 - delay)).clamp(0.0, 1.0);
+    return 1 - Curves.easeOutCubic.transform(localProgress);
+  }
+}
+
+class _StorybookBookPaperLeaf extends StatelessWidget {
+  const _StorybookBookPaperLeaf();
+
+  @override
+  Widget build(BuildContext context) {
+    return const DecoratedBox(
+      decoration: BoxDecoration(
+        color: Color(0xFFFFFDF8),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color(0xFFFFFEFB), Color(0xFFF4EBDD)],
+        ),
+      ),
+    );
+  }
+}
+
+/// Places the blank paper bundle in the same pulled-back camera scene as the
+/// rigid cover. The tabletop remains outside this transform, so it stays
+/// visible around the book for the whole boundary animation.
+class _StorybookBookSheetsScene extends StatelessWidget {
+  const _StorybookBookSheetsScene({
+    required this.motion,
+    required this.backCover,
+    required this.progress,
+    required this.child,
+    super.key,
+  });
+
+  final StorybookBookCoverMotion motion;
+  final bool backCover;
+  final double progress;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final values = StorybookBookCoverMotionValues.forCover(
+      motion: motion,
+      progress: progress,
+      backCover: backCover,
+    );
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final cameraOffset = Offset(
+          values.cameraOffset.dx * constraints.maxWidth,
+          values.cameraOffset.dy * constraints.maxHeight,
+        );
+        return Transform.translate(
+          offset: cameraOffset,
+          child: Transform.scale(
+            alignment: Alignment.center,
+            scale: values.cameraScale,
+            child: Center(
+              child: FractionallySizedBox(
+                widthFactor: 0.78,
+                heightFactor: 0.76,
+                child: child,
+              ),
+            ),
+          ),
+        );
+      },
+    );
   }
 }
 
