@@ -396,6 +396,7 @@ class _StorybookPageTurnTransition extends StatelessWidget {
 
         if (boundary case final boundaryTransition?) {
           return _buildBookBoundaryTransition(
+            context: context,
             boundary: boundaryTransition,
             page: page!,
             incoming: rawIncoming,
@@ -430,44 +431,38 @@ class _StorybookPageTurnTransition extends StatelessWidget {
   }
 
   Widget _buildBookBoundaryTransition({
+    required BuildContext context,
     required _BookBoundaryTransition boundary,
     required Widget page,
     required double incoming,
     required double outgoing,
   }) {
-    if (incoming >= 1 && outgoing <= 0) {
+    final isBoundaryOutgoingRoute = ModalRoute.of(context)?.isCurrent == false;
+    if (!isBoundaryOutgoingRoute && incoming >= 1 && outgoing <= 0) {
       return page;
     }
 
-    final boundaryPage = Stack(
-      fit: StackFit.expand,
-      children: [
-        const Positioned.fill(
-          child: StorybookBookTabletop(
-            key: ValueKey('storybook-book-boundary-tabletop'),
-          ),
-        ),
-        Positioned.fill(
-          child: StorybookBookTabletopFrame(
-            child: StorybookPageBackgroundScope(
-              outerColor: Colors.transparent,
-              child: page,
-            ),
-          ),
-        ),
-      ],
+    final boundaryPage = _StorybookBookBoundaryPageScene(
+      key: const ValueKey('storybook-book-boundary-page-scene'),
+      motion: boundary == _BookBoundaryTransition.opening
+          ? StorybookBookCoverMotion.opening
+          : StorybookBookCoverMotion.closing,
+      backCover: boundaryBackCover,
+      progress: incoming,
+      child: StorybookPageBackgroundScope(
+        outerColor: Colors.transparent,
+        child: _StorybookBoundarySlide(child: page),
+      ),
     );
-
     final turnsOutWithPrimary =
         animation.status == AnimationStatus.reverse && animation.value < 1;
     final turnsOutWithSecondary =
         secondaryAnimation.status == AnimationStatus.forward &&
         secondaryAnimation.value > 0;
     final isTurningOut = turnsOutWithPrimary || turnsOutWithSecondary;
-
     switch (boundary) {
       case _BookBoundaryTransition.opening:
-        if (isTurningOut) {
+        if (isBoundaryOutgoingRoute || isTurningOut) {
           if (boundaryOutgoingChild != null) {
             // The incoming route owns the visible boundary scene. Keeping the
             // outgoing route empty prevents its Scaffold background from
@@ -529,7 +524,7 @@ class _StorybookPageTurnTransition extends StatelessWidget {
                 // creates a visible seam that makes the background appear to
                 // bend with the cover. The actual page is introduced only
                 // after the rigid board has visibly left the book.
-                child: incoming < 0.35 ? const SizedBox.expand() : boundaryPage,
+                child: incoming < 0.20 ? const SizedBox.expand() : boundaryPage,
               ),
             ],
           );
@@ -565,7 +560,11 @@ class _StorybookPageTurnTransition extends StatelessWidget {
           ],
         );
       case _BookBoundaryTransition.closing:
-        if (isTurningOut) {
+        if (isBoundaryOutgoingRoute) {
+          // Keep the outgoing route's real page visible until the cover has
+          // painted over it. Unlike the opening boundary, closing cannot
+          // remount this subtree from the incoming route because FlutterDeck's
+          // slide contains framework-owned GlobalKeys.
           return Stack(
             fit: StackFit.expand,
             children: [
@@ -574,7 +573,16 @@ class _StorybookPageTurnTransition extends StatelessWidget {
                   key: ValueKey('storybook-book-closing-underlay-tabletop'),
                 ),
               ),
-              boundaryPage,
+              _StorybookBookBoundaryPageScene(
+                key: const ValueKey('storybook-book-closing-underlay-page'),
+                motion: StorybookBookCoverMotion.closing,
+                backCover: boundaryBackCover,
+                progress: outgoing,
+                child: StorybookPageBackgroundScope(
+                  outerColor: Colors.transparent,
+                  child: _StorybookBoundarySlide(child: page),
+                ),
+              ),
             ],
           );
         }
@@ -582,11 +590,9 @@ class _StorybookPageTurnTransition extends StatelessWidget {
         return Stack(
           fit: StackFit.expand,
           children: [
-            const Positioned.fill(
-              child: StorybookBookTabletop(
-                key: ValueKey('storybook-book-closing-scene-tabletop'),
-              ),
-            ),
+            // The incoming route is transparent outside its paper and rigid
+            // cover. The outgoing route below provides the continuous page
+            // image while this route closes over it.
             _StorybookBookClosingSheets(
               progress: incoming,
               pageCount: bookPageCount,
@@ -797,7 +803,7 @@ class _StorybookBookOpeningSheets extends StatelessWidget {
           key: const ValueKey('storybook-book-opening-cover'),
           motion: StorybookBookCoverMotion.opening,
           progress: progress,
-          child: child,
+          child: _StorybookBoundarySlide(child: child),
         ),
         Positioned.fill(
           child: StorybookCurlReveal(
@@ -887,11 +893,6 @@ class _StorybookBookClosingSheets extends StatelessWidget {
       fit: StackFit.expand,
       children: [
         Positioned.fill(
-          child: StorybookBookTabletop(
-            key: ValueKey('storybook-book-closing-tabletop'),
-          ),
-        ),
-        Positioned.fill(
           child: _StorybookBookSheetsScene(
             key: const ValueKey('storybook-book-closing-paper-scene'),
             motion: StorybookBookCoverMotion.closing,
@@ -923,7 +924,8 @@ class _StorybookBookClosingSheets extends StatelessWidget {
           key: const ValueKey('storybook-book-closing-cover'),
           motion: StorybookBookCoverMotion.closing,
           progress: progress,
-          child: child,
+          includeTabletop: false,
+          child: _StorybookBoundarySlide(child: child),
         ),
       ],
     );
@@ -954,9 +956,9 @@ class _StorybookBookPaperLeaf extends StatelessWidget {
   }
 }
 
-/// Places the blank paper bundle in the same pulled-back camera scene as the
-/// rigid cover. The tabletop remains outside this transform, so it stays
-/// visible around the book for the whole boundary animation.
+/// Places the blank paper bundle in the same camera scene as the rigid cover.
+/// The tabletop remains outside this transform, so it stays visible around the
+/// book for the whole boundary animation.
 class _StorybookBookSheetsScene extends StatelessWidget {
   const _StorybookBookSheetsScene({
     required this.motion,
@@ -992,14 +994,82 @@ class _StorybookBookSheetsScene extends StatelessWidget {
             scale: values.cameraScale,
             child: Center(
               child: FractionallySizedBox(
-                widthFactor: 0.78,
-                heightFactor: 0.76,
+                widthFactor: 0.93,
+                heightFactor: 0.88,
                 child: child,
               ),
             ),
           ),
         );
       },
+    );
+  }
+}
+
+/// Keeps a real route page in the same camera move as the boundary artwork.
+///
+/// The normal FlutterDeck route is full-screen, while the cover and paper
+/// bundle are intentionally smaller at rest. Scaling the incoming/outgoing
+/// route here makes those two coordinate systems meet at scale 1.0 instead of
+/// popping from a pulled-back book scene into an unrelated full-screen page.
+class _StorybookBookBoundaryPageScene extends StatelessWidget {
+  const _StorybookBookBoundaryPageScene({
+    required this.motion,
+    required this.backCover,
+    required this.progress,
+    required this.child,
+    super.key,
+  });
+
+  final StorybookBookCoverMotion motion;
+  final bool backCover;
+  final double progress;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final values = StorybookBookCoverMotionValues.forCover(
+      motion: motion,
+      progress: progress,
+      backCover: backCover,
+    );
+
+    // FractionalTranslation keeps the route child out of a LayoutBuilder
+    // callback. The boundary route can swap a StatefulWidget while Flutter is
+    // laying out the navigator; making this paint-only avoids detaching its
+    // render subtree mid-layout while preserving the same normalized camera
+    // position.
+    return FractionalTranslation(
+      key: const ValueKey('storybook-book-boundary-page-position'),
+      translation: values.cameraOffset,
+      child: Transform.scale(
+        key: const ValueKey('storybook-book-boundary-page-scale'),
+        alignment: Alignment.center,
+        scale: values.cameraScale,
+        child: child,
+      ),
+    );
+  }
+}
+
+/// Makes the route child transparent around its book artwork.
+///
+/// A FlutterDeck slide normally owns a Material [Scaffold] background. At a
+/// book boundary that background would sit above the neighbouring route and
+/// hide the table and outgoing page through the transparent parts of the
+/// cover scene. This local theme override changes only the boundary child; it
+/// does not alter the deck's normal page background.
+class _StorybookBoundarySlide extends StatelessWidget {
+  const _StorybookBoundarySlide({required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return Theme(
+      data: Theme.of(context)
+          .copyWith(scaffoldBackgroundColor: Colors.transparent),
+      child: child,
     );
   }
 }
