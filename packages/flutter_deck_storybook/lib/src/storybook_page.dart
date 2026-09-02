@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'storybook_circular_sketch_reveal.dart';
 import 'storybook_reveal.dart';
 
 /// Overrides the area surrounding a [StorybookPage] while it is part of a
@@ -44,6 +45,7 @@ class StorybookPage extends StatelessWidget {
     this.designSize = const Size(1200, 675),
     this.borderRadius = 24,
     this.showPageNumber = true,
+    this.circularSketchReveal,
     super.key,
   }) : assert(pageNumber == null || pageNumber > 0),
        assert(totalPages == null || totalPages > 0),
@@ -87,6 +89,13 @@ class StorybookPage extends StatelessWidget {
 
   /// Whether to display [pageNumber] at the bottom of the page.
   final bool showPageNumber;
+
+  /// Optional circular reveal used only while the pencil sketch develops.
+  ///
+  /// The configured [StorybookCircularSketchReveal.origin] is resolved within
+  /// the visible, `BoxFit.contain` artwork area. When this is null, the page
+  /// keeps the original full-page sketch rendering, timing, and sound cues.
+  final StorybookCircularSketchReveal? circularSketchReveal;
 
   String? get _pageLabel {
     final current = pageNumber;
@@ -158,6 +167,11 @@ class StorybookPage extends StatelessWidget {
                   paintProgress: reveal?.paintProgress ?? 1,
                   revealOrigin:
                       reveal?.revealOrigin ?? const Alignment(0, 0.25),
+                  circularSketchReveal: circularSketchReveal,
+                  contentPadding: contentPadding.resolve(
+                    Directionality.maybeOf(context) ?? TextDirection.ltr,
+                  ),
+                  designSize: designSize,
                   child: Stack(
                     fit: StackFit.expand,
                     children: [
