@@ -259,6 +259,119 @@ void main() {
     expect(bottomRight.origin, bottomRight.artworkRect.bottomRight);
   });
 
+  test('circular focus hands off to a separate surrounding-line fade', () {
+    const configuration = StorybookCircularSketchReveal(
+      origin: Alignment.center,
+      artworkAspectRatio: 16 / 9,
+      focusRadiusFraction: 0.5,
+      softEdgeFraction: 0.02,
+    );
+    const bounds = Rect.fromLTWH(0, 0, 1600, 900);
+
+    StorybookCircularSketchGeometry geometryAt(double fadeProgress) {
+      return resolveStorybookCircularSketchGeometry(
+        bounds: bounds,
+        contentPadding: EdgeInsets.zero,
+        designSize: const Size(1600, 900),
+        configuration: configuration,
+        progress: 1,
+        focusRadiusFraction: configuration.focusRadiusFraction,
+        surroundingFadeProgress: fadeProgress,
+      );
+    }
+
+    final focused = geometryAt(0);
+    final fading = geometryAt(0.45);
+    final complete = geometryAt(1);
+
+    expect(focused.opacityAt(focused.origin), 1);
+    expect(focused.opacityAt(bounds.bottomRight), lessThan(0.1));
+    expect(fading.opacityAt(fading.origin), 1);
+    expect(fading.opacityAt(bounds.bottomRight), closeTo(0.45, 0.001));
+    expect(complete.isComplete, isTrue);
+    expect(complete.opacityAt(bounds.topLeft), 1);
+    expect(complete.opacityAt(bounds.bottomRight), 1);
+  });
+
+  testWidgets('circular reveal keeps its three phases in order', (
+    tester,
+  ) async {
+    const circularReveal = StorybookCircularSketchReveal(
+      origin: Alignment.center,
+      artworkAspectRatio: 16 / 9,
+      focusLineFraction: 0.4,
+      surroundingFadeFraction: 0.1,
+    );
+
+    Future<RenderStorybookInkReveal> pumpReveal(double inkProgress) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: StorybookRevealScope(
+            sketchProgress: 1,
+            paintProgress: 1,
+            revealOrigin: Alignment.center,
+            inkProgress: inkProgress,
+            child: const StorybookPage(
+              circularSketchReveal: circularReveal,
+              child: ColoredBox(color: Colors.red),
+            ),
+          ),
+        ),
+      );
+
+      return tester.renderObject<RenderStorybookInkReveal>(
+        find.byKey(const ValueKey('storybook-ink-reveal')),
+      );
+    }
+
+    final blank = await pumpReveal(0.10);
+    expect(blank.circularFocusLineProgress, 0);
+    expect(blank.circularSurroundingFadeProgress, 0);
+    expect(blank.effectivePaintProgress, 0);
+
+    final focused = await pumpReveal(0.35);
+    expect(focused.circularFocusLineProgress, greaterThan(0));
+    expect(focused.circularFocusLineProgress, lessThan(1));
+    expect(focused.circularSurroundingFadeProgress, 0);
+    expect(focused.effectivePaintProgress, 0);
+
+    final focusEnd = 0.11 + (1 - 0.11) * circularReveal.focusLineFraction;
+    final fadeMid =
+        0.11 +
+        (1 - 0.11) *
+            (circularReveal.focusLineFraction +
+                circularReveal.surroundingFadeFraction / 2);
+    final colorStart =
+        0.11 +
+        (1 - 0.11) *
+            (circularReveal.focusLineFraction +
+                circularReveal.surroundingFadeFraction);
+
+    final focusComplete = await pumpReveal(focusEnd);
+    expect(focusComplete.circularFocusLineProgress, closeTo(1, 0.0001));
+    expect(focusComplete.circularSurroundingFadeProgress, 0);
+    expect(focusComplete.effectivePaintProgress, 0);
+
+    final fading = await pumpReveal(fadeMid);
+    expect(fading.circularFocusLineProgress, 1);
+    expect(fading.circularSurroundingFadeProgress, greaterThan(0));
+    expect(fading.circularSurroundingFadeProgress, lessThan(1));
+    expect(fading.effectivePaintProgress, 0);
+
+    final colorBoundary = await pumpReveal(colorStart);
+    expect(colorBoundary.circularFocusLineProgress, 1);
+    expect(colorBoundary.circularSurroundingFadeProgress, closeTo(1, 0.0001));
+    expect(colorBoundary.effectivePaintProgress, 0);
+
+    final coloring = await pumpReveal(0.75);
+    expect(coloring.circularFocusLineProgress, 1);
+    expect(coloring.circularSurroundingFadeProgress, 1);
+    expect(coloring.effectivePaintProgress, greaterThan(0));
+
+    final complete = await pumpReveal(1);
+    expect(complete.effectivePaintProgress, 1);
+  });
+
   testWidgets('circular reveal keeps color hidden until sketch completes', (
     tester,
   ) async {

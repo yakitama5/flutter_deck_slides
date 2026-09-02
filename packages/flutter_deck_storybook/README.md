@@ -47,7 +47,7 @@ FlutterDeckApp(
 
 16:9画像をページ全面に使う場合は、`outerPadding` と `contentPadding` を `EdgeInsets.zero`、`borderRadius` を `0` にすると、画像全体を1枚の紙としてめくれます。
 
-下描きだけを画像内の注目点から円形に広げたいページには、`circularSketchReveal` を指定できます。`origin` は、`BoxFit.contain` で表示された実画像領域を基準にした `Alignment` です。画像の上下や左右に余白が入る場合も、`artworkAspectRatio` から表示領域を解決します。省略したページは従来の全面下描き、時間、効果音をそのまま使用します。
+画像内の注目点から線画を見せたいページには、`circularSketchReveal` を指定できます。指定時だけ、白紙の後に「焦点円形線画」→「周辺線画の短いFade」→「彩色」の3段階で進みます。`origin` は、`BoxFit.contain` で表示された実画像領域を基準にした `Alignment` です。画像の上下や左右に余白が入る場合も、`artworkAspectRatio` から表示領域を解決します。`focusRadiusFraction` は周辺Fadeへ渡す時点の円の大きさ、`focusLineFraction` と `surroundingFadeFraction` は初期の白紙区間後に続く有効な演出時間の割合です。残りの時間で彩色します。省略したページは従来の全面下描き、時間、効果音をそのまま使用します。
 
 ```dart
 StorybookPage(
@@ -57,6 +57,9 @@ StorybookPage(
   circularSketchReveal: const StorybookCircularSketchReveal(
     origin: Alignment(0.35, -0.2),
     artworkAspectRatio: 1408 / 752,
+    focusRadiusFraction: 0.56,
+    focusLineFraction: 0.38,
+    surroundingFadeFraction: 0.10,
     initialRadiusFraction: 0.055,
     softEdgeFraction: 0.025,
   ),

@@ -172,6 +172,7 @@ class StorybookPage extends StatelessWidget {
                     Directionality.maybeOf(context) ?? TextDirection.ltr,
                   ),
                   designSize: designSize,
+                  inkProgress: reveal?.inkProgress,
                   child: Stack(
                     fit: StackFit.expand,
                     children: [
