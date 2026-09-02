@@ -1,0 +1,365 @@
+version: 1
+title: "リスくんと ひとつのどんぐり"
+aspect_ratio: "16:9"
+image_model: "gpt-image-2"
+evaluator_model: "gpt-5.6-sol"
+pages:
+  - id: cover
+    locked: true
+    setting: forest
+    environment_scale_min: 4.0
+    story_beat: "物語の始まり。リスくんが一粒のどんぐりを大切に持つ。"
+    must_have:
+      - "enormous bright woodland"
+      - "the canonical squirrel holding one acorn"
+      - "warm dappled sunlight"
+      - "a welcoming beginning-of-a-story feeling"
+    must_not_have:
+      - "owl professor"
+      - "story text or title letters rendered in the image"
+    variants:
+      a:
+        shot: centered_establishing
+        composition: "classic centered cover composition; sunlight gathers around the squirrel while the forest rises beyond him"
+        focal_point: "the squirrel and the single acorn"
+      b:
+        shot: rule_of_thirds_wide
+        composition: "place the squirrel slightly off-center on a third; make the depth of the enormous forest the visual hero"
+        focal_point: "the acorn leading into the forest depth"
+      c:
+        shot: foreground_frame_peek
+        composition: "use a huge foreground trunk and leaves as a frame, as if looking into one small part of the forest"
+        focal_point: "the squirrel revealed inside the natural frame"
+
+  - id: page01
+    locked: true
+    setting: forest
+    environment_scale_min: 4.5
+    story_beat: "うさぎさんが友達としてリスくんへ一粒のどんぐりを渡す。"
+    must_have:
+      - "canonical squirrel with red neckerchief"
+      - "canonical white rabbit with blue patterned scarf"
+      - "rabbit offering one acorn naturally"
+      - "squirrel making a curious what-is-this face"
+      - "bright enormous woodland seen as a close camera view"
+    must_not_have:
+      - "owl professor"
+      - "teacher, boss, or superior body language"
+      - "unnatural hands or duplicate acorns"
+      - "story text in the image"
+    variants:
+      a:
+        shot: left_right_two_shot
+        composition: "squirrel on the left and rabbit on the right in a close zoomed-in part of the giant forest; use a natural handoff gesture"
+        focal_point: "the acorn between their hands"
+      b:
+        shot: foreground_handoff_detail
+        composition: "rabbit is slightly nearer to camera; foreground handoff leads the eye to the acorn while both faces remain readable"
+        focal_point: "the natural exchange of the acorn"
+      c:
+        shot: lower_right_negative_space
+        composition: "place both friends toward the lower right; bright light enters from upper left and leaves generous forest negative space"
+        focal_point: "their shared moment within the large woodland"
+
+  - id: page02
+    locked: false
+    setting: meadow
+    environment_scale_min: 4.0
+    story_beat: "リスくんが明るい野原の土にどんぐりを植え、小さな芽がぴょこんと出る。"
+    must_have:
+      - "canonical squirrel planting an acorn in open meadow soil"
+      - "a tiny fresh sprout emerging from the soil"
+      - "bright grassland, gentle hill, and open sky"
+      - "the squirrel is visibly caring for the sprout"
+    must_not_have:
+      - "the acorn visible above ground"
+      - "an acorn lying on the ground"
+      - "a mature forest or large woodland"
+      - "centered two-shot in every variant"
+      - "owl professor"
+      - "story text in the image"
+    variants:
+      a:
+        shot: rule_of_thirds_wide
+        composition: "put the squirrel and tiny sprout on the right third; leave the left side open to a broad meadow, sky, and gentle hill"
+        focal_point: "the sprout beside the squirrel's hands"
+      b:
+        shot: high_angle_detail
+        composition: "use a slightly elevated diagonal view focused on hands, soil, and the tiny sprout; keep the character off-center and do not line up two characters"
+        focal_point: "soil, hands, and sprout"
+      c:
+        shot: low_side_foreground_frame
+        composition: "use a low side view with large flowers and grass in the foreground; show the squirrel farther back beside the sprout, with hills and open sky behind"
+        focal_point: "the small sprout framed by meadow life"
+
+  - id: page03
+    locked: false
+    setting: meadow
+    environment_scale_min: 4.0
+    story_beat: "リスくんが毎日水をあげ、苗を観察し、育て続ける。"
+    must_have:
+      - "the same open meadow as page 02"
+      - "a seedling slightly larger than on page 02"
+      - "canonical squirrel watering or carefully observing it"
+      - "a visible sense of repeated care and passing time"
+    must_not_have:
+      - "finished forest"
+      - "giant mature tree"
+      - "owl professor"
+      - "a hidden or forgotten seedling"
+      - "story text in the image"
+    variants:
+      a:
+        shot: left_right_action
+        composition: "place the squirrel with a small watering can on the left and the young seedling on the right; use warm slanting morning light"
+        focal_point: "the stream of water reaching the seedling"
+      b:
+        shot: seedling_low_angle
+        composition: "make the seedling leaves large in the near foreground; let the squirrel lean in happily from the background to discover new growth"
+        focal_point: "new leaves seen from the seedling's low point of view"
+      c:
+        shot: quiet_wide_evening
+        composition: "use a pulled-back meadow at a soft late-day hour; the squirrel sits beside the small seedling, with calm empty space showing patient time"
+        focal_point: "the quiet relationship between caretaker and seedling"
+
+  - id: page04
+    locked: false
+    setting: young_tree_meadow
+    environment_scale_min: 4.0
+    story_beat: "苗が若木になり、リスくんの一人の楽しさが少しずつ誰かとの楽しさへ広がる。"
+    must_have:
+      - "a young tree, not yet a full forest"
+      - "squirrel making, showing, or playing with something near the tree"
+      - "a small-scale feeling of curiosity expanding to a friend"
+      - "bright meadow continuity"
+    must_not_have:
+      - "large crowd or finished community"
+      - "mature dense forest"
+      - "owl professor"
+      - "leader or teacher hierarchy"
+      - "story text in the image"
+    variants:
+      a:
+        shot: side_activity_rule_of_thirds
+        composition: "put the young tree on the left third; on the right the squirrel enjoys a small creation or game while the rabbit peeks in as an equal friend"
+        focal_point: "the shared discovery of the small activity"
+      b:
+        shot: branch_foreground_frame
+        composition: "look through a young tree branch and leaves toward the squirrel and rabbit in its shade; keep the interaction intimate and small"
+        focal_point: "the two friends showing something to one another"
+      c:
+        shot: hands_and_object_close
+        composition: "bring the squirrel's hands and a small object or craft into the near foreground; let the young tree and rabbit sit softly in the background"
+        focal_point: "the thing being made or shared"
+
+  - id: page05
+    locked: false
+    setting: community_forest
+    environment_scale_min: 4.0
+    story_beat: "リスくんが初めて大きな森と、木の下で活動するたくさんの仲間に出会う。"
+    must_have:
+      - "a huge symbolic tree or large forest"
+      - "many small woodland friends in several distinct activities"
+      - "the canonical squirrel discovering the scene from the foreground"
+      - "a strong sense that the world suddenly became larger"
+      - "bright welcoming light"
+    must_not_have:
+      - "dark scary forest"
+      - "a single uniform crowd or formal stage"
+      - "owl professor"
+      - "squirrel presented as a leader"
+      - "story text in the image"
+    variants:
+      a:
+        shot: ultra_wide_establishing
+        composition: "show a gigantic tree centered high in the frame, many small groups beneath its roots, and the squirrel looking in from the foreground"
+        focal_point: "the scale of the tree and the variety of activities"
+      b:
+        shot: foreground_leaf_discovery
+        composition: "peek through foreground leaves and a tree trunk toward the large community tree; place the squirrel's back and red neckerchief in the foreground"
+        focal_point: "the discovery of a welcoming place beyond the foliage"
+      c:
+        shot: elevated_activity_map
+        composition: "use a slightly high viewpoint around the great tree; distribute several small groups across the scene so different activities happen at once"
+        focal_point: "the connected but non-uniform community"
+
+  - id: page06
+    locked: false
+    setting: community_forest
+    environment_scale_min: 4.5
+    story_beat: "大きな森に感動したリスくんの中に、自分の場所でもやってみたいというひらめきが生まれる。"
+    must_have:
+      - "canonical squirrel reacting with wonder and a new idea"
+      - "the enormous tree and lively community in the background or view"
+      - "a self-discovered realization, not advice from another character"
+      - "bright light on the squirrel's face or silhouette"
+    must_not_have:
+      - "owl professor"
+      - "another character explaining the answer"
+      - "boss or teacher framing"
+      - "story text in the image"
+    variants:
+      a:
+        shot: rear_view_looking_up
+        composition: "show the squirrel from behind, standing near the bottom of the frame and looking up at a huge tree that fills the view"
+        focal_point: "the squirrel's small figure and the overwhelming tree"
+      b:
+        shot: side_medium_close
+        composition: "use a side-facing medium close-up of the squirrel; behind him, softly show the great tree and animals enjoying their activities"
+        focal_point: "the transition from wonder to a personal idea in his expression"
+      c:
+        shot: root_low_angle_edge
+        composition: "shoot from near the tree roots at a low angle; put the squirrel at the edge of the frame and let the giant trunk dominate"
+        focal_point: "the new thought forming inside a small figure"
+
+  - id: page07
+    locked: false
+    setting: young_tree_meadow
+    environment_scale_min: 4.5
+    story_beat: "自分の野原へ戻ったリスくんが、仲間へ対等な声で一緒にやろうと誘い始める。"
+    must_have:
+      - "the squirrel's young tree or home meadow"
+      - "squirrel inviting rabbit and/or bear friends with open friendly gestures"
+      - "peers at the same eye level"
+      - "the change from being invited to inviting others"
+    must_not_have:
+      - "formal leader pose"
+      - "teacher, boss, podium, or command gesture"
+      - "owl professor"
+      - "large finished crowd"
+      - "story text in the image"
+    variants:
+      a:
+        shot: left_invitation_approach
+        composition: "place the squirrel on the left inviting friends; rabbit and bear approach from the right in a relaxed, equal-height grouping"
+        focal_point: "the squirrel's open gesture and friends choosing to come closer"
+      b:
+        shot: shared_tree_circle
+        composition: "make the young tree a shared object in the center; form a natural beginning circle around it without a designated leader"
+        focal_point: "the shared young tree and first connection"
+      c:
+        shot: peer_shoulder_over_the_shoulder
+        composition: "view the squirrel from behind another friend's shoulder in the foreground; show the squirrel happily introducing an activity at the same eye level"
+        focal_point: "the invited friend's point of view"
+
+  - id: page08
+    locked: false
+    setting: growing_community_forest
+    environment_scale_min: 4.5
+    story_beat: "木が育ち、話す・作る・見せる・遊ぶ仲間が増えて、みんなの場所になる。"
+    must_have:
+      - "a growing tree and a welcoming shared place"
+      - "multiple small animal groups doing different activities"
+      - "the squirrel participating as one peer among peers"
+      - "clear foreground, midground, and background depth"
+    must_not_have:
+      - "squirrel posed alone as a hero or leader"
+      - "uniform lineup or group portrait"
+      - "owl professor"
+      - "dark or chaotic crowd"
+      - "story text in the image"
+    variants:
+      a:
+        shot: medium_wide_multi_group
+        composition: "show the whole tree at medium-wide scale, with different groups on both sides and in front; place the squirrel inside one small circle"
+        focal_point: "the shared place rather than one central character"
+      b:
+        shot: three_depth_layers
+        composition: "use foreground, midground, and background activities under the tree's shade; keep the lively scene organized like a picture book"
+        focal_point: "the relationships between separate activities"
+      c:
+        shot: high_angle_growing_circle
+        composition: "look slightly down on the tree and activity clusters spreading naturally around it; avoid a posed group photograph"
+        focal_point: "the community expanding around a common center"
+
+  - id: page09
+    locked: false
+    setting: growing_community_forest
+    environment_scale_min: 4.5
+    story_beat: "リスくんが、対等な友達である別のリスへ一粒のどんぐりを渡し、面白さを一緒に始めようとする。"
+    must_have:
+      - "canonical squirrel with red neckerchief"
+      - "a distinct peer squirrel receiving one acorn"
+      - "both squirrels at the same eye level and social status"
+      - "friendly recommendation rather than teaching"
+      - "grown tree and friends softly in the background"
+    must_not_have:
+      - "child or subordinate recipient"
+      - "bowing, lecturing, or hierarchical body language"
+      - "duplicate visible acorns"
+      - "owl professor"
+      - "story text in the image"
+    recipient_design: "slightly lighter brown fur, no red bandana, subtly different tail stripes; clearly the same species but a distinct peer"
+    variants:
+      a:
+        shot: medium_acorn_exchange
+        composition: "medium shot of the two squirrels at equal height, with the single acorn exchange as the center of a friendly conversation"
+        focal_point: "the acorn and their matching eye line"
+      b:
+        shot: diagonal_conversational_two_shot
+        composition: "angle the two squirrels diagonally in a natural conversation; move the acorn slightly off-center and use smiles and interested eye contact"
+        focal_point: "their reciprocal curiosity"
+      c:
+        shot: recipient_over_shoulder
+        composition: "look over the recipient squirrel's shoulder as the canonical squirrel offers the acorn; keep both figures at equal eye level and avoid a dominant low/high angle"
+        focal_point: "the protagonist's inviting expression"
+
+  - id: page10
+    locked: false
+    setting: meadow_path
+    environment_scale_min: 4.0
+    story_beat: "どんぐりを受け取った別のリスが、新しい場所へ歩き出し、次の物語へ向かう。"
+    must_have:
+      - "the distinct recipient squirrel carrying one acorn"
+      - "a bright path or meadow leading toward the future"
+      - "a sense of departure and continuation"
+      - "the protagonist may appear only as a small farewell at the edge"
+    must_not_have:
+      - "owl professor"
+      - "duplicate acorns"
+      - "sad dark ending"
+      - "story text in the image"
+    variants:
+      a:
+        shot: recipient_rear_view_path
+        composition: "show the recipient squirrel from behind walking along a bright path; keep the canonical squirrel small at the edge waving goodbye"
+        focal_point: "the road ahead"
+      b:
+        shot: wide_negative_space_departure
+        composition: "use a long horizontal meadow with generous open sky and negative space; the recipient walks with the acorn toward a distant light"
+        focal_point: "the destination and possibility beyond the frame"
+      c:
+        shot: flowers_foreground_rear_view
+        composition: "frame the recipient's rear view with large grass and flowers in the foreground; let the path recede into a softly lit distance and omit the protagonist"
+        focal_point: "the next story beginning"
+
+  - id: page11
+    locked: false
+    setting: future_forest
+    environment_scale_min: 4.0
+    story_beat: "時間がたち、最初の野原が豊かな森になり、あちこちに仲間が集う未来を見せて物語を閉じる。"
+    must_have:
+      - "a rich mature forest grown from the earlier meadow"
+      - "multiple natural animal gatherings spread through the trees"
+      - "clear visual echo of the beginning, now transformed"
+      - "warm hopeful emotional afterglow"
+      - "the protagonist may be small in the scene"
+    must_not_have:
+      - "empty barren meadow"
+      - "dark silhouettes hiding all details"
+      - "owl professor"
+      - "forced Japanese ending text"
+      - "story text in the image"
+    variants:
+      a:
+        shot: bright_ultra_wide_future_forest
+        composition: "show a wide daylight view of the mature forest with small gatherings beneath several trees and abundant hopeful growth"
+        focal_point: "the forest-wide result of one small beginning"
+      b:
+        shot: forest_interior_echo
+        composition: "look from behind a large foreground tree root through the forest toward several friend groups; echo the cover's depth without copying its composition"
+        focal_point: "the many places where community now lives"
+      c:
+        shot: golden_distant_overlook
+        composition: "use warm late-day golden light over the mature forest seen into the distance; retain enough detail that animals and trees do not become silhouettes"
+        focal_point: "the emotional, continuing future"
