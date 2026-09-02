@@ -15,9 +15,10 @@ class StorybookRevealScope extends InheritedWidget {
     required this.sketchProgress,
     required this.paintProgress,
     required this.revealOrigin,
+    this.inkProgress,
     required super.child,
     super.key,
-  });
+  }) : assert(inkProgress == null || (inkProgress >= 0 && inkProgress <= 1));
 
   /// Progress of the faint pencil underdrawing.
   final double sketchProgress;
@@ -28,6 +29,13 @@ class StorybookRevealScope extends InheritedWidget {
   /// Point from which the watercolor bloom spreads.
   final Alignment revealOrigin;
 
+  /// Normalized progress of the whole blank-paper-to-color sequence.
+  ///
+  /// This is supplied by the storybook transition for page-specific phases.
+  /// It is nullable so older callers that construct a scope directly keep
+  /// their existing sketch and paint progress semantics.
+  final double? inkProgress;
+
   /// Returns the closest reveal animation data, if any.
   static StorybookRevealScope? maybeOf(BuildContext context) {
     return context.dependOnInheritedWidgetOfExactType<StorybookRevealScope>();
@@ -37,7 +45,8 @@ class StorybookRevealScope extends InheritedWidget {
   bool updateShouldNotify(StorybookRevealScope oldWidget) {
     return sketchProgress != oldWidget.sketchProgress ||
         paintProgress != oldWidget.paintProgress ||
-        revealOrigin != oldWidget.revealOrigin;
+        revealOrigin != oldWidget.revealOrigin ||
+        inkProgress != oldWidget.inkProgress;
   }
 }
 
@@ -52,10 +61,12 @@ class StorybookInkReveal extends SingleChildRenderObjectWidget {
     required this.circularSketchReveal,
     required this.contentPadding,
     required this.designSize,
+    this.inkProgress,
     required super.child,
     super.key,
   }) : assert(sketchProgress >= 0 && sketchProgress <= 1),
-       assert(paintProgress >= 0 && paintProgress <= 1);
+       assert(paintProgress >= 0 && paintProgress <= 1),
+       assert(inkProgress == null || (inkProgress >= 0 && inkProgress <= 1));
 
   /// Progress of the pencil underdrawing.
   final double sketchProgress;
@@ -75,6 +86,10 @@ class StorybookInkReveal extends SingleChildRenderObjectWidget {
   /// Logical canvas fitted inside [contentPadding].
   final Size designSize;
 
+  /// Normalized progress of the whole reveal sequence, when provided by the
+  /// transition. This is used only by [circularSketchReveal].
+  final double? inkProgress;
+
   @override
   RenderStorybookInkReveal createRenderObject(BuildContext context) {
     return RenderStorybookInkReveal._(
@@ -84,6 +99,7 @@ class StorybookInkReveal extends SingleChildRenderObjectWidget {
       circularSketchReveal: circularSketchReveal,
       contentPadding: contentPadding,
       designSize: designSize,
+      inkProgress: inkProgress,
     );
   }
 
@@ -98,7 +114,8 @@ class StorybookInkReveal extends SingleChildRenderObjectWidget {
       ..revealOrigin = revealOrigin
       ..circularSketchReveal = circularSketchReveal
       ..contentPadding = contentPadding
-      ..designSize = designSize;
+      ..designSize = designSize
+      ..inkProgress = inkProgress;
   }
 }
 
@@ -112,6 +129,7 @@ class RenderStorybookInkReveal extends RenderProxyBox {
     required this._circularSketchReveal,
     required this._contentPadding,
     required this._designSize,
+    required this._inkProgress,
   });
 
   double _sketchProgress;
@@ -163,10 +181,75 @@ class RenderStorybookInkReveal extends RenderProxyBox {
     markNeedsPaint();
   }
 
+  double? _inkProgress;
+  double? get inkProgress => _inkProgress;
+  set inkProgress(double? value) {
+    if (_inkProgress == value) return;
+    _inkProgress = value;
+    markNeedsPaint();
+  }
+
   /// Color progress after enforcing sketch-before-color for circular reveals.
   double get effectivePaintProgress {
-    if (circularSketchReveal != null && sketchProgress < 0.995) return 0;
-    return paintProgress;
+    final configuration = circularSketchReveal;
+    if (configuration == null) return paintProgress;
+    if (inkProgress == null) {
+      return sketchProgress < 0.995 ? 0 : paintProgress;
+    }
+    return _circularSketchPhase.colorProgress;
+  }
+
+  /// Progress of the focused circular line phase.
+  double get circularFocusLineProgress {
+    final configuration = circularSketchReveal;
+    if (configuration == null) return 0;
+    if (inkProgress == null) return sketchProgress.clamp(0.0, 1.0);
+    return _circularSketchPhase.focusLineProgress;
+  }
+
+  /// Progress of the short fade that reveals the surrounding line.
+  double get circularSurroundingFadeProgress {
+    if (circularSketchReveal == null || inkProgress == null) return 0;
+    return _circularSketchPhase.surroundingFadeProgress;
+  }
+
+  _CircularSketchPhase get _circularSketchPhase {
+    final configuration = circularSketchReveal!;
+    final sequenceProgress = inkProgress;
+    if (sequenceProgress == null) {
+      return _CircularSketchPhase(
+        focusLineProgress: sketchProgress.clamp(0.0, 1.0),
+        surroundingFadeProgress: 0,
+        colorProgress: sketchProgress < 0.995
+            ? 0
+            : paintProgress.clamp(0.0, 1.0),
+      );
+    }
+
+    // Keep the existing blank-paper interval and drawing sound cue intact.
+    // The configurable fractions divide only the active reveal that follows
+    // it, so the phase boundaries can be tuned without changing page turns.
+    const blankPaperFraction = 0.11;
+    final activeProgress =
+        ((sequenceProgress - blankPaperFraction) / (1 - blankPaperFraction))
+            .clamp(0.0, 1.0);
+    final focusEnd = configuration.focusLineFraction;
+    final fadeEnd =
+        configuration.focusLineFraction + configuration.surroundingFadeFraction;
+    final focusRaw = (activeProgress / focusEnd).clamp(0.0, 1.0);
+    final fadeRaw =
+        ((activeProgress - focusEnd) / configuration.surroundingFadeFraction)
+            .clamp(0.0, 1.0);
+    const phaseBoundaryEpsilon = 1e-9;
+    final colorRaw = activeProgress <= fadeEnd + phaseBoundaryEpsilon
+        ? 0.0
+        : ((activeProgress - fadeEnd) / (1 - fadeEnd)).clamp(0.0, 1.0);
+
+    return _CircularSketchPhase(
+      focusLineProgress: Curves.easeOutCubic.transform(focusRaw),
+      surroundingFadeProgress: Curves.easeInOutCubic.transform(fadeRaw),
+      colorProgress: Curves.easeInOutCubic.transform(colorRaw),
+    );
   }
 
   @override
@@ -221,7 +304,8 @@ class RenderStorybookInkReveal extends RenderProxyBox {
     RenderBox renderChild,
     Offset offset,
   ) {
-    final colorProgress = effectivePaintProgress;
+    final phase = _circularSketchPhase;
+    final colorProgress = phase.colorProgress;
     if (colorProgress >= 0.995) {
       context.paintChild(renderChild, offset);
       return;
@@ -230,17 +314,22 @@ class RenderStorybookInkReveal extends RenderProxyBox {
     final bounds = offset & size;
     final canvas = context.canvas;
 
-    if (sketchProgress > 0) {
-      _paintCircularSketch(context, renderChild, offset, bounds);
+    if (phase.focusLineProgress > 0 ||
+        phase.surroundingFadeProgress > 0 ||
+        (inkProgress == null && sketchProgress > 0)) {
+      _paintCircularSketch(context, renderChild, offset, bounds, phase);
     }
 
     if (colorProgress <= 0) return;
 
+    // The sketch and watercolor are each composited once over the paper. The
+    // surrounding fade is part of the single sketch mask, avoiding a second
+    // translucent copy of the page that could flash against the paper.
     canvas.saveLayer(bounds, Paint());
     context.paintChild(renderChild, offset);
 
     canvas.saveLayer(bounds, Paint()..blendMode = BlendMode.dstIn);
-    _paintWatercolorMask(canvas, bounds);
+    _paintWatercolorMask(canvas, bounds, paintProgress: colorProgress);
     canvas.restore();
     canvas.restore();
   }
@@ -250,32 +339,60 @@ class RenderStorybookInkReveal extends RenderProxyBox {
     RenderBox renderChild,
     Offset offset,
     Rect bounds,
+    _CircularSketchPhase phase,
   ) {
-    if (sketchProgress >= 0.995) {
-      _paintSketch(context, renderChild, offset, bounds);
-      return;
-    }
-
+    final configuration = circularSketchReveal!;
     final geometry = resolveStorybookCircularSketchGeometry(
       bounds: bounds,
       contentPadding: contentPadding,
       designSize: designSize,
-      configuration: circularSketchReveal!,
-      progress: sketchProgress,
+      configuration: configuration,
+      progress: phase.focusLineProgress,
+      // A scope created directly by an older caller has no whole-sequence
+      // progress. Preserve the pre-phase circular behavior in that case; the
+      // three-stage radius is used only when the transition supplies it.
+      focusRadiusFraction: inkProgress == null
+          ? 1
+          : configuration.focusRadiusFraction,
+      surroundingFadeProgress: phase.surroundingFadeProgress,
     );
+    final sketchProgress = phase.surroundingFadeProgress > 0
+        ? 1.0
+        : phase.focusLineProgress;
+
+    if (geometry.isComplete) {
+      _paintSketch(context, renderChild, offset, bounds, sketchProgress: 1);
+      return;
+    }
 
     context.canvas.saveLayer(bounds, Paint());
-    _paintSketch(context, renderChild, offset, bounds);
+    _paintSketch(
+      context,
+      renderChild,
+      offset,
+      bounds,
+      sketchProgress: sketchProgress,
+    );
     context.canvas.saveLayer(bounds, Paint()..blendMode = BlendMode.dstIn);
-    _paintCircularSketchMask(context.canvas, geometry);
+    _paintCircularSketchMask(context.canvas, bounds, geometry);
     context.canvas.restore();
     context.canvas.restore();
   }
 
   void _paintCircularSketchMask(
     Canvas canvas,
+    Rect bounds,
     StorybookCircularSketchGeometry geometry,
   ) {
+    final surroundingFade = geometry.surroundingFadeProgress;
+    if (surroundingFade > 0) {
+      canvas.drawRect(
+        bounds,
+        Paint()
+          ..color = const Color(0xFFFFFFFF).withValues(alpha: surroundingFade),
+      );
+    }
+
     final outerRadius = geometry.radius + geometry.softEdge;
     final innerRadius = math.max(0.0, geometry.radius - geometry.softEdge);
     final innerStop = (innerRadius / outerRadius).clamp(0.0, 1.0);
@@ -303,9 +420,11 @@ class RenderStorybookInkReveal extends RenderProxyBox {
     PaintingContext context,
     RenderBox renderChild,
     Offset offset,
-    Rect bounds,
-  ) {
-    final strength = Curves.easeOutCubic.transform(sketchProgress);
+    Rect bounds, {
+    double? sketchProgress,
+  }) {
+    final progress = (sketchProgress ?? this.sketchProgress).clamp(0.0, 1.0);
+    final strength = Curves.easeOutCubic.transform(progress);
     final edgeTint = ColorFilter.matrix(<double>[
       0.22 * strength,
       0.22 * strength,
@@ -370,8 +489,12 @@ class RenderStorybookInkReveal extends RenderProxyBox {
     context.canvas.restore();
   }
 
-  void _paintWatercolorMask(Canvas canvas, Rect bounds) {
-    final progress = paintProgress.clamp(0.0, 1.0);
+  void _paintWatercolorMask(
+    Canvas canvas,
+    Rect bounds, {
+    double? paintProgress,
+  }) {
+    final progress = (paintProgress ?? this.paintProgress).clamp(0.0, 1.0);
     final shortestSide = bounds.shortestSide;
     final origin = bounds.topLeft + revealOrigin.alongSize(bounds.size);
     final fringePath = Path();
@@ -539,6 +662,18 @@ class RenderStorybookInkReveal extends RenderProxyBox {
   }
 }
 
+class _CircularSketchPhase {
+  const _CircularSketchPhase({
+    required this.focusLineProgress,
+    required this.surroundingFadeProgress,
+    required this.colorProgress,
+  });
+
+  final double focusLineProgress;
+  final double surroundingFadeProgress;
+  final double colorProgress;
+}
+
 /// Geometry shared by the circular sketch painter and its structural tests.
 class StorybookCircularSketchGeometry {
   const StorybookCircularSketchGeometry({
@@ -546,6 +681,7 @@ class StorybookCircularSketchGeometry {
     required this.origin,
     required this.radius,
     required this.softEdge,
+    required this.surroundingFadeProgress,
     required this.isComplete,
   });
 
@@ -553,6 +689,7 @@ class StorybookCircularSketchGeometry {
   final Offset origin;
   final double radius;
   final double softEdge;
+  final double surroundingFadeProgress;
   final bool isComplete;
 
   /// Returns the circular mask opacity at [position].
@@ -562,9 +699,12 @@ class StorybookCircularSketchGeometry {
     final distance = (position - origin).distance;
     final innerRadius = math.max(0.0, radius - softEdge);
     final outerRadius = radius + softEdge;
-    if (distance <= innerRadius) return 1;
-    if (distance >= outerRadius) return 0;
-    return 1 - (distance - innerRadius) / (outerRadius - innerRadius);
+    final circularOpacity = distance <= innerRadius
+        ? 1.0
+        : distance >= outerRadius
+        ? 0.0
+        : 1 - (distance - innerRadius) / (outerRadius - innerRadius);
+    return math.max(circularOpacity, surroundingFadeProgress);
   }
 }
 
@@ -575,6 +715,8 @@ StorybookCircularSketchGeometry resolveStorybookCircularSketchGeometry({
   required Size designSize,
   required StorybookCircularSketchReveal configuration,
   required double progress,
+  double focusRadiusFraction = 1,
+  double surroundingFadeProgress = 0,
 }) {
   final paddedBounds = Rect.fromLTRB(
     bounds.left + contentPadding.left,
@@ -613,15 +755,23 @@ StorybookCircularSketchGeometry resolveStorybookCircularSketchGeometry({
     bounds.bottomRight,
   ].map((corner) => (corner - origin).distance).reduce(math.max);
   final normalizedProgress = progress.clamp(0.0, 1.0);
-  final radius =
+  final normalizedFocusRadius = focusRadiusFraction.clamp(0.0, 1.0);
+  final normalizedSurroundingFade = surroundingFadeProgress.clamp(0.0, 1.0);
+  final targetRadius =
       initialRadius +
-      (farthestCornerDistance + softEdge - initialRadius) * normalizedProgress;
+      (farthestCornerDistance + softEdge - initialRadius) *
+          normalizedFocusRadius;
+  final radius =
+      initialRadius + (targetRadius - initialRadius) * normalizedProgress;
 
   return StorybookCircularSketchGeometry(
     artworkRect: artworkRect,
     origin: origin,
     radius: radius,
     softEdge: softEdge,
-    isComplete: normalizedProgress >= 0.995,
+    surroundingFadeProgress: normalizedSurroundingFade,
+    isComplete:
+        normalizedSurroundingFade >= 0.995 ||
+        (normalizedProgress >= 0.995 && normalizedFocusRadius >= 0.995),
   );
 }

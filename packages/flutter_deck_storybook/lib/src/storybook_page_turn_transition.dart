@@ -1399,6 +1399,7 @@ class _StorybookInkSequenceState extends State<_StorybookInkSequence>
           sketchProgress: sketchProgress,
           paintProgress: paintProgress,
           revealOrigin: widget.revealOrigin,
+          inkProgress: _controller.value,
           child: page!,
         );
       },
