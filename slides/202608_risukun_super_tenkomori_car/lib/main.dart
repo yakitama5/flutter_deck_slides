@@ -9,6 +9,8 @@ import 'speaker_notes.dart';
 
 const _noHeader = FlutterDeckHeaderConfiguration(showHeader: false);
 const _noFooter = FlutterDeckFooterConfiguration(showFooter: false);
+const _wideArtworkAspectRatio = 1408 / 752;
+const _standardArtworkAspectRatio = 2816 / 1536;
 
 /// The ten image pages stay in this explicit numeric order.
 const risukunPages = <RisukunPageData>[
@@ -18,6 +20,10 @@ const risukunPages = <RisukunPageData>[
     title: 'タイトル',
     assetPath: 'assets/risukun_super_tenkomori_car/01_title.png',
     speakerNotes: SpeakerNotes.page01,
+    circularSketchReveal: StorybookCircularSketchReveal(
+      origin: Alignment(0.43, 0.04),
+      artworkAspectRatio: _wideArtworkAspectRatio,
+    ),
   ),
   RisukunPageData(
     number: 2,
@@ -25,6 +31,10 @@ const risukunPages = <RisukunPageData>[
     title: 'レースの夢',
     assetPath: 'assets/risukun_super_tenkomori_car/02_race_dream.png',
     speakerNotes: SpeakerNotes.page02,
+    circularSketchReveal: StorybookCircularSketchReveal(
+      origin: Alignment(-0.20, 0.14),
+      artworkAspectRatio: _wideArtworkAspectRatio,
+    ),
   ),
   RisukunPageData(
     number: 3,
@@ -32,6 +42,10 @@ const risukunPages = <RisukunPageData>[
     title: '車をつくる',
     assetPath: 'assets/risukun_super_tenkomori_car/03_building.png',
     speakerNotes: SpeakerNotes.page03,
+    circularSketchReveal: StorybookCircularSketchReveal(
+      origin: Alignment(0.12, -0.25),
+      artworkAspectRatio: _standardArtworkAspectRatio,
+    ),
   ),
   RisukunPageData(
     number: 4,
@@ -39,6 +53,10 @@ const risukunPages = <RisukunPageData>[
     title: 'てんこもりカー完成',
     assetPath: 'assets/risukun_super_tenkomori_car/04_super_tenkomori_car.png',
     speakerNotes: SpeakerNotes.page04,
+    circularSketchReveal: StorybookCircularSketchReveal(
+      origin: Alignment(0.49, 0.53),
+      artworkAspectRatio: _standardArtworkAspectRatio,
+    ),
   ),
   RisukunPageData(
     number: 5,
@@ -46,6 +64,10 @@ const risukunPages = <RisukunPageData>[
     title: 'レースで故障',
     assetPath: 'assets/risukun_super_tenkomori_car/05_race_breakdown.png',
     speakerNotes: SpeakerNotes.page05,
+    circularSketchReveal: StorybookCircularSketchReveal(
+      origin: Alignment(0.08, 0.09),
+      artworkAspectRatio: _standardArtworkAspectRatio,
+    ),
   ),
   RisukunPageData(
     number: 6,
@@ -53,6 +75,10 @@ const risukunPages = <RisukunPageData>[
     title: 'フクロウ博士',
     assetPath: 'assets/risukun_super_tenkomori_car/06_owl_doctor.png',
     speakerNotes: SpeakerNotes.page06,
+    circularSketchReveal: StorybookCircularSketchReveal(
+      origin: Alignment(0.17, 0.46),
+      artworkAspectRatio: _standardArtworkAspectRatio,
+    ),
   ),
   RisukunPageData(
     number: 7,
@@ -60,6 +86,10 @@ const risukunPages = <RisukunPageData>[
     title: '新しい車',
     assetPath: 'assets/risukun_super_tenkomori_car/07_new_car.png',
     speakerNotes: SpeakerNotes.page07,
+    circularSketchReveal: StorybookCircularSketchReveal(
+      origin: Alignment(0.10, 0.10),
+      artworkAspectRatio: _standardArtworkAspectRatio,
+    ),
   ),
   RisukunPageData(
     number: 8,
@@ -67,6 +97,10 @@ const risukunPages = <RisukunPageData>[
     title: 'ゴール',
     assetPath: 'assets/risukun_super_tenkomori_car/08_goal.png',
     speakerNotes: SpeakerNotes.page08,
+    circularSketchReveal: StorybookCircularSketchReveal(
+      origin: Alignment(0.08, -0.28),
+      artworkAspectRatio: _standardArtworkAspectRatio,
+    ),
   ),
   RisukunPageData(
     number: 9,
@@ -74,6 +108,10 @@ const risukunPages = <RisukunPageData>[
     title: 'YAGNIのくらべっこ',
     assetPath: 'assets/risukun_super_tenkomori_car/09_yagni_comparison.png',
     speakerNotes: SpeakerNotes.page09,
+    circularSketchReveal: StorybookCircularSketchReveal(
+      origin: Alignment(0.46, 0.11),
+      artworkAspectRatio: _standardArtworkAspectRatio,
+    ),
   ),
   RisukunPageData(
     number: 10,
@@ -81,6 +119,10 @@ const risukunPages = <RisukunPageData>[
     title: 'おしまいと解説',
     assetPath: 'assets/risukun_super_tenkomori_car/10_ending.png',
     speakerNotes: SpeakerNotes.page10,
+    circularSketchReveal: StorybookCircularSketchReveal(
+      origin: Alignment(-0.25, 0.02),
+      artworkAspectRatio: _wideArtworkAspectRatio,
+    ),
   ),
 ];
 
@@ -182,6 +224,7 @@ FlutterDeckSlide _buildImageSlide(RisukunPageData page) {
       contentPadding: EdgeInsets.zero,
       borderRadius: 0,
       showPageNumber: false,
+      circularSketchReveal: page.circularSketchReveal,
       child: Image.asset(
         page.assetPath,
         key: ValueKey('risukun-page-image-${page.number}'),
@@ -215,6 +258,7 @@ class RisukunPageData {
     required this.title,
     required this.assetPath,
     required this.speakerNotes,
+    required this.circularSketchReveal,
   });
 
   final int number;
@@ -222,4 +266,5 @@ class RisukunPageData {
   final String title;
   final String assetPath;
   final String speakerNotes;
+  final StorybookCircularSketchReveal circularSketchReveal;
 }
