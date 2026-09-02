@@ -41,8 +41,31 @@ void main() {
       expect(reveal.origin.y, inInclusiveRange(-1, 1));
       expect(reveal.artworkAspectRatio, greaterThan(0));
       expect(reveal.initialRadiusFraction, inInclusiveRange(0, 1));
+      expect(reveal.focusRadiusFraction, inExclusiveRange(0, 1.000001));
+      expect(reveal.focusLineFraction, inExclusiveRange(0, 1.000001));
+      expect(reveal.surroundingFadeFraction, inExclusiveRange(0, 1.000001));
       expect(reveal.softEdgeFraction, inExclusiveRange(0, 1.000001));
+      expect(
+        reveal.focusLineFraction + reveal.surroundingFadeFraction,
+        lessThan(1),
+      );
     }
+
+    expect(
+      risukunPages.map((page) => page.circularSketchReveal.origin),
+      orderedEquals(<Alignment>[
+        const Alignment(0.43, 0.04),
+        const Alignment(-0.20, 0.14),
+        const Alignment(0.12, -0.25),
+        const Alignment(0.49, 0.53),
+        const Alignment(0.08, 0.09),
+        const Alignment(0.17, 0.46),
+        const Alignment(0.10, 0.10),
+        const Alignment(0.08, -0.28),
+        const Alignment(0.46, 0.11),
+        const Alignment(-0.25, 0.02),
+      ]),
+    );
   });
 
   testWidgets('the ten image pages use the storybook cover and page flow', (
@@ -146,9 +169,21 @@ void main() {
     final progress = scopes
         .map(
           (scope) =>
-              'sketch=${scope.sketchProgress}, paint=${scope.paintProgress}',
+              'ink=${scope.inkProgress}, sketch=${scope.sketchProgress}, '
+              'paint=${scope.paintProgress}',
         )
         .join('; ');
+    expect(scopes.any((scope) => scope.inkProgress != null), isTrue);
+    expect(
+      scopes.any(
+        (scope) =>
+            scope.inkProgress != null &&
+            scope.inkProgress! > 0 &&
+            scope.inkProgress! < 1,
+      ),
+      isTrue,
+      reason: progress,
+    );
     expect(
       scopes.any((scope) => scope.sketchProgress > 0),
       isTrue,
