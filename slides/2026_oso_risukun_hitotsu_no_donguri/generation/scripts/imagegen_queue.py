@@ -229,6 +229,35 @@ def page_by_id(pages: Sequence[storybook.PageSpec], page_id: str) -> storybook.P
     raise QueueError(f"Unknown page {page_id!r}; choose from {', '.join(page.id for page in pages)}")
 
 
+def parse_variant_selection(
+    selected_variant: str | None,
+    selected_variants: str | None,
+    all_variants: bool,
+) -> tuple[str, ...]:
+    selectors = sum(
+        value is not None and value is not False
+        for value in (selected_variant, selected_variants, all_variants)
+    )
+    if selectors != 1:
+        raise QueueError("choose exactly one of --variant, --variants, or --all")
+    if all_variants:
+        return storybook.VARIANTS
+    if selected_variant:
+        return (selected_variant,)
+    assert selected_variants is not None
+    parsed = tuple(item.strip() for item in selected_variants.split(",") if item.strip())
+    if not parsed:
+        raise QueueError("--variants must contain at least one variant")
+    unknown = [item for item in parsed if item not in storybook.VARIANTS]
+    if unknown:
+        raise QueueError(
+            f"Unknown variant(s) {', '.join(unknown)}; choose from {', '.join(storybook.VARIANTS)}"
+        )
+    if len(set(parsed)) != len(parsed):
+        raise QueueError("--variants must not contain duplicates")
+    return parsed
+
+
 def job_id(page_id: str, variant_id: str, attempt: int) -> str:
     return f"{page_id}__variant_{variant_id}__attempt_{attempt:02d}"
 
@@ -316,6 +345,7 @@ def build_job(
     attempt: int,
     quality: str,
     revision_instruction: str | None = None,
+    edit_target: Path | None = None,
 ) -> dict[str, Any]:
     if variant_id not in storybook.VARIANTS:
         raise QueueError(f"Variant must be one of {', '.join(storybook.VARIANTS)}")
@@ -343,6 +373,7 @@ def build_job(
         "prompt": prompt,
         "prompt_sha256": storybook.prompt_hash(prompt),
         "revision_instruction": revision_instruction,
+        "edit_target": relative_path(edit_target, storybook_dir) if edit_target else None,
         "references": [
             {
                 "path": relative_path(reference.path, storybook_dir),
@@ -359,6 +390,24 @@ def build_job(
 
 
 def job_markdown(storybook_dir: Path, job: Mapping[str, Any]) -> str:
+    edit_target = job.get("edit_target")
+    if edit_target:
+        edit_target_block = (
+            "## Edit target\n\n"
+            f"- `{absolute_path(str(edit_target), storybook_dir)}` — current candidate to edit\n\n"
+            "This is a precise revision. Use the edit target as the first input image. Change "
+            "only the requested revision while preserving the existing characters, scene, "
+            "lighting, aspect ratio, and composition unless the revision explicitly changes one.\n\n"
+        )
+        edit_target_instruction = (
+            "Include the edit target as the first input image, followed by the listed reference "
+            "images, and use built-in ImageGen edit semantics. Do not overwrite the edit target."
+        )
+    else:
+        edit_target_block = ""
+        edit_target_instruction = (
+            "Use the listed reference images as references for identity, palette, and continuity."
+        )
     references = job.get("references", [])
     reference_lines: list[str] = []
     if isinstance(references, list):
@@ -389,12 +438,13 @@ def job_markdown(storybook_dir: Path, job: Mapping[str, Any]) -> str:
         Mode: Codex built-in ImageGen only — do not use the OpenAI SDK or `OPENAI_API_KEY`.
         Canvas intent: wide 16:9 picture-book illustration for the project's 2048x1152 layout.
 
-        ## Reference images
+        {edit_target_block}## Reference images
 
         {chr(10).join(reference_lines)}
 
-        Use each attached image only for the role stated above. Preserve character identity,
-        palette, and visual language; do not copy a reference image's framing or composition.
+        {edit_target_instruction}
+        Preserve rules: keep character identity, palette, and visual language; do not copy a
+        reference image's framing or composition unless it is the explicit edit target.
 
         ## Prompt
 
@@ -538,6 +588,9 @@ def prepare_page(
                 int(latest.get("attempt", 1)),
                 quality,
                 latest.get("revision_instruction"),
+                absolute_path(str(latest["edit_target"]), storybook_dir)
+                if latest.get("edit_target")
+                else None,
             )
             refreshed["id"] = latest["id"]
             refreshed["created_at"] = latest.get("created_at", refreshed["created_at"])
@@ -612,6 +665,7 @@ def review_manifest(
                 "attempt": job.get("attempt"),
                 "status": job.get("status"),
                 "prompt_sha256": job.get("prompt_sha256"),
+                "edit_target": job.get("edit_target"),
                 "candidate_output": job.get("candidate_output"),
                 "attempt_output": job.get("attempt_output"),
                 "image_sha256": job.get("image_sha256"),
@@ -638,6 +692,23 @@ def maybe_make_contact_sheet(storybook_dir: Path, page_id: str) -> str | None:
     except Exception as exc:
         return str(exc)
     return None
+
+
+def revision_source(
+    storybook_dir: Path,
+    queue: Mapping[str, Any],
+    page_id: str,
+    variant_id: str,
+) -> tuple[dict[str, Any], Path]:
+    latest = latest_job(queue, page_id, variant_id)
+    if latest is None:
+        raise QueueError(f"No existing candidate for {page_id}/{variant_id}")
+    if latest.get("status") == JOB_PENDING:
+        raise QueueError(f"A revision is already pending for {page_id}/{variant_id}")
+    candidate_path = absolute_path(str(latest.get("candidate_output", "")), storybook_dir)
+    if not candidate_path.is_file():
+        raise QueueError(f"Candidate image is missing for {page_id}/{variant_id}")
+    return latest, candidate_path
 
 
 def record_job(
@@ -714,11 +785,7 @@ def revise_job(
     if not note.strip():
         raise QueueError("--note must not be empty")
     page = page_by_id(pages, page_id)
-    latest = latest_job(queue, page_id, variant_id)
-    if latest is None:
-        raise QueueError(f"No existing candidate for {page_id}/{variant_id}")
-    if not absolute_path(str(latest.get("candidate_output", "")), storybook_dir).is_file():
-        raise QueueError(f"Candidate image is missing for {page_id}/{variant_id}")
+    latest, candidate_path = revision_source(storybook_dir, queue, page_id, variant_id)
     attempt = int(latest.get("attempt", 0)) + 1
     if attempt > int(queue.get("max_attempts", DEFAULT_MAX_RETRIES + 1)):
         raise QueueError(
@@ -733,6 +800,7 @@ def revise_job(
         attempt,
         quality,
         revision_instruction=note.strip(),
+        edit_target=candidate_path,
     )
     replace_job(queue, job)
     page_entry = queue["pages"][page_id]
@@ -893,7 +961,21 @@ def build_parser() -> argparse.ArgumentParser:
 
     revise = subparsers.add_parser("revise", help="Queue a human-directed revision")
     revise.add_argument("--page", required=True)
-    revise.add_argument("--variant", choices=storybook.VARIANTS, required=True)
+    revise.add_argument(
+        "--variant",
+        choices=storybook.VARIANTS,
+        help="Revise one candidate",
+    )
+    revise.add_argument(
+        "--variants",
+        help="Revise several candidates with the same note, for example a,b,c",
+    )
+    revise.add_argument(
+        "--all",
+        dest="all_variants",
+        action="store_true",
+        help="Revise all three candidates with the same note",
+    )
     revise.add_argument("--note", required=True)
     revise.add_argument("--quality", choices=("low", "medium", "high"), default="medium")
     revise.add_argument("--storybook-dir", type=Path, default=argparse.SUPPRESS)
@@ -988,17 +1070,38 @@ def main(argv: Sequence[str] | None = None) -> int:
             )
             return 0
         if args.command == "revise":
-            job = revise_job(
-                storybook_dir,
-                queue,
-                pages,
-                style,
-                args.page,
+            variant_ids = parse_variant_selection(
                 args.variant,
-                args.note,
-                args.quality,
+                args.variants,
+                args.all_variants,
             )
-            print(f"REVISION_QUEUED {job['page']}/{job['variant']}: {job['job_file']}")
+            # Validate every target before enqueueing the first one so a group
+            # revision cannot be partially scheduled.
+            for variant_id in variant_ids:
+                latest, _ = revision_source(storybook_dir, queue, args.page, variant_id)
+                attempt = int(latest.get("attempt", 0)) + 1
+                if attempt > int(queue.get("max_attempts", DEFAULT_MAX_RETRIES + 1)):
+                    raise QueueError(
+                        f"{args.page}/{variant_id} reached max attempts "
+                        f"({queue.get('max_attempts')})"
+                    )
+            queued_jobs = [
+                revise_job(
+                    storybook_dir,
+                    queue,
+                    pages,
+                    style,
+                    args.page,
+                    variant_id,
+                    args.note,
+                    args.quality,
+                )
+                for variant_id in variant_ids
+            ]
+            print(
+                "REVISION_QUEUED "
+                + ", ".join(f"{job['page']}/{job['variant']}" for job in queued_jobs)
+            )
             return 0
         if args.command == "fail":
             job = None

@@ -136,6 +136,10 @@ class ImageGenQueueTest(unittest.TestCase):
             self.assertEqual(revision["attempt"], 2)
             self.assertEqual(revision["status"], queue.JOB_PENDING)
             self.assertIn("move the squirrel farther right", revision["prompt"])
+            self.assertEqual(
+                revision["edit_target"],
+                "generation/output/page02/variant_a.png",
+            )
             self.assertEqual(len(queue.jobs_for(state, "page02", "a")), 2)
 
             with self.assertRaises(queue.QueueError):
@@ -148,6 +152,54 @@ class ImageGenQueueTest(unittest.TestCase):
                     "a",
                     "one more revision",
                     "medium",
+                )
+
+    def test_group_revision_queues_each_variant_from_the_same_note(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            pages, style = self.make_storybook_copy(root)
+            state = queue.load_queue(root, pages, max_retries=1)
+            page02 = pages[2]
+            jobs = queue.prepare_page(
+                root,
+                state,
+                pages,
+                page02,
+                style,
+                None,
+                "medium",
+                False,
+                False,
+            )
+            source = root / "source.png"
+            source.write_bytes(ONE_PIXEL_PNG)
+            for job in jobs:
+                queue.record_job(root, state, pages, job["id"], source, False)
+
+            exit_code = queue.main(
+                [
+                    "--storybook-dir",
+                    str(root),
+                    "revise",
+                    "--page",
+                    "page02",
+                    "--variants",
+                    "a,b,c",
+                    "--note",
+                    "keep the same story beat but make the sprout more readable",
+                ]
+            )
+            self.assertEqual(exit_code, 0)
+            state = queue.load_queue(root, pages)
+            for variant in storybook.VARIANTS:
+                latest = queue.latest_job(state, "page02", variant)
+                self.assertIsNotNone(latest)
+                assert latest is not None
+                self.assertEqual(latest["attempt"], 2)
+                self.assertEqual(latest["status"], queue.JOB_PENDING)
+                self.assertEqual(
+                    latest["edit_target"],
+                    f"generation/output/page02/variant_{variant}.png",
                 )
 
 

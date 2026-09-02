@@ -22,7 +22,8 @@ APIキーはファイルへ保存せず、環境変数から読み込みます�
 
 Codexのサブスク利用枠で生成する場合は、PythonからAPIを呼ばず、Codex内蔵の
 ImageGenを1ジョブずつ使います。ローカル側にはプロンプト、参照画像の役割、試行番号、
-生成済みPNG、レビュー状態を保存します。`generation/output/` はGit管理外です。
+生成済みPNG、レビュー状態を保存します。`generation/output/` は通常Git管理外ですが、
+今回の確認用スナップショットはIssue #28ブランチへ公開しています。
 
 まず次のページのジョブを作ります。`--next-page` は、前ページの生成結果を参照画像に
 反映してから次のページを準備します。
@@ -52,6 +53,16 @@ python3 generation/scripts/imagegen_queue.py adopt --page page05 --variant b
 ```sh
 python3 generation/scripts/imagegen_queue.py revise \
   --page page05 --variant b \
+  --note 'リスくんをもう少し右へ寄せ、木のスケール感を維持する'
+```
+
+同じ修正プロンプトを複数候補へ適用する場合は `--variants a,b,c`、そのページの
+全候補には `--all` を使います。各候補自身を編集対象にして別試行へ保存するため、
+元画像を上書きせず、修正パターンを候補ごとに比較できます。
+
+```sh
+python3 generation/scripts/imagegen_queue.py revise \
+  --page page05 --variants a,b,c \
   --note 'リスくんをもう少し右へ寄せ、木のスケール感を維持する'
 ```
 
@@ -121,9 +132,14 @@ python generation/scripts/make_contact_sheet.py --page page05
 - `contact_sheet.png` — 3案を横並びにした確認用画像
 - `state.json` — 進行中・失敗・再試行可能な状態
 
-候補・状態・評価ファイルはローカル生成物なので `.gitignore` 対象です。APIエラーは
-ページ全体を中断せず、`state.json` に記録して次回実行で再開できます。画像生成後の
-vision評価でも、次の候補生成に使う具体的な `revision_instruction` を保存します。
+候補・状態・評価ファイルは通常ローカル生成物として `.gitignore` 対象です。今回の
+レビュー用には候補PNGとコンタクトシートだけをGitHubへ公開し、試行履歴の重い
+`attempts/` はローカルに残しています。APIエラーはページ全体を中断せず、`state.json`
+に記録して次回実行で再開できます。画像生成後のvision評価でも、次の候補生成に使う
+具体的な `revision_instruction` を保存します。
+
+GitHubで確認する場合は `generation/review/README.md` を開くと、ページごとの
+コンタクトシートと `a` / `b` / `c` 候補へ移動できます。
 
 3案が揃った後は `gpt-5.6-sol` で構図の類似度を比較し、似すぎている場合は残りの
 試行回数の範囲で低評価側を再生成します。`recommended_variant` は機械的な提案に
