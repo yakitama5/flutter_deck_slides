@@ -7,7 +7,7 @@ canonical reference として扱い、page02〜page11 の各ページについ�
 
 ## セットアップ
 
-Python 3.10 以上と `OPENAI_API_KEY` が必要です。
+Python 3.10 以上が必要です。APIモードを使う場合だけ `OPENAI_API_KEY` が必要です。
 
 ```sh
 cd slides/2026_oso_risukun_hitotsu_no_donguri
@@ -17,6 +17,47 @@ export OPENAI_API_KEY='...'
 ```
 
 APIキーはファイルへ保存せず、環境変数から読み込みます。
+
+## サブスク内蔵ImageGenで放置生成（APIキーなし）
+
+Codexのサブスク利用枠で生成する場合は、PythonからAPIを呼ばず、Codex内蔵の
+ImageGenを1ジョブずつ使います。ローカル側にはプロンプト、参照画像の役割、試行番号、
+生成済みPNG、レビュー状態を保存します。`generation/output/` はGit管理外です。
+
+まず次のページのジョブを作ります。`--next-page` は、前ページの生成結果を参照画像に
+反映してから次のページを準備します。
+
+```sh
+python3 generation/scripts/imagegen_queue.py prepare --next-page
+python3 generation/scripts/imagegen_queue.py status
+python3 generation/scripts/imagegen_queue.py next
+```
+
+バックグラウンドで動かすCodexタスクは、`generation/output/BUILTIN_IMAGEGEN_WORKER.md` を
+読み、表示された `.md` ジョブを順番に処理します。各ジョブでは `$imagegen` を使い、
+生成されたPNGをジョブ内の `record` コマンドでローカルへ取り込みます。1ページの
+`a` / `b` / `c` が揃うと、次ページへ進む前にコンタクトシートを作ります。API SDKや
+`OPENAI_API_KEY` は使いません。
+
+生成完了後は、次のコマンドで人間レビュー対象だけを確認します。
+
+```sh
+python3 generation/scripts/imagegen_queue.py review
+python3 generation/scripts/imagegen_queue.py adopt --page page05 --variant b
+```
+
+レビューで修正したい候補だけ、同じキューへ追加できます。過去の試行は
+`generation/output/<page>/attempts/` に残ります。
+
+```sh
+python3 generation/scripts/imagegen_queue.py revise \
+  --page page05 --variant b \
+  --note 'リスくんをもう少し右へ寄せ、木のスケール感を維持する'
+```
+
+キュー全体の進捗は `status`、次に処理するジョブは `next` で確認できます。キューを
+作り直さずに再開できるため、利用枠やツールの一時的な失敗で中断しても、完了済みの
+候補を重複生成しません。
 
 参照画像は `generation/refs/` に置きます。現在の canonical の優先順位は次の通りです。
 
@@ -99,6 +140,7 @@ python -m unittest discover -s generation/scripts -p 'test_*.py'
 - `generation/prompts/global_style.md` — キャラクター、画風、スケール、禁止事項
 - `generation/prompts/storyboard.yaml` — cover / page01 / page02〜page11 の全ページと3構図
 - `generation/scripts/generate_storybook.py` — `gpt-image-2` edit + vision評価ループ
+- `generation/scripts/imagegen_queue.py` — サブスク内蔵ImageGen用のローカルキュー
 - `generation/scripts/make_contact_sheet.py` — 候補の横並び画像生成
 - `generation/requirements.txt` — OpenAI SDK、Pillow、PyYAML、Pydantic
 
