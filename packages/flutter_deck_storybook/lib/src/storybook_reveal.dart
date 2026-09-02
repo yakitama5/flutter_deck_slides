@@ -3,6 +3,8 @@ import 'dart:math' as math;
 import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
 
+import 'storybook_circular_sketch_reveal.dart';
+
 /// Animation values supplied by the page transition to [StorybookPage].
 ///
 /// This type lives in `src/` intentionally. It lets the transition and page
@@ -47,6 +49,9 @@ class StorybookInkReveal extends SingleChildRenderObjectWidget {
     required this.sketchProgress,
     required this.paintProgress,
     required this.revealOrigin,
+    required this.circularSketchReveal,
+    required this.contentPadding,
+    required this.designSize,
     required super.child,
     super.key,
   }) : assert(sketchProgress >= 0 && sketchProgress <= 1),
@@ -61,12 +66,24 @@ class StorybookInkReveal extends SingleChildRenderObjectWidget {
   /// Point from which the watercolor mask spreads.
   final Alignment revealOrigin;
 
+  /// Optional circular mask used while the pencil sketch develops.
+  final StorybookCircularSketchReveal? circularSketchReveal;
+
+  /// Padding around the logical artwork canvas.
+  final EdgeInsets contentPadding;
+
+  /// Logical canvas fitted inside [contentPadding].
+  final Size designSize;
+
   @override
   RenderStorybookInkReveal createRenderObject(BuildContext context) {
     return RenderStorybookInkReveal._(
       sketchProgress: sketchProgress,
       paintProgress: paintProgress,
       revealOrigin: revealOrigin,
+      circularSketchReveal: circularSketchReveal,
+      contentPadding: contentPadding,
+      designSize: designSize,
     );
   }
 
@@ -78,7 +95,10 @@ class StorybookInkReveal extends SingleChildRenderObjectWidget {
     renderObject
       ..sketchProgress = sketchProgress
       ..paintProgress = paintProgress
-      ..revealOrigin = revealOrigin;
+      ..revealOrigin = revealOrigin
+      ..circularSketchReveal = circularSketchReveal
+      ..contentPadding = contentPadding
+      ..designSize = designSize;
   }
 }
 
@@ -89,6 +109,9 @@ class RenderStorybookInkReveal extends RenderProxyBox {
     required this._sketchProgress,
     required this._paintProgress,
     required this._revealOrigin,
+    required this._circularSketchReveal,
+    required this._contentPadding,
+    required this._designSize,
   });
 
   double _sketchProgress;
@@ -115,6 +138,37 @@ class RenderStorybookInkReveal extends RenderProxyBox {
     markNeedsPaint();
   }
 
+  StorybookCircularSketchReveal? _circularSketchReveal;
+  StorybookCircularSketchReveal? get circularSketchReveal =>
+      _circularSketchReveal;
+  set circularSketchReveal(StorybookCircularSketchReveal? value) {
+    if (_circularSketchReveal == value) return;
+    _circularSketchReveal = value;
+    markNeedsPaint();
+  }
+
+  EdgeInsets _contentPadding;
+  EdgeInsets get contentPadding => _contentPadding;
+  set contentPadding(EdgeInsets value) {
+    if (_contentPadding == value) return;
+    _contentPadding = value;
+    markNeedsPaint();
+  }
+
+  Size _designSize;
+  Size get designSize => _designSize;
+  set designSize(Size value) {
+    if (_designSize == value) return;
+    _designSize = value;
+    markNeedsPaint();
+  }
+
+  /// Color progress after enforcing sketch-before-color for circular reveals.
+  double get effectivePaintProgress {
+    if (circularSketchReveal != null && sketchProgress < 0.995) return 0;
+    return paintProgress;
+  }
+
   @override
   bool get isRepaintBoundary => true;
 
@@ -122,6 +176,22 @@ class RenderStorybookInkReveal extends RenderProxyBox {
   void paint(PaintingContext context, Offset offset) {
     final renderChild = child;
     if (renderChild == null) return;
+
+    if (circularSketchReveal == null) {
+      _paintLegacyReveal(context, renderChild, offset);
+      return;
+    }
+
+    _paintCircularReveal(context, renderChild, offset);
+  }
+
+  void _paintLegacyReveal(
+    PaintingContext context,
+    RenderBox renderChild,
+    Offset offset,
+  ) {
+    // Keep the original rendering path isolated so an omitted circular reveal
+    // cannot change existing pages' pixels, timing, or phase overlap.
 
     if (paintProgress >= 0.995) {
       context.paintChild(renderChild, offset);
@@ -144,6 +214,89 @@ class RenderStorybookInkReveal extends RenderProxyBox {
     _paintWatercolorMask(canvas, bounds);
     canvas.restore();
     canvas.restore();
+  }
+
+  void _paintCircularReveal(
+    PaintingContext context,
+    RenderBox renderChild,
+    Offset offset,
+  ) {
+    final colorProgress = effectivePaintProgress;
+    if (colorProgress >= 0.995) {
+      context.paintChild(renderChild, offset);
+      return;
+    }
+
+    final bounds = offset & size;
+    final canvas = context.canvas;
+
+    if (sketchProgress > 0) {
+      _paintCircularSketch(context, renderChild, offset, bounds);
+    }
+
+    if (colorProgress <= 0) return;
+
+    canvas.saveLayer(bounds, Paint());
+    context.paintChild(renderChild, offset);
+
+    canvas.saveLayer(bounds, Paint()..blendMode = BlendMode.dstIn);
+    _paintWatercolorMask(canvas, bounds);
+    canvas.restore();
+    canvas.restore();
+  }
+
+  void _paintCircularSketch(
+    PaintingContext context,
+    RenderBox renderChild,
+    Offset offset,
+    Rect bounds,
+  ) {
+    if (sketchProgress >= 0.995) {
+      _paintSketch(context, renderChild, offset, bounds);
+      return;
+    }
+
+    final geometry = resolveStorybookCircularSketchGeometry(
+      bounds: bounds,
+      contentPadding: contentPadding,
+      designSize: designSize,
+      configuration: circularSketchReveal!,
+      progress: sketchProgress,
+    );
+
+    context.canvas.saveLayer(bounds, Paint());
+    _paintSketch(context, renderChild, offset, bounds);
+    context.canvas.saveLayer(bounds, Paint()..blendMode = BlendMode.dstIn);
+    _paintCircularSketchMask(context.canvas, geometry);
+    context.canvas.restore();
+    context.canvas.restore();
+  }
+
+  void _paintCircularSketchMask(
+    Canvas canvas,
+    StorybookCircularSketchGeometry geometry,
+  ) {
+    final outerRadius = geometry.radius + geometry.softEdge;
+    final innerRadius = math.max(0.0, geometry.radius - geometry.softEdge);
+    final innerStop = (innerRadius / outerRadius).clamp(0.0, 1.0);
+    final shaderBounds = Rect.fromCircle(
+      center: geometry.origin,
+      radius: outerRadius,
+    );
+
+    canvas.drawCircle(
+      geometry.origin,
+      outerRadius,
+      Paint()
+        ..shader = RadialGradient(
+          colors: const [
+            Color(0xFFFFFFFF),
+            Color(0xFFFFFFFF),
+            Color(0x00FFFFFF),
+          ],
+          stops: [0, innerStop, 1],
+        ).createShader(shaderBounds),
+    );
   }
 
   void _paintSketch(
@@ -384,4 +537,91 @@ class RenderStorybookInkReveal extends RenderProxyBox {
     final t = value.clamp(0.0, 1.0);
     return t * t * (3 - 2 * t);
   }
+}
+
+/// Geometry shared by the circular sketch painter and its structural tests.
+class StorybookCircularSketchGeometry {
+  const StorybookCircularSketchGeometry({
+    required this.artworkRect,
+    required this.origin,
+    required this.radius,
+    required this.softEdge,
+    required this.isComplete,
+  });
+
+  final Rect artworkRect;
+  final Offset origin;
+  final double radius;
+  final double softEdge;
+  final bool isComplete;
+
+  /// Returns the circular mask opacity at [position].
+  double opacityAt(Offset position) {
+    if (isComplete) return 1;
+
+    final distance = (position - origin).distance;
+    final innerRadius = math.max(0.0, radius - softEdge);
+    final outerRadius = radius + softEdge;
+    if (distance <= innerRadius) return 1;
+    if (distance >= outerRadius) return 0;
+    return 1 - (distance - innerRadius) / (outerRadius - innerRadius);
+  }
+}
+
+/// Resolves a normalized circular reveal against the fitted artwork rectangle.
+StorybookCircularSketchGeometry resolveStorybookCircularSketchGeometry({
+  required Rect bounds,
+  required EdgeInsets contentPadding,
+  required Size designSize,
+  required StorybookCircularSketchReveal configuration,
+  required double progress,
+}) {
+  final paddedBounds = Rect.fromLTRB(
+    bounds.left + contentPadding.left,
+    bounds.top + contentPadding.top,
+    bounds.right - contentPadding.right,
+    bounds.bottom - contentPadding.bottom,
+  );
+  final availableBounds = paddedBounds.width > 0 && paddedBounds.height > 0
+      ? paddedBounds
+      : bounds;
+  final fittedDesignSize = applyBoxFit(
+    BoxFit.contain,
+    designSize,
+    availableBounds.size,
+  ).destination;
+  final designRect = Alignment.center.inscribe(
+    fittedDesignSize,
+    availableBounds,
+  );
+  final fittedArtworkSize = applyBoxFit(
+    BoxFit.contain,
+    Size(configuration.artworkAspectRatio, 1),
+    designRect.size,
+  ).destination;
+  final artworkRect = Alignment.center.inscribe(fittedArtworkSize, designRect);
+  final origin =
+      artworkRect.topLeft + configuration.origin.alongSize(artworkRect.size);
+  final artworkShortestSide = artworkRect.shortestSide;
+  final softEdge = artworkShortestSide * configuration.softEdgeFraction;
+  final initialRadius =
+      artworkShortestSide * configuration.initialRadiusFraction;
+  final farthestCornerDistance = <Offset>[
+    bounds.topLeft,
+    bounds.topRight,
+    bounds.bottomLeft,
+    bounds.bottomRight,
+  ].map((corner) => (corner - origin).distance).reduce(math.max);
+  final normalizedProgress = progress.clamp(0.0, 1.0);
+  final radius =
+      initialRadius +
+      (farthestCornerDistance + softEdge - initialRadius) * normalizedProgress;
+
+  return StorybookCircularSketchGeometry(
+    artworkRect: artworkRect,
+    origin: origin,
+    radius: radius,
+    softEdge: softEdge,
+    isComplete: normalizedProgress >= 0.995,
+  );
 }

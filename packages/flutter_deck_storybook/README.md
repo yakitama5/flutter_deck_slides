@@ -46,3 +46,20 @@ FlutterDeckApp(
 3D回転はWebを含む全プラットフォームで標準です。描画に問題がある環境だけ `usePerspective: false` を指定すると、スライド＋クロスフェードへ切り替えられます。OS・ブラウザで「視差効果を減らす」が有効な場合は、ページめくりと描画演出をフェードへ切り替え、効果音も鳴らしません。
 
 16:9画像をページ全面に使う場合は、`outerPadding` と `contentPadding` を `EdgeInsets.zero`、`borderRadius` を `0` にすると、画像全体を1枚の紙としてめくれます。
+
+下描きだけを画像内の注目点から円形に広げたいページには、`circularSketchReveal` を指定できます。`origin` は、`BoxFit.contain` で表示された実画像領域を基準にした `Alignment` です。画像の上下や左右に余白が入る場合も、`artworkAspectRatio` から表示領域を解決します。省略したページは従来の全面下描き、時間、効果音をそのまま使用します。
+
+```dart
+StorybookPage(
+  outerPadding: EdgeInsets.zero,
+  contentPadding: EdgeInsets.zero,
+  borderRadius: 0,
+  circularSketchReveal: const StorybookCircularSketchReveal(
+    origin: Alignment(0.35, -0.2),
+    artworkAspectRatio: 1408 / 752,
+    initialRadiusFraction: 0.055,
+    softEdgeFraction: 0.025,
+  ),
+  child: Image.asset('assets/story.png', fit: BoxFit.contain),
+)
+```

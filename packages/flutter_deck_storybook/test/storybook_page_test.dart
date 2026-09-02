@@ -185,6 +185,120 @@ void main() {
     expect(reveal.sketchProgress, 0.4);
     expect(reveal.paintProgress, 0.2);
     expect(reveal.revealOrigin, const Alignment(0, 0.25));
+    expect(reveal.circularSketchReveal, isNull);
+
+    final renderReveal = tester.renderObject<RenderStorybookInkReveal>(
+      find.byKey(const ValueKey('storybook-ink-reveal')),
+    );
+    expect(renderReveal.effectivePaintProgress, 0.2);
+  });
+
+  test('circular sketch reveal expands from the fitted artwork origin', () {
+    const configuration = StorybookCircularSketchReveal(
+      origin: Alignment(-0.5, 0.5),
+      artworkAspectRatio: 1408 / 752,
+    );
+    const bounds = Rect.fromLTWH(0, 0, 1600, 900);
+
+    StorybookCircularSketchGeometry geometryAt(double progress) {
+      return resolveStorybookCircularSketchGeometry(
+        bounds: bounds,
+        contentPadding: EdgeInsets.zero,
+        designSize: const Size(1600, 900),
+        configuration: configuration,
+        progress: progress,
+      );
+    }
+
+    final initial = geometryAt(0);
+    final middle = geometryAt(0.5);
+    final complete = geometryAt(1);
+
+    expect(initial.artworkRect.left, 0);
+    expect(initial.artworkRect.right, 1600);
+    expect(initial.artworkRect.top, greaterThan(0));
+    expect(initial.artworkRect.bottom, lessThan(900));
+    expect(initial.origin.dx, closeTo(400, 0.001));
+    expect(
+      initial.origin.dy,
+      closeTo(
+        initial.artworkRect.top + initial.artworkRect.height * 0.75,
+        0.001,
+      ),
+    );
+    expect(initial.opacityAt(initial.origin), 1);
+    expect(initial.opacityAt(bounds.bottomRight), 0);
+    expect(middle.radius, greaterThan(initial.radius));
+    expect(middle.opacityAt(const Offset(800, 650)), greaterThan(0));
+    expect(complete.radius, greaterThan(middle.radius));
+    expect(complete.opacityAt(bounds.topLeft), 1);
+    expect(complete.opacityAt(bounds.bottomRight), 1);
+  });
+
+  test('different normalized origins stay inside 16:9 fitted artwork', () {
+    const bounds = Rect.fromLTWH(0, 0, 1600, 900);
+
+    StorybookCircularSketchGeometry geometryFor(Alignment origin) {
+      return resolveStorybookCircularSketchGeometry(
+        bounds: bounds,
+        contentPadding: EdgeInsets.zero,
+        designSize: const Size(1600, 900),
+        configuration: StorybookCircularSketchReveal(
+          origin: origin,
+          artworkAspectRatio: 4 / 3,
+        ),
+        progress: 0,
+      );
+    }
+
+    final topLeft = geometryFor(Alignment.topLeft);
+    final bottomRight = geometryFor(Alignment.bottomRight);
+
+    expect(topLeft.artworkRect, const Rect.fromLTWH(200, 0, 1200, 900));
+    expect(topLeft.origin, topLeft.artworkRect.topLeft);
+    expect(bottomRight.origin, bottomRight.artworkRect.bottomRight);
+  });
+
+  testWidgets('circular reveal keeps color hidden until sketch completes', (
+    tester,
+  ) async {
+    const circularReveal = StorybookCircularSketchReveal(
+      origin: Alignment.center,
+      artworkAspectRatio: 16 / 9,
+    );
+
+    Future<RenderStorybookInkReveal> pumpReveal({
+      required double sketchProgress,
+      required double paintProgress,
+    }) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: StorybookRevealScope(
+            sketchProgress: sketchProgress,
+            paintProgress: paintProgress,
+            revealOrigin: Alignment.center,
+            child: const StorybookPage(
+              circularSketchReveal: circularReveal,
+              child: ColoredBox(color: Colors.red),
+            ),
+          ),
+        ),
+      );
+
+      return tester.renderObject<RenderStorybookInkReveal>(
+        find.byKey(const ValueKey('storybook-ink-reveal')),
+      );
+    }
+
+    final developing = await pumpReveal(
+      sketchProgress: 0.8,
+      paintProgress: 0.9,
+    );
+    expect(developing.circularSketchReveal, circularReveal);
+    expect(developing.effectivePaintProgress, 0);
+
+    final sketched = await pumpReveal(sketchProgress: 1, paintProgress: 0.3);
+    expect(sketched.effectivePaintProgress, 0.3);
   });
 
   testWidgets('page-turn transition deforms one full slide as a paper mesh', (
