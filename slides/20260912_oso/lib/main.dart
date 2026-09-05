@@ -193,9 +193,7 @@ FlutterDeckSlide _buildFrontCoverSlide() {
         width: 1000,
         height: 563,
         child: Image(
-          image: AssetImage(
-            'assets/risukun_hitotsu_no_donguri/00_cover.png',
-          ),
+          image: AssetImage('assets/risukun_hitotsu_no_donguri/00_cover.png'),
           fit: BoxFit.cover,
         ),
       ),
