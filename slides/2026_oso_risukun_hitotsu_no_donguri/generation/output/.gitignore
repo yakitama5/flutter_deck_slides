@@ -1,0 +1,4 @@
+# Candidate images, contact sheets, evaluation.json, and state.json are local
+# generation artifacts. Keep the directory itself available for a fresh clone.
+*
+!.gitignore

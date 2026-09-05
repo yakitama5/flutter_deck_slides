@@ -10,6 +10,7 @@ workspace:
   - slides/example
   - slides/202607_claudenotebooklm
   - slides/202608_risukun_super_tenkomori_car
+  - slides/20260912_oso
 
 dev_dependencies:
   melos: ^7.3.0
