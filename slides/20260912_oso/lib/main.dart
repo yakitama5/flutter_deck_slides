@@ -12,6 +12,16 @@ const _artworkAspectRatio = 1672 / 941;
 const osoPages = <OsoPageData>[
   OsoPageData(
     number: 1,
+    slug: 'title-art',
+    title: 'タイトルページ',
+    assetPath: 'assets/risukun_hitotsu_no_donguri/00_cover.png',
+    circularSketchReveal: StorybookCircularSketchReveal(
+      origin: Alignment(0.02, 0.08),
+      artworkAspectRatio: _artworkAspectRatio,
+    ),
+  ),
+  OsoPageData(
+    number: 2,
     slug: 'first-acorn',
     title: '一粒のどんぐり',
     assetPath: 'assets/risukun_hitotsu_no_donguri/01_page01.png',
@@ -21,7 +31,7 @@ const osoPages = <OsoPageData>[
     ),
   ),
   OsoPageData(
-    number: 2,
+    number: 3,
     slug: 'planting',
     title: 'どんぐりを植える',
     assetPath: 'assets/risukun_hitotsu_no_donguri/02_page02.png',
@@ -31,7 +41,7 @@ const osoPages = <OsoPageData>[
     ),
   ),
   OsoPageData(
-    number: 3,
+    number: 4,
     slug: 'daily-care',
     title: '毎日のお世話',
     assetPath: 'assets/risukun_hitotsu_no_donguri/03_page03.png',
@@ -41,7 +51,7 @@ const osoPages = <OsoPageData>[
     ),
   ),
   OsoPageData(
-    number: 4,
+    number: 5,
     slug: 'young-tree',
     title: '小さな木と友達',
     assetPath: 'assets/risukun_hitotsu_no_donguri/04_page04.png',
@@ -51,7 +61,7 @@ const osoPages = <OsoPageData>[
     ),
   ),
   OsoPageData(
-    number: 5,
+    number: 6,
     slug: 'big-forest',
     title: '大きな森との出会い',
     assetPath: 'assets/risukun_hitotsu_no_donguri/05_page05.png',
@@ -61,7 +71,7 @@ const osoPages = <OsoPageData>[
     ),
   ),
   OsoPageData(
-    number: 6,
+    number: 7,
     slug: 'new-idea',
     title: 'ひらめき',
     assetPath: 'assets/risukun_hitotsu_no_donguri/06_page06.png',
@@ -71,7 +81,7 @@ const osoPages = <OsoPageData>[
     ),
   ),
   OsoPageData(
-    number: 7,
+    number: 8,
     slug: 'invite-friends',
     title: '友達を誘う',
     assetPath: 'assets/risukun_hitotsu_no_donguri/07_page07.png',
@@ -81,7 +91,7 @@ const osoPages = <OsoPageData>[
     ),
   ),
   OsoPageData(
-    number: 8,
+    number: 9,
     slug: 'shared-place',
     title: 'みんなの場所',
     assetPath: 'assets/risukun_hitotsu_no_donguri/08_page08.png',
@@ -91,7 +101,7 @@ const osoPages = <OsoPageData>[
     ),
   ),
   OsoPageData(
-    number: 9,
+    number: 10,
     slug: 'pass-the-acorn',
     title: 'どんぐりを渡す',
     assetPath: 'assets/risukun_hitotsu_no_donguri/09_page09.png',
@@ -101,7 +111,7 @@ const osoPages = <OsoPageData>[
     ),
   ),
   OsoPageData(
-    number: 10,
+    number: 11,
     slug: 'next-place',
     title: '次の場所へ',
     assetPath: 'assets/risukun_hitotsu_no_donguri/10_page10.png',
@@ -111,10 +121,10 @@ const osoPages = <OsoPageData>[
     ),
   ),
   OsoPageData(
-    number: 11,
+    number: 12,
     slug: 'future-forest',
     title: '育った森',
-    assetPath: 'assets/risukun_hitotsu_no_donguri/11_page11.png',
+    assetPath: 'assets/risukun_hitotsu_no_donguri/11_page11_ending.png',
     circularSketchReveal: StorybookCircularSketchReveal(
       origin: Alignment(-0.18, 0.12),
       artworkAspectRatio: _artworkAspectRatio,
@@ -189,12 +199,25 @@ FlutterDeckSlide _buildFrontCoverSlide() {
     builder: (context) => const StorybookBookCover(
       coverColor: Color(0xFF31533E),
       accentColor: Color(0xFFE7C978),
-      child: SizedBox(
-        width: 1000,
-        height: 563,
-        child: Image(
-          image: AssetImage('assets/risukun_hitotsu_no_donguri/00_cover.png'),
-          fit: BoxFit.cover,
+      child: Padding(
+        padding: EdgeInsets.symmetric(horizontal: 72, vertical: 48),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            FlutterLogo(size: 116, style: FlutterLogoStyle.markOnly),
+            SizedBox(height: 28),
+            Text(
+              'リスくんと\nひとつのどんぐり',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: Color(0xFFE7C978),
+                fontSize: 64,
+                height: 1.12,
+                fontWeight: FontWeight.w800,
+                letterSpacing: 0.5,
+              ),
+            ),
+          ],
         ),
       ),
     ),
