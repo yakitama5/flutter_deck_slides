@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:oso_20260912/main.dart';
+import 'package:oso_20260912/speaker_notes.dart';
 
 void main() {
   test('selected story pages stay in numeric order', () {
@@ -26,6 +27,18 @@ void main() {
         'assets/risukun_hitotsu_no_donguri/11_page11_ending.png',
       ]),
     );
+  });
+
+  test('every story page uses the separately managed speaker notes', () {
+    expect(
+      osoPages.map((page) => page.speakerNotes),
+      orderedEquals(SpeakerNotes.all.skip(1)),
+    );
+    expect(
+      osoPages.map((page) => page.speakerNotes.trim()),
+      everyElement(isNotEmpty),
+    );
+    expect(osoPages.last.speakerNotes, contains('おしまい'));
   });
 
   testWidgets('the storybook opens, turns through pages, and closes', (
