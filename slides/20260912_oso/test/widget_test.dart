@@ -1,5 +1,5 @@
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:oso_20260912/main.dart';
 
@@ -7,11 +7,12 @@ void main() {
   test('selected story pages stay in numeric order', () {
     expect(
       osoPages.map((page) => page.number),
-      orderedEquals(<int>[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]),
+      orderedEquals(<int>[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]),
     );
     expect(
       osoPages.map((page) => page.assetPath),
       orderedEquals(<String>[
+        'assets/risukun_hitotsu_no_donguri/00_cover.png',
         'assets/risukun_hitotsu_no_donguri/01_page01.png',
         'assets/risukun_hitotsu_no_donguri/02_page02.png',
         'assets/risukun_hitotsu_no_donguri/03_page03.png',
@@ -22,7 +23,7 @@ void main() {
         'assets/risukun_hitotsu_no_donguri/08_page08.png',
         'assets/risukun_hitotsu_no_donguri/09_page09.png',
         'assets/risukun_hitotsu_no_donguri/10_page10.png',
-        'assets/risukun_hitotsu_no_donguri/11_page11.png',
+        'assets/risukun_hitotsu_no_donguri/11_page11_ending.png',
       ]),
     );
   });
@@ -37,6 +38,8 @@ void main() {
       find.byKey(const ValueKey('storybook-book-front-cover')),
       findsOneWidget,
     );
+    expect(find.byType(FlutterLogo), findsOneWidget);
+    expect(find.text('リスくんと\nひとつのどんぐり'), findsOneWidget);
 
     for (var pageNumber = 1; pageNumber <= osoPages.length; pageNumber++) {
       await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
