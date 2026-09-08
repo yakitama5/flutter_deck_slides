@@ -41,6 +41,12 @@ FlutterDeckApp(
 
 `StorybookPageTurnTransitionBuilder` は移動方向を覚えるため、デッキ全体で同じインスタンスを再利用してください。`referenceTurnDuration` は参照動画を0.1秒刻みで測った約1.7秒の紙めくり時間です。インク表現は `StorybookPage` のコンテンツへ適用され、紙面・綴じ目・影は先に表示されます。`enableInkReveal: false` で描画演出のみ無効化できます。
 
+通常のMaterialスライドと絵本を1つのデッキに混在させる場合は、
+`useMaterialTransitionForOrdinarySlides: true` と本文ページの範囲
+(`bookPageStartSlideNumber` / `bookPageEndSlideNumber`) を指定します。範囲内の本文は
+ページめくり、範囲外の通常スライドは短いフェード＋スライドになり、
+`enableBookOpening` / `enableBookClosing` で指定した境界だけ本を開く・閉じる演出になります。
+
 `StorybookSoundEffects` は、横向きの隆起が見え始める約0.71秒後に約0.65秒の紙音、下描きが現れ始める位置に約2.48秒の鉛筆・筆音を合わせます。紙音の開始位置は `turnSoundCueProgress` で調整できます。音声は自作の生成素材で、外部通信は行いません。`enabled = false` で一時ミュートでき、不要なら `soundEffects` を省略すると音声機能自体を使いません。所有する `State` の `dispose` では `StorybookSoundEffects.dispose()` を呼んでください。Webではブラウザの自動再生制限により、URLを開いただけでは鳴らず、矢印キー・タップなどユーザー操作でページを移動した時から再生されます。
 
 3D回転はWebを含む全プラットフォームで標準です。描画に問題がある環境だけ `usePerspective: false` を指定すると、スライド＋クロスフェードへ切り替えられます。OS・ブラウザで「視差効果を減らす」が有効な場合は、ページめくりと描画演出をフェードへ切り替え、効果音も鳴らしません。

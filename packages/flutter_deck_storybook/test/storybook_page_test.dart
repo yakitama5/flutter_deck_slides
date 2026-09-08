@@ -164,6 +164,35 @@ void main() {
     expect(find.byType(Opacity), findsNothing);
   });
 
+  testWidgets(
+    'storybook transitions can use material motion outside the book',
+    (tester) async {
+      final controller = AnimationController(vsync: TestVSync(), value: 0.5);
+      final builder = StorybookPageTurnTransitionBuilder(
+        useMaterialTransitionForOrdinarySlides: true,
+      );
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Builder(
+            builder: (context) => builder.build(
+              context,
+              controller,
+              kAlwaysDismissedAnimation,
+              const Text('通常スライド'),
+            ),
+          ),
+        ),
+      );
+
+      expect(
+        find.byKey(const ValueKey('storybook-material-slide-transition')),
+        findsOneWidget,
+      );
+      controller.dispose();
+    },
+  );
+
   testWidgets('StorybookPage applies reveal animation values to its artwork', (
     tester,
   ) async {
