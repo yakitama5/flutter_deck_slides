@@ -3,7 +3,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:oso_20260912/main.dart';
 import 'package:oso_20260912/speaker_notes.dart';
-import 'package:oso_20260912/speaker_notes.dart';
 
 void main() {
   test('selected story pages stay in numeric order', () {
