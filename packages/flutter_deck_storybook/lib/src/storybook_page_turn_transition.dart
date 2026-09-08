@@ -52,6 +52,9 @@ class StorybookPageTurnTransitionBuilder extends FlutterDeckTransitionBuilder {
     this.inkRevealOrigin = const Alignment(0, 0.25),
     this.enableBookOpening = false,
     this.enableBookClosing = false,
+    this.useMaterialTransitionForOrdinarySlides = false,
+    this.bookPageStartSlideNumber,
+    this.bookPageEndSlideNumber,
     this.openingTargetSlideNumber = 2,
     this.closingTargetSlideNumber,
     this.bookPageCount = 5,
@@ -66,6 +69,11 @@ class StorybookPageTurnTransitionBuilder extends FlutterDeckTransitionBuilder {
        assert(inkRevealDuration > Duration.zero),
        assert(openingTargetSlideNumber >= 2),
        assert(closingTargetSlideNumber == null || closingTargetSlideNumber > 1),
+       assert(
+         bookPageStartSlideNumber == null ||
+             (bookPageEndSlideNumber != null &&
+                 bookPageEndSlideNumber >= bookPageStartSlideNumber),
+       ),
        assert(bookPageCount >= 2 && bookPageCount <= 8);
 
   /// Perspective applied to the page transform.
@@ -135,6 +143,25 @@ class StorybookPageTurnTransitionBuilder extends FlutterDeckTransitionBuilder {
   /// supplied explicitly.
   final bool enableBookClosing;
 
+  /// Whether routes that are not book boundaries should use a short material
+  /// slide transition instead of a page curl.
+  ///
+  /// This is useful when a deck places a normal presentation slide before a
+  /// front cover or after a back cover. Boundary routes still use the full
+  /// book animation, while ordinary routes remain visually consistent with
+  /// the surrounding Material slides.
+  final bool useMaterialTransitionForOrdinarySlides;
+
+  /// First slide number that belongs to the actual book pages.
+  ///
+  /// When [useMaterialTransitionForOrdinarySlides] is enabled, this range
+  /// keeps the page turns between the book pages while normal slides outside
+  /// the range use the Material fallback.
+  final int? bookPageStartSlideNumber;
+
+  /// Last slide number that belongs to the actual book pages.
+  final int? bookPageEndSlideNumber;
+
   /// Slide number at which the opening animation ends.
   final int openingTargetSlideNumber;
 
@@ -187,6 +214,17 @@ class StorybookPageTurnTransitionBuilder extends FlutterDeckTransitionBuilder {
         secondaryAnimation.status == AnimationStatus.dismissed &&
         boundary != _BookBoundaryTransition.opening) {
       _settledChild = child;
+    }
+
+    final isBookPage = _isBookPage(slideNumber);
+    if (useMaterialTransitionForOrdinarySlides &&
+        boundary == null &&
+        !isBookPage) {
+      return _StorybookMaterialSlideTransition(
+        animation: animation,
+        direction: _direction,
+        child: child,
+      );
     }
 
     if (!usePerspective &&
@@ -285,6 +323,49 @@ class StorybookPageTurnTransitionBuilder extends FlutterDeckTransitionBuilder {
     return boundary == _BookBoundaryTransition.opening
         ? _direction == _PageTurnDirection.backward
         : _direction == _PageTurnDirection.forward;
+  }
+
+  bool _isBookPage(int? slideNumber) {
+    final start = bookPageStartSlideNumber;
+    final end = bookPageEndSlideNumber;
+    return slideNumber != null &&
+        start != null &&
+        end != null &&
+        slideNumber >= start &&
+        slideNumber <= end;
+  }
+}
+
+class _StorybookMaterialSlideTransition extends StatelessWidget {
+  const _StorybookMaterialSlideTransition({
+    required this.animation,
+    required this.direction,
+    required this.child,
+  });
+
+  final Animation<double> animation;
+  final _PageTurnDirection direction;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    if (MediaQuery.maybeOf(context)?.disableAnimations ?? false) {
+      return child;
+    }
+
+    final directionSign = direction == _PageTurnDirection.forward ? 1.0 : -1.0;
+    final position = animation.drive(
+      Tween<Offset>(
+        begin: Offset(directionSign * 0.035, 0),
+        end: Offset.zero,
+      ).chain(CurveTween(curve: Curves.easeOutCubic)),
+    );
+
+    return FadeTransition(
+      key: const ValueKey('storybook-material-slide-transition'),
+      opacity: animation.drive(CurveTween(curve: Curves.easeOut)),
+      child: SlideTransition(position: position, child: child),
+    );
   }
 }
 

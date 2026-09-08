@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:oso_20260912/main.dart';
 import 'package:oso_20260912/speaker_notes.dart';
+import 'package:oso_20260912/speaker_notes.dart';
 
 void main() {
   test('selected story pages stay in numeric order', () {
@@ -41,17 +42,41 @@ void main() {
     expect(osoPages.last.speakerNotes, contains('おしまい'));
   });
 
+  test('every story page uses the separately managed speaker notes', () {
+    expect(
+      osoPages.map((page) => page.speakerNotes),
+      orderedEquals(SpeakerNotes.all.skip(1)),
+    );
+    expect(
+      osoPages.map((page) => page.speakerNotes.trim()),
+      everyElement(isNotEmpty),
+    );
+    expect(SpeakerNotes.frontCover.trim(), isNotEmpty);
+    expect(osoPages.last.speakerNotes, contains('おしまい'));
+  });
+
   testWidgets('the storybook opens, turns through pages, and closes', (
     tester,
   ) async {
     await tester.pumpWidget(const OsoStorybookApp());
     await tester.pumpAndSettle();
 
+    expect(find.text('自分でつくる、伝える。'), findsOneWidget);
+    expect(find.text('ABOUT THE SPEAKER'), findsNothing);
+
+    for (final introTitle in <String>['まず、自己紹介', '会社紹介', 'ここから、1冊の絵本へ']) {
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
+      await tester.pumpAndSettle();
+      expect(find.text(introTitle), findsOneWidget);
+    }
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
+    await tester.pumpAndSettle();
     expect(
       find.byKey(const ValueKey('storybook-book-front-cover')),
       findsOneWidget,
     );
-    expect(find.byType(FlutterLogo), findsOneWidget);
+    expect(find.byIcon(Icons.auto_stories_rounded), findsOneWidget);
     expect(find.text('リスくんと\nひとつのどんぐり'), findsOneWidget);
 
     for (var pageNumber = 1; pageNumber <= osoPages.length; pageNumber++) {
@@ -70,6 +95,17 @@ void main() {
       find.byKey(const ValueKey('storybook-book-back-cover')),
       findsOneWidget,
     );
+
+    for (final experienceTitle in <String>[
+      '実体験の紹介',
+      '小さく始めて、反応を見ながら育てた',
+      '今日、持ち帰ってほしいこと',
+    ]) {
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
+      await tester.pumpAndSettle();
+      expect(find.text(experienceTitle), findsOneWidget);
+    }
+
     expect(tester.takeException(), isNull);
   });
 
