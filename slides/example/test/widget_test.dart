@@ -291,6 +291,16 @@ void main() {
       find.byKey(const ValueKey('storybook-book-camera-scale')),
       findsOneWidget,
     );
+    final openingPaperBedRect = tester.getRect(
+      find.byKey(const ValueKey('storybook-book-opening-paper-bed')),
+    );
+    final openingCoverRect = tester.getRect(
+      find.byKey(const ValueKey('storybook-book-rigid-cover-panel')),
+    );
+    expect(openingPaperBedRect.left, closeTo(openingCoverRect.left, 0.01));
+    expect(openingPaperBedRect.top, closeTo(openingCoverRect.top, 0.01));
+    expect(openingPaperBedRect.right, closeTo(openingCoverRect.right, 0.01));
+    expect(openingPaperBedRect.bottom, closeTo(openingCoverRect.bottom, 0.01));
 
     await tester.pumpAndSettle();
     expect(find.text('FlutterDeck Storybook'), findsOneWidget);

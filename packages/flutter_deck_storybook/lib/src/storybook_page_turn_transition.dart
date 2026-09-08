@@ -928,51 +928,59 @@ class _StorybookBookOpeningSheets extends StatelessWidget {
       fit: StackFit.expand,
       children: [
         Positioned.fill(
-          child: _StorybookBookSheetsScene(
-            key: const ValueKey('storybook-book-opening-paper-bed-scene'),
-            motion: StorybookBookCoverMotion.opening,
-            backCover: backCover,
-            progress: progress,
-            child: const _StorybookBookPaperBed(),
-          ),
-        ),
-        Positioned.fill(
-          child: StorybookCurlReveal(
-            clipKey: const ValueKey('storybook-book-opening-paper-reveal'),
-            progress: openingProgress,
-            direction: pageDirection,
-            motion: StorybookPageCurlMotion.turnAway,
-            perspective: perspective,
-            maxRotation: maxRotation,
-            flex: flex,
-            twist: twist,
-            columns: columns,
-            rows: rows,
-            shadowFactor: 0,
+          child: Padding(
+            padding: const EdgeInsets.all(16),
             child: _StorybookBookSheetsScene(
-              key: const ValueKey('storybook-book-opening-paper-scene'),
+              key: const ValueKey('storybook-book-opening-paper-bed-scene'),
               motion: StorybookBookCoverMotion.opening,
               backCover: backCover,
               progress: progress,
-              child: Stack(
-                fit: StackFit.expand,
-                children: [
-                  for (var index = 0; index < pageCount; index++)
-                    StorybookCurlSheet(
-                      key: ValueKey('storybook-book-opening-sheet-$index'),
-                      progress: _staggeredProgress(openingProgress, index),
-                      direction: pageDirection,
-                      motion: StorybookPageCurlMotion.turnAway,
-                      perspective: perspective,
-                      maxRotation: maxRotation,
-                      flex: flex,
-                      twist: twist,
-                      columns: columns,
-                      rows: rows,
-                      paperOnly: true,
-                      child: const _StorybookBookPaperLeaf(),
-                    ),
-                ],
+              child: const _StorybookBookPaperBed(
+                key: ValueKey('storybook-book-opening-paper-bed'),
+              ),
+            ),
+          ),
+        ),
+        Positioned.fill(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: StorybookCurlReveal(
+              clipKey: const ValueKey('storybook-book-opening-paper-reveal'),
+              progress: openingProgress,
+              direction: pageDirection,
+              motion: StorybookPageCurlMotion.turnAway,
+              perspective: perspective,
+              maxRotation: maxRotation,
+              flex: flex,
+              twist: twist,
+              columns: columns,
+              rows: rows,
+              shadowFactor: 0,
+              child: _StorybookBookSheetsScene(
+                key: const ValueKey('storybook-book-opening-paper-scene'),
+                motion: StorybookBookCoverMotion.opening,
+                backCover: backCover,
+                progress: progress,
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    for (var index = 0; index < pageCount; index++)
+                      StorybookCurlSheet(
+                        key: ValueKey('storybook-book-opening-sheet-$index'),
+                        progress: _staggeredProgress(openingProgress, index),
+                        direction: pageDirection,
+                        motion: StorybookPageCurlMotion.turnAway,
+                        perspective: perspective,
+                        maxRotation: maxRotation,
+                        flex: flex,
+                        twist: twist,
+                        columns: columns,
+                        rows: rows,
+                        paperOnly: true,
+                        child: const _StorybookBookPaperLeaf(),
+                      ),
+                  ],
+                ),
               ),
             ),
           ),
