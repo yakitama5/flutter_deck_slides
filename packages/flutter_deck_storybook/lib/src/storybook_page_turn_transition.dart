@@ -930,13 +930,31 @@ class _StorybookBookOpeningSheets extends StatelessWidget {
         Positioned.fill(
           child: Padding(
             padding: const EdgeInsets.all(16),
-            child: _StorybookBookSheetsScene(
-              key: const ValueKey('storybook-book-opening-paper-bed-scene'),
-              motion: StorybookBookCoverMotion.opening,
-              backCover: backCover,
-              progress: progress,
-              child: const _StorybookBookPaperBed(
-                key: ValueKey('storybook-book-opening-paper-bed'),
+            // The bed must enter through the same curl as the paper sheets.
+            // Revealing it as a static surface at the cover's edge-on point
+            // creates a brief bright flash before the first sheet moves.
+            child: StorybookCurlReveal(
+              clipKey: const ValueKey(
+                'storybook-book-opening-paper-bed-reveal',
+              ),
+              progress: openingProgress,
+              direction: pageDirection,
+              motion: StorybookPageCurlMotion.turnAway,
+              perspective: perspective,
+              maxRotation: maxRotation,
+              flex: flex,
+              twist: twist,
+              columns: columns,
+              rows: rows,
+              shadowFactor: 0,
+              child: _StorybookBookSheetsScene(
+                key: const ValueKey('storybook-book-opening-paper-bed-scene'),
+                motion: StorybookBookCoverMotion.opening,
+                backCover: backCover,
+                progress: progress,
+                child: const _StorybookBookPaperBed(
+                  key: ValueKey('storybook-book-opening-paper-bed'),
+                ),
               ),
             ),
           ),
