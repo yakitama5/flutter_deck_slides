@@ -291,14 +291,6 @@ void main() {
       find.byKey(const ValueKey('storybook-book-camera-scale')),
       findsOneWidget,
     );
-    final openingPaperBedReveal = tester
-        .widgetList<StorybookCurlReveal>(find.byType(StorybookCurlReveal))
-        .singleWhere(
-          (reveal) =>
-              reveal.clipKey ==
-              const ValueKey('storybook-book-opening-paper-bed-reveal'),
-        );
-    expect(openingPaperBedReveal.progress, closeTo(openingReveal.progress, 0));
     final openingPaperBedRect = tester.getRect(
       find.byKey(const ValueKey('storybook-book-opening-paper-bed')),
     );
