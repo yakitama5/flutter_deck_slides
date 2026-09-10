@@ -238,6 +238,7 @@ class _OsoStorybookAppState extends State<OsoStorybookApp> {
       initial: true,
       subtitle: '「リスくんとひとつのどんぐり」から考える、小さな一歩の育て方',
       stepLabel: '01 / 04',
+      speakerNotes: SpeakerNotes.introTitle,
       child: Row(
         children: [
           const Expanded(
@@ -270,6 +271,7 @@ class _OsoStorybookAppState extends State<OsoStorybookApp> {
       eyebrow: 'ABOUT THE SPEAKER',
       subtitle: '試して、観察して、次の人に渡すのが好きです。',
       stepLabel: '02 / 04',
+      speakerNotes: SpeakerNotes.introProfile,
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -325,6 +327,7 @@ class _OsoStorybookAppState extends State<OsoStorybookApp> {
       eyebrow: 'ABOUT THE COMPANY / SAMPLE',
       subtitle: 'サンプルの会社紹介です。発表前に社名・数字・事例を差し替えて使えます。',
       stepLabel: '03 / 04',
+      speakerNotes: SpeakerNotes.introCompany,
       child: const Row(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -366,6 +369,7 @@ class _OsoStorybookAppState extends State<OsoStorybookApp> {
       eyebrow: 'STORYBOOK MODE',
       subtitle: '説明をいったん物語に預けて、ひとつの体験を追いかけます。',
       stepLabel: '04 / 04',
+      speakerNotes: SpeakerNotes.introStoryBridge,
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
@@ -476,6 +480,7 @@ class _OsoStorybookAppState extends State<OsoStorybookApp> {
         title: '絵本の裏表紙',
         header: _noHeader,
         footer: _noFooter,
+        speakerNotes: SpeakerNotes.backCover,
         transition: _storybookTransition,
       ),
       builder: (context) => const StorybookBookCover(
@@ -492,6 +497,7 @@ class _OsoStorybookAppState extends State<OsoStorybookApp> {
       title: '実体験の紹介',
       eyebrow: 'AFTER THE STORY',
       subtitle: '絵本の「一粒」を、現場で起きたことに重ねてみます。',
+      speakerNotes: SpeakerNotes.experienceIntro,
       child: Row(
         children: [
           const Expanded(
@@ -523,6 +529,7 @@ class _OsoStorybookAppState extends State<OsoStorybookApp> {
       title: '小さく始めて、反応を見ながら育てた',
       eyebrow: 'ONE EXPERIENCE / SAMPLE',
       subtitle: '実体験の紹介フェーズのサンプルです。実際の出来事・数字・写真に差し替えられます。',
+      speakerNotes: SpeakerNotes.experienceTimeline,
       child: const Row(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -562,6 +569,7 @@ class _OsoStorybookAppState extends State<OsoStorybookApp> {
       route: '/experience/takeaway',
       title: '今日、持ち帰ってほしいこと',
       eyebrow: 'TAKEAWAY',
+      speakerNotes: SpeakerNotes.experienceTakeaway,
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
@@ -591,6 +599,7 @@ class _OsoStorybookAppState extends State<OsoStorybookApp> {
     required Widget child,
     String? subtitle,
     String? stepLabel,
+    String? speakerNotes,
     bool initial = false,
   }) {
     return FlutterDeckSlide.blank(
@@ -600,6 +609,7 @@ class _OsoStorybookAppState extends State<OsoStorybookApp> {
         title: title,
         header: _noHeader,
         footer: _noFooter,
+        speakerNotes: speakerNotes ?? '',
         transition: _materialTransition,
       ),
       builder: (context) => OsoMaterialSlide(
