@@ -609,7 +609,7 @@ class _OsoStorybookAppState extends State<OsoStorybookApp> {
         title: title,
         header: _noHeader,
         footer: _noFooter,
-        speakerNotes: speakerNotes,
+        speakerNotes: speakerNotes ?? '',
         transition: _materialTransition,
       ),
       builder: (context) => OsoMaterialSlide(
