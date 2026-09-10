@@ -32,24 +32,13 @@ void main() {
   test('every story page uses the separately managed speaker notes', () {
     expect(
       osoPages.map((page) => page.speakerNotes),
-      orderedEquals(SpeakerNotes.all.skip(1)),
+      orderedEquals(SpeakerNotes.bookPages),
     );
     expect(
       osoPages.map((page) => page.speakerNotes.trim()),
       everyElement(isNotEmpty),
     );
-    expect(osoPages.last.speakerNotes, contains('おしまい'));
-  });
-
-  test('every story page uses the separately managed speaker notes', () {
-    expect(
-      osoPages.map((page) => page.speakerNotes),
-      orderedEquals(SpeakerNotes.all.skip(1)),
-    );
-    expect(
-      osoPages.map((page) => page.speakerNotes.trim()),
-      everyElement(isNotEmpty),
-    );
+    expect(SpeakerNotes.bookPages, hasLength(osoPages.length));
     expect(SpeakerNotes.frontCover.trim(), isNotEmpty);
     expect(osoPages.last.speakerNotes, contains('おしまい'));
   });
@@ -60,17 +49,6 @@ void main() {
     await tester.pumpWidget(const OsoStorybookApp());
     await tester.pumpAndSettle();
 
-    expect(find.text('自分でつくる、伝える。'), findsOneWidget);
-    expect(find.text('ABOUT THE SPEAKER'), findsNothing);
-
-    for (final introTitle in <String>['まず、自己紹介', '会社紹介', 'ここから、1冊の絵本へ']) {
-      await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
-      await tester.pumpAndSettle();
-      expect(find.text(introTitle), findsOneWidget);
-    }
-
-    await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
-    await tester.pumpAndSettle();
     expect(
       find.byKey(const ValueKey('storybook-book-front-cover')),
       findsOneWidget,
@@ -95,14 +73,28 @@ void main() {
       findsOneWidget,
     );
 
-    for (final experienceTitle in <String>[
-      '実体験の紹介',
-      '小さく始めて、反応を見ながら育てた',
-      '今日、持ち帰ってほしいこと',
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
+    await tester.pumpAndSettle();
+    expect(find.text('ご清聴ありがとうございました'), findsOneWidget);
+    expect(find.text('とはいかず……'), findsNothing);
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
+    await tester.pumpAndSettle();
+    expect(find.text('ご清聴ありがとうございました'), findsOneWidget);
+    expect(find.text('とはいかず……'), findsOneWidget);
+
+    for (final presentationTitle in <String>[
+      'ここからは、絵本のモデルとなった話と絵本を通して伝えたかった内容の話になります',
+      '自己紹介',
+      '会社紹介',
+      '絵本で伝えたかったこと',
+      '絵本のモデルとなった話',
+      '持ち帰り',
+      'ご清聴ありがとうございました',
     ]) {
       await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
       await tester.pumpAndSettle();
-      expect(find.text(experienceTitle), findsOneWidget);
+      expect(find.text(presentationTitle), findsOneWidget);
     }
 
     expect(tester.takeException(), isNull);
