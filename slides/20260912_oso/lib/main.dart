@@ -11,9 +11,12 @@ const _noHeader = FlutterDeckHeaderConfiguration(showHeader: false);
 const _noFooter = FlutterDeckFooterConfiguration(showFooter: false);
 const _artworkAspectRatio = 1672 / 941;
 
-const _frontCoverSlideNumber = 5;
+// The picture book is the opening section of the presentation. Keep these
+// numbers in sync with the slide list below because the shared transition
+// uses them to distinguish book turns from ordinary presentation slides.
+const _frontCoverSlideNumber = 1;
 const _firstBookPageSlideNumber = _frontCoverSlideNumber + 1;
-const _lastBookPageSlideNumber = 17;
+const _lastBookPageSlideNumber = 13;
 const _backCoverSlideNumber = _lastBookPageSlideNumber + 1;
 
 const _materialSeedColor = Color(0xFF4D6958);
@@ -216,61 +219,27 @@ class _OsoStorybookAppState extends State<OsoStorybookApp> {
         transition: _materialTransition,
       ),
       slides: [
-        _buildTitleSlide(),
-        _buildProfileSlide(),
-        _buildCompanySlide(),
-        _buildStoryBridgeSlide(),
         _buildFrontCoverSlide(),
         for (final page in osoPages) _buildImageSlide(page),
         _buildBackCoverSlide(),
-        _buildExperienceIntroSlide(),
-        _buildExperienceTimelineSlide(),
+        _buildAfterStoryThanksSlide(),
+        _buildAfterStoryBridgeSlide(),
+        _buildProfileSlide(),
+        _buildCompanySlide(),
+        _buildStoryMessageSlide(),
+        _buildModelStorySlide(),
         _buildTakeawaySlide(),
+        _buildFinalThanksSlide(),
       ],
-    );
-  }
-
-  FlutterDeckSlide _buildTitleSlide() {
-    return _buildMaterialSlide(
-      route: '/intro/title',
-      title: '自分でつくる、伝える。',
-      eyebrow: 'オープンセミナー岡山 / 2026',
-      initial: true,
-      subtitle: '「リスくんとひとつのどんぐり」から考える、小さな一歩の育て方',
-      stepLabel: '01 / 04',
-      speakerNotes: SpeakerNotes.introTitle,
-      child: Row(
-        children: [
-          const Expanded(
-            flex: 3,
-            child: _StatementCard(
-              icon: Icons.lightbulb_outline_rounded,
-              title: 'つくったものを、物語として手渡す',
-              body: 'プロダクトの話を、まずは一粒のどんぐりから始めます。',
-            ),
-          ),
-          const SizedBox(width: 28),
-          const Expanded(
-            flex: 2,
-            child: _IconPanel(
-              icon: Icons.auto_stories_rounded,
-              label: 'TODAY\'S STORY',
-              color: _bookCoverColor,
-              iconColor: _bookAccentColor,
-            ),
-          ),
-        ],
-      ),
     );
   }
 
   FlutterDeckSlide _buildProfileSlide() {
     return _buildMaterialSlide(
       route: '/intro/profile',
-      title: 'まず、自己紹介',
+      title: '自己紹介',
       eyebrow: 'ABOUT THE SPEAKER',
       subtitle: '試して、観察して、次の人に渡すのが好きです。',
-      stepLabel: '02 / 04',
       speakerNotes: SpeakerNotes.introProfile,
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -326,7 +295,6 @@ class _OsoStorybookAppState extends State<OsoStorybookApp> {
       title: '会社紹介',
       eyebrow: 'ABOUT THE COMPANY / SAMPLE',
       subtitle: 'サンプルの会社紹介です。発表前に社名・数字・事例を差し替えて使えます。',
-      stepLabel: '03 / 04',
       speakerNotes: SpeakerNotes.introCompany,
       child: const Row(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -362,36 +330,11 @@ class _OsoStorybookAppState extends State<OsoStorybookApp> {
     );
   }
 
-  FlutterDeckSlide _buildStoryBridgeSlide() {
-    return _buildMaterialSlide(
-      route: '/intro/story-bridge',
-      title: 'ここから、1冊の絵本へ',
-      eyebrow: 'STORYBOOK MODE',
-      subtitle: '説明をいったん物語に預けて、ひとつの体験を追いかけます。',
-      stepLabel: '04 / 04',
-      speakerNotes: SpeakerNotes.introStoryBridge,
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const _StoryBridgeCard(),
-          const SizedBox(height: 26),
-          Text(
-            '右矢印で本を開きます',
-            style: const TextStyle(
-              color: _materialSeedColor,
-              fontSize: 18,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   FlutterDeckSlide _buildFrontCoverSlide() {
     return FlutterDeckSlide.blank(
       configuration: FlutterDeckSlideConfiguration(
         route: '/storybook/front-cover',
+        initial: true,
         title: '絵本の表紙',
         header: _noHeader,
         footer: _noFooter,
@@ -491,31 +434,46 @@ class _OsoStorybookAppState extends State<OsoStorybookApp> {
     );
   }
 
-  FlutterDeckSlide _buildExperienceIntroSlide() {
+  FlutterDeckSlide _buildAfterStoryThanksSlide() {
+    return FlutterDeckSlide.blank(
+      configuration: FlutterDeckSlideConfiguration(
+        route: '/after-story/false-thanks',
+        title: 'ご清聴ありがとうございました（仮）',
+        steps: 2,
+        header: _noHeader,
+        footer: _noFooter,
+        speakerNotes: SpeakerNotes.afterStoryThanks,
+        transition: _materialTransition,
+      ),
+      builder: (context) => const _AfterStoryThanksSlide(),
+    );
+  }
+
+  FlutterDeckSlide _buildAfterStoryBridgeSlide() {
     return _buildMaterialSlide(
-      route: '/experience/intro',
-      title: '実体験の紹介',
+      route: '/after-story/bridge',
+      title: 'ここからは、絵本のモデルとなった話と絵本を通して伝えたかった内容の話になります',
       eyebrow: 'AFTER THE STORY',
-      subtitle: '絵本の「一粒」を、現場で起きたことに重ねてみます。',
-      speakerNotes: SpeakerNotes.experienceIntro,
+      subtitle: '絵本の「一粒」を、実際の体験とメッセージに重ねます。',
+      speakerNotes: SpeakerNotes.afterStoryBridge,
       child: Row(
         children: [
           const Expanded(
             flex: 3,
             child: _StatementCard(
-              icon: Icons.grass_rounded,
-              title: '一粒を、次の人へ',
-              body: '小さく始めたものが、誰かの反応を受け取り、次の一歩に変わっていきました。',
+              icon: Icons.compare_arrows_rounded,
+              title: '絵本から、現実の話へ',
+              body: '物語に込めたメッセージと、そのモデルになった体験を振り返ります。',
             ),
           ),
           const SizedBox(width: 28),
           Expanded(
             flex: 2,
             child: _IconPanel(
-              icon: Icons.forum_outlined,
-              label: 'REAL EXPERIENCE',
-              color: _materialSeedColor,
-              iconColor: Colors.white,
+              icon: Icons.auto_stories_rounded,
+              label: 'NEXT CHAPTER',
+              color: _bookCoverColor,
+              iconColor: _bookAccentColor,
             ),
           ),
         ],
@@ -523,40 +481,81 @@ class _OsoStorybookAppState extends State<OsoStorybookApp> {
     );
   }
 
-  FlutterDeckSlide _buildExperienceTimelineSlide() {
+  FlutterDeckSlide _buildStoryMessageSlide() {
     return _buildMaterialSlide(
-      route: '/experience/timeline',
-      title: '小さく始めて、反応を見ながら育てた',
-      eyebrow: 'ONE EXPERIENCE / SAMPLE',
-      subtitle: '実体験の紹介フェーズのサンプルです。実際の出来事・数字・写真に差し替えられます。',
-      speakerNotes: SpeakerNotes.experienceTimeline,
+      route: '/message/story',
+      title: '絵本で伝えたかったこと',
+      eyebrow: 'WHAT THE STORY SAYS',
+      subtitle: '小さな一歩から生まれた「おもしろい」が、次の誰かへ広がっていく。',
+      speakerNotes: SpeakerNotes.storyMessage,
       child: const Row(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Expanded(
             child: _InfoCard(
               number: '01',
-              icon: Icons.visibility_outlined,
-              title: '観察する',
-              body: '困りごとと、すでにある工夫を知る。',
+              icon: Icons.grass_rounded,
+              title: '最初の一歩はいつも「ちいさな一粒」',
+              body: '大きな成果をいきなり目指さず、まずは小さなきっかけを手に取って、やってみる。',
             ),
           ),
           SizedBox(width: 18),
           Expanded(
             child: _InfoCard(
               number: '02',
-              icon: Icons.build_outlined,
-              title: '試してみる',
-              body: '触れる大きさのプロトタイプを渡す。',
+              icon: Icons.auto_awesome_rounded,
+              title: '「おもしろい」という感動が、原動力になる',
+              body: 'やってみて感じた面白さが、誰かに伝えたくなる力になり、次の場所へ広がっていく。',
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  FlutterDeckSlide _buildModelStorySlide() {
+    return _buildMaterialSlide(
+      route: '/message/model-story',
+      title: '絵本のモデルとなった話',
+      eyebrow: 'THE STORY BEHIND THE STORY',
+      subtitle: '小さなきっかけが、次の出会いと行動につながっていきました。',
+      speakerNotes: SpeakerNotes.modelStory,
+      child: const Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Expanded(
+            child: _InfoCard(
+              number: '01',
+              icon: Icons.emoji_events_outlined,
+              title: '会社のコンテスト',
+              body: '会社のコンテストイベントをきっかけに、Flutterを始める。',
+            ),
+          ),
+          SizedBox(width: 18),
+          Expanded(
+            child: _InfoCard(
+              number: '02',
+              icon: Icons.code_rounded,
+              title: '個人開発',
+              body: 'つくって公開する中で、人とのつながりが広がっていく。',
             ),
           ),
           SizedBox(width: 18),
           Expanded(
             child: _InfoCard(
               number: '03',
-              icon: Icons.sync_alt_rounded,
-              title: '受け取る',
-              body: '反応を次の一手にして、もう一度育てる。',
+              icon: Icons.local_fire_department_outlined,
+              title: 'FlutterKaigi',
+              body: 'テックカンファレンスで、コミュニティの熱を肌で感じる。',
+            ),
+          ),
+          SizedBox(width: 18),
+          Expanded(
+            child: _InfoCard(
+              number: '04',
+              icon: Icons.groups_rounded,
+              title: '広げる側へ',
+              body: '人に勧めたり広げる活動へ。FlutterKaigiのコアスタッフに。',
             ),
           ),
         ],
@@ -567,20 +566,21 @@ class _OsoStorybookAppState extends State<OsoStorybookApp> {
   FlutterDeckSlide _buildTakeawaySlide() {
     return _buildMaterialSlide(
       route: '/experience/takeaway',
-      title: '今日、持ち帰ってほしいこと',
+      title: '持ち帰り',
       eyebrow: 'TAKEAWAY',
-      speakerNotes: SpeakerNotes.experienceTakeaway,
+      subtitle: '些細なきっかけでも、やってみて感じた「おもしろい」を大事に。',
+      speakerNotes: SpeakerNotes.takeaway,
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           const _StatementCard(
             icon: Icons.park_rounded,
-            title: '完成した大木ではなく、まず一粒を渡す。',
-            body: '手渡した人の反応が、次の枝と、次の仲間を連れてきます。',
+            title: '「おもしろい」と感じたことを、大事にする。',
+            body: '些細なきっかけでも、まずはやってみる。その中で感じた面白さを、次の一歩につなげてみてください。',
           ),
           const SizedBox(height: 28),
           Text(
-            'あなたの「一粒」は何ですか？',
+            'あなたの「一粒」を、大切に。',
             style: const TextStyle(
               color: _materialSeedColor,
               fontSize: 24,
@@ -588,6 +588,26 @@ class _OsoStorybookAppState extends State<OsoStorybookApp> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  FlutterDeckSlide _buildFinalThanksSlide() {
+    return _buildMaterialSlide(
+      route: '/closing/thanks',
+      title: 'ご清聴ありがとうございました',
+      eyebrow: 'THANK YOU',
+      subtitle: '小さな一歩が、次の誰かへつながりますように。',
+      speakerNotes: SpeakerNotes.finalThanks,
+      child: Center(
+        child: Text(
+          'ありがとうございました！',
+          style: const TextStyle(
+            color: _materialSeedColor,
+            fontSize: 42,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
       ),
     );
   }
@@ -740,6 +760,56 @@ class OsoMaterialSlide extends StatelessWidget {
             ),
           );
         },
+      ),
+    );
+  }
+}
+
+class _AfterStoryThanksSlide extends StatelessWidget {
+  const _AfterStoryThanksSlide();
+
+  @override
+  Widget build(BuildContext context) {
+    return ColoredBox(
+      color: _bookCoverColor,
+      child: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text(
+              'ご清聴ありがとうございました',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: _bookAccentColor,
+                fontSize: 68,
+                fontWeight: FontWeight.w800,
+                letterSpacing: 1.2,
+              ),
+            ),
+            const SizedBox(height: 32),
+            FlutterDeckSlideStepsBuilder(
+              builder: (context, stepNumber) {
+                return AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 360),
+                  child: stepNumber < 2
+                      ? const SizedBox(
+                          key: ValueKey('after-story-thanks-placeholder'),
+                          height: 54,
+                        )
+                      : const Text(
+                          'とはいかず……',
+                          key: ValueKey('after-story-thanks-not-yet'),
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 38,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                );
+              },
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -950,78 +1020,6 @@ class _InfoCard extends StatelessWidget {
           ],
         ),
       ),
-    );
-  }
-}
-
-class _StoryBridgeCard extends StatelessWidget {
-  const _StoryBridgeCard();
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
-    return Card(
-      margin: EdgeInsets.zero,
-      elevation: 0,
-      color: colors.surfaceContainerLow,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 28),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const _BridgeStep(
-              icon: Icons.business_center_outlined,
-              label: '会社の話',
-            ),
-            _BridgeArrow(color: colors.primary),
-            const _BridgeStep(icon: Icons.grass_rounded, label: '体験の種'),
-            _BridgeArrow(color: colors.primary),
-            const _BridgeStep(icon: Icons.auto_stories_rounded, label: '1冊の絵本'),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _BridgeStep extends StatelessWidget {
-  const _BridgeStep({required this.icon, required this.label});
-
-  final IconData icon;
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        CircleAvatar(
-          radius: 34,
-          backgroundColor: colors.primaryContainer,
-          child: Icon(icon, size: 34, color: colors.onPrimaryContainer),
-        ),
-        const SizedBox(height: 12),
-        Text(
-          label,
-          style: Theme.of(context).textTheme.titleMedium
-              ?.copyWith(fontWeight: FontWeight.w700),
-        ),
-      ],
-    );
-  }
-}
-
-class _BridgeArrow extends StatelessWidget {
-  const _BridgeArrow({required this.color});
-
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 28),
-      child: Icon(Icons.arrow_forward_rounded, color: color, size: 30),
     );
   }
 }
