@@ -1,8 +1,12 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:oso_20260912/main.dart';
 import 'package:oso_20260912/speaker_notes.dart';
+import 'package:oso_20260912/theme.dart';
+import 'package:oso_20260912/widgets.dart';
 
 void main() {
   test('selected story pages stay in numeric order', () {
@@ -43,6 +47,30 @@ void main() {
     expect(SpeakerNotes.backCover, contains('おしまい'));
   });
 
+  test('the speaker supplies the portrait and the sponsor photo', () {
+    // Both paths are declared in pubspec.yaml, so a renamed replacement breaks
+    // the web build rather than the slide. Fail here instead, where the message
+    // names the file.
+    for (final path in <String>[
+      OsoProfileBody.avatarAssetPath,
+      OsoCompanySlide.imageAssetPath,
+    ]) {
+      expect(
+        File(path).existsSync(),
+        isTrue,
+        reason: '$path is declared in pubspec.yaml and must exist',
+      );
+    }
+  });
+
+  test('the presentation type scale is sized for a projected room', () {
+    expect(osoCanvasSize, const Size(1920, 1080));
+    // Body copy has to stay readable from the back of the hall. Against the
+    // canvas above this is roughly 3% of the screen height.
+    expect(osoTheme.textTheme.bodyLarge?.fontSize, greaterThanOrEqualTo(32));
+    expect(osoTheme.textTheme.displaySmall?.fontSize, greaterThanOrEqualTo(72));
+  });
+
   testWidgets('the storybook opens, turns through pages, and closes', (
     tester,
   ) async {
@@ -54,7 +82,8 @@ void main() {
       findsOneWidget,
     );
     expect(find.byIcon(Icons.auto_stories_rounded), findsOneWidget);
-    expect(find.text('リスくんと\nひとつのどんぐり'), findsOneWidget);
+    // The cover is artwork only; the title is spoken, not printed.
+    expect(find.text('リスくんと\nひとつのどんぐり'), findsNothing);
 
     for (var pageNumber = 1; pageNumber <= osoPages.length; pageNumber++) {
       await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
@@ -83,18 +112,25 @@ void main() {
     expect(find.text('ご清聴ありがとうございました'), findsOneWidget);
     expect(find.text('とはいかず……'), findsOneWidget);
 
-    for (final presentationTitle in <String>[
-      'ここからは、絵本のモデルとなった話と絵本を通して伝えたかった内容の話になります',
-      '自己紹介',
-      '絵本で伝えたかったこと',
-      '絵本のモデルとなった話',
-      '持ち帰り',
-      '会社紹介',
-      'ご清聴ありがとうございました',
+    // The arrow key advances a step at a time, so a slide with steps has to be
+    // walked through before the next slide is reached.
+    for (final (onSlide, steps) in <(String, int)>[
+      ('絵本から、現実の話へ', 1),
+      ('自己紹介', 1),
+      ('絵本で伝えたかったこと', 2),
+      ('絵本のモデルとなった話', 4),
+      ('持ち帰り', 1),
+      ('ピープルソフトウェア株式会社', 1),
+      (OsoFinalThanksSlide.message, 1),
     ]) {
       await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
       await tester.pumpAndSettle();
-      expect(find.text(presentationTitle), findsOneWidget);
+      expect(find.text(onSlide), findsOneWidget, reason: 'expected $onSlide');
+
+      for (var step = 1; step < steps; step++) {
+        await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
+        await tester.pumpAndSettle();
+      }
     }
 
     expect(tester.takeException(), isNull);
