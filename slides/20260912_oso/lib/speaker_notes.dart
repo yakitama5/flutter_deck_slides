@@ -240,8 +240,8 @@ abstract final class SpeakerNotes {
 その感動が次の一歩の原動力になり、いつか誰かに手渡せる一粒になっていきます。
 ''';
 
-// 21: 会社紹介
-static const introCompany = '''
+  // 21: 会社紹介
+  static const introCompany = '''
 忘れがちですが、これはスポンサーセッションです。
 
 今回の話のように、ピープルソフトウェアでは「ちいさなキッカケ」を見つける環境が多くあります。
@@ -276,10 +276,10 @@ static const introCompany = '''
     afterStoryThanks,
     afterStoryBridge,
     introProfile,
-    introCompany,
     storyMessage,
     modelStory,
     takeaway,
+    introCompany,
     finalThanks,
   ];
 }

@@ -86,10 +86,10 @@ void main() {
     for (final presentationTitle in <String>[
       'ここからは、絵本のモデルとなった話と絵本を通して伝えたかった内容の話になります',
       '自己紹介',
-      '会社紹介',
       '絵本で伝えたかったこと',
       '絵本のモデルとなった話',
       '持ち帰り',
+      '会社紹介',
       'ご清聴ありがとうございました',
     ]) {
       await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
