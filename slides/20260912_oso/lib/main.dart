@@ -210,6 +210,10 @@ class _OsoStorybookAppState extends State<OsoStorybookApp> {
   Widget build(BuildContext context) {
     return FlutterDeckApp(
       client: FlutterDeckWebClient(),
+      // The slides are drawn light whatever the machine is set to, so the deck
+      // chrome around them has to be pinned as well. Left on system, a laptop
+      // in dark mode frames every slide in a dark border.
+      themeMode: ThemeMode.light,
       configuration: FlutterDeckConfiguration(
         controls: const FlutterDeckControlsConfiguration(
           presenterToolbarVisible: true,
@@ -395,6 +399,7 @@ class _OsoStorybookAppState extends State<OsoStorybookApp> {
       eyebrow: 'WHAT THE STORY SAYS',
       subtitle: '2つのメッセージ。',
       speakerNotes: SpeakerNotes.storyMessage,
+      steps: 2,
       child: Builder(
         builder: (context) {
           final colors = Theme.of(context).colorScheme;
@@ -414,16 +419,22 @@ class _OsoStorybookAppState extends State<OsoStorybookApp> {
               ),
               const Padding(
                 padding: EdgeInsets.symmetric(horizontal: 28),
-                child: Center(child: OsoFlowArrow()),
+                child: OsoStepReveal(
+                  step: 2,
+                  child: Center(child: OsoFlowArrow()),
+                ),
               ),
               Expanded(
-                child: OsoMessageCard(
-                  number: '02',
-                  icon: Icons.auto_awesome_rounded,
-                  headline: '「おもしろい」は、\n次の誰かへ広がる。',
-                  body: 'その感動が原動力になって、\nまた新しい一歩が生まれる。',
-                  color: colors.primaryContainer,
-                  onColor: colors.onPrimaryContainer,
+                child: OsoStepReveal(
+                  step: 2,
+                  child: OsoMessageCard(
+                    number: '02',
+                    icon: Icons.auto_awesome_rounded,
+                    headline: '「おもしろい」は、\n次の誰かへ広がる。',
+                    body: 'その感動が原動力になって、\nまた新しい一歩が生まれる。',
+                    color: colors.primaryContainer,
+                    onColor: colors.onPrimaryContainer,
+                  ),
                 ),
               ),
             ],
@@ -440,6 +451,7 @@ class _OsoStorybookAppState extends State<OsoStorybookApp> {
       eyebrow: 'THE STORY BEHIND THE STORY',
       subtitle: 'ひと粒から、いまの活動まで。',
       speakerNotes: SpeakerNotes.modelStory,
+      steps: 4,
       child: Builder(
         builder: (context) {
           final colors = Theme.of(context).colorScheme;
@@ -448,6 +460,7 @@ class _OsoStorybookAppState extends State<OsoStorybookApp> {
             stages: [
               OsoGrowthStage(
                 number: '01',
+                step: 1,
                 icon: Icons.emoji_events_rounded,
                 title: '社内コンテスト',
                 body: 'Flutterを始める。',
@@ -458,6 +471,7 @@ class _OsoStorybookAppState extends State<OsoStorybookApp> {
               ),
               OsoGrowthStage(
                 number: '02',
+                step: 2,
                 icon: Icons.code_rounded,
                 title: '個人開発',
                 body: '人とのつながりが広がる。',
@@ -468,6 +482,7 @@ class _OsoStorybookAppState extends State<OsoStorybookApp> {
               ),
               OsoGrowthStage(
                 number: '03',
+                step: 3,
                 icon: Icons.local_fire_department_rounded,
                 title: 'FlutterKaigi',
                 body: 'コミュニティの熱を感じる。',
@@ -478,9 +493,10 @@ class _OsoStorybookAppState extends State<OsoStorybookApp> {
               ),
               OsoGrowthStage(
                 number: '04',
+                step: 4,
                 icon: Icons.groups_rounded,
                 title: '広げる側へ',
-                body: '岡山.Flutter / コアスタッフ。',
+                body: '岡山.Flutter / FlutterKaigi',
                 color: colors.primary,
                 onColor: colors.onPrimary,
                 heightFactor: 1,
@@ -527,11 +543,13 @@ class _OsoStorybookAppState extends State<OsoStorybookApp> {
     required Widget child,
     String? subtitle,
     String? speakerNotes,
+    int steps = 1,
   }) {
     return FlutterDeckSlide.blank(
       configuration: FlutterDeckSlideConfiguration(
         route: route,
         title: title,
+        steps: steps,
         header: _noHeader,
         footer: _noFooter,
         speakerNotes: speakerNotes ?? '',
@@ -574,6 +592,7 @@ class _AfterStoryThanksSlide extends StatelessWidget {
   Widget build(BuildContext context) {
     return OsoCanvas(
       backgroundColor: osoSeedColor,
+      theme: osoEndingTheme,
       child: Builder(
         builder: (context) {
           final theme = Theme.of(context);

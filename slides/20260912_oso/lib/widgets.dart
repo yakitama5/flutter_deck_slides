@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_deck/flutter_deck.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 
 import 'theme.dart';
@@ -385,6 +386,50 @@ class OsoFlowArrow extends StatelessWidget {
   }
 }
 
+/// Holds its child's space from the first step and fades it in on [step].
+///
+/// Reserving the space up front matters: the cards are laid out by a Row, and
+/// letting them appear would re-flow everything already on screen.
+class OsoStepReveal extends StatelessWidget {
+  const OsoStepReveal({
+    required this.step,
+    required this.child,
+    this.from = const Offset(0.1, 0),
+    super.key,
+  });
+
+  /// The slide step at which the child becomes visible.
+  final int step;
+
+  /// Where the child travels from, as a fraction of its own size.
+  final Offset from;
+
+  final Widget child;
+
+  static const _duration = Duration(milliseconds: 420);
+
+  @override
+  Widget build(BuildContext context) {
+    return FlutterDeckSlideStepsBuilder(
+      builder: (context, stepNumber) {
+        final shown = stepNumber >= step;
+
+        return AnimatedSlide(
+          offset: shown ? Offset.zero : from,
+          duration: _duration,
+          curve: Curves.easeOutCubic,
+          child: AnimatedOpacity(
+            opacity: shown ? 1 : 0,
+            duration: _duration,
+            curve: Curves.easeOut,
+            child: child,
+          ),
+        );
+      },
+    );
+  }
+}
+
 /// One step of the speaker's own history, drawn as a stage of a growing tree.
 ///
 /// [heightFactor] is what makes the row read as growth: the cards get taller
@@ -400,6 +445,7 @@ class OsoGrowthStage extends StatelessWidget {
     required this.onColor,
     required this.heightFactor,
     required this.leafCount,
+    required this.step,
     super.key,
   });
 
@@ -411,6 +457,9 @@ class OsoGrowthStage extends StatelessWidget {
   final Color onColor;
   final double heightFactor;
   final int leafCount;
+
+  /// The slide step this stage appears on. [OsoGrowthRow] reads it.
+  final int step;
 
   @override
   Widget build(BuildContext context) {
@@ -492,7 +541,7 @@ class OsoGrowthStage extends StatelessWidget {
 class OsoGrowthRow extends StatelessWidget {
   const OsoGrowthRow({required this.stages, super.key});
 
-  final List<Widget> stages;
+  final List<OsoGrowthStage> stages;
 
   @override
   Widget build(BuildContext context) {
@@ -518,19 +567,32 @@ class OsoGrowthRow extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               for (var i = 0; i < stages.length; i++) ...[
+                // The chevron belongs to the stage it points at, so it arrives
+                // on the same step rather than dangling at an empty gap.
                 if (i > 0)
                   SizedBox(
                     width: 44,
-                    child: Align(
-                      alignment: const Alignment(0, 0.62),
-                      child: Icon(
-                        Icons.chevron_right_rounded,
-                        size: 60,
-                        color: colors.primary.withValues(alpha: 0.85),
+                    child: OsoStepReveal(
+                      step: stages[i].step,
+                      child: Align(
+                        alignment: const Alignment(0, 0.62),
+                        child: Icon(
+                          Icons.chevron_right_rounded,
+                          size: 60,
+                          color: colors.primary.withValues(alpha: 0.85),
+                        ),
                       ),
                     ),
                   ),
-                Expanded(child: stages[i]),
+                Expanded(
+                  child: OsoStepReveal(
+                    step: stages[i].step,
+                    // The stages grow out of the soil line, so they rise into
+                    // place instead of sliding in from the side.
+                    from: const Offset(0, 0.08),
+                    child: stages[i],
+                  ),
+                ),
               ],
             ],
           ),
@@ -733,6 +795,10 @@ class OsoCompanySlide extends StatelessWidget {
 
   static const imageAssetPath = 'assets/company/people_software.png';
 
+  /// Aspect ratio of [imageAssetPath] (1904x510). The band is sized from it so
+  /// the banner lands edge to edge with none of its lettering cropped off.
+  static const _bannerAspectRatio = 1904 / 510;
+
   @override
   Widget build(BuildContext context) {
     return OsoCanvas(
@@ -746,27 +812,24 @@ class OsoCompanySlide extends StatelessWidget {
             // the full-bleed photo instead of sharing the deck's left margin.
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Expanded(
-                flex: 54,
-                child: SizedBox(
-                  width: double.infinity,
-                  child: Image.asset(
-                    imageAssetPath,
-                    fit: BoxFit.cover,
-                    filterQuality: FilterQuality.high,
-                    errorBuilder: (context, error, stackTrace) => ColoredBox(
-                      color: colors.primaryContainer,
-                      child: Icon(
-                        Icons.apartment_rounded,
-                        size: 200,
-                        color: colors.onPrimaryContainer,
-                      ),
+              SizedBox(
+                width: double.infinity,
+                height: osoCanvasSize.width / _bannerAspectRatio,
+                child: Image.asset(
+                  imageAssetPath,
+                  fit: BoxFit.cover,
+                  filterQuality: FilterQuality.high,
+                  errorBuilder: (context, error, stackTrace) => ColoredBox(
+                    color: colors.primaryContainer,
+                    child: Icon(
+                      Icons.apartment_rounded,
+                      size: 200,
+                      color: colors.onPrimaryContainer,
                     ),
                   ),
                 ),
               ),
               Expanded(
-                flex: 46,
                 child: ColoredBox(
                   color: colors.surface,
                   child: Padding(
@@ -846,6 +909,7 @@ class OsoFinalThanksSlide extends StatelessWidget {
   Widget build(BuildContext context) {
     return OsoCanvas(
       backgroundColor: osoSeedColor,
+      theme: osoEndingTheme,
       child: Builder(
         builder: (context) {
           final theme = Theme.of(context);

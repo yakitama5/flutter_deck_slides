@@ -26,6 +26,12 @@ const osoCanvasSize = Size(1920, 1080);
 /// sprinkling font sizes across the slides.
 const _osoFontSizeFactor = 2.2;
 
+/// The rounded face the talk is set in, bundled under assets/fonts so it never
+/// depends on the venue network. Kiwi Maru ships only 300/400/500, so the bold
+/// weights in the slides resolve to Medium; the hierarchy is carried by size
+/// and colour rather than by weight.
+const _osoFontFamily = 'Kiwi Maru';
+
 final osoColorScheme = ColorScheme.fromSeed(
   seedColor: osoSeedColor,
   tertiary: osoAccentColor,
@@ -34,9 +40,15 @@ final osoColorScheme = ColorScheme.fromSeed(
   onTertiaryContainer: _osoOnAccentContainerColor,
 );
 
-final osoTheme = _buildOsoTheme();
+final osoTheme = _buildOsoTheme(fontFamily: _osoFontFamily);
 
-ThemeData _buildOsoTheme() {
+/// The same theme in the platform face.
+///
+/// The two 「ご清聴ありがとうございました」 slides belong to the picture book rather
+/// than to the talk, so they keep the face the book is set in.
+final osoEndingTheme = _buildOsoTheme();
+
+ThemeData _buildOsoTheme({String? fontFamily}) {
   final base = ThemeData(colorScheme: osoColorScheme);
   // A raw ThemeData carries only colours in its text theme: MaterialApp merges
   // the type geometry in at localization time, and this theme replaces that.
@@ -44,7 +56,7 @@ ThemeData _buildOsoTheme() {
   // fixed canvas laying out identically whatever locale the browser reports.
   final textTheme = Typography.englishLike2021
       .merge(base.textTheme)
-      .apply(fontSizeFactor: _osoFontSizeFactor);
+      .apply(fontSizeFactor: _osoFontSizeFactor, fontFamily: fontFamily);
 
   return base.copyWith(
     textTheme: textTheme,
@@ -68,7 +80,12 @@ ThemeData _buildOsoTheme() {
 /// Letterbox gutters are painted with the surface colour rather than black, so
 /// a window that is not 16:9 reads as margin instead of a broken slide.
 class OsoCanvas extends StatelessWidget {
-  const OsoCanvas({required this.child, this.backgroundColor, super.key});
+  const OsoCanvas({
+    required this.child,
+    this.backgroundColor,
+    this.theme,
+    super.key,
+  });
 
   final Widget child;
 
@@ -76,10 +93,13 @@ class OsoCanvas extends StatelessWidget {
   /// full-bleed slide passes its own so the gutters do not frame it in white.
   final Color? backgroundColor;
 
+  /// Defaults to [osoTheme]. The book's ending slides pass [osoEndingTheme].
+  final ThemeData? theme;
+
   @override
   Widget build(BuildContext context) {
     return Theme(
-      data: osoTheme,
+      data: theme ?? osoTheme,
       child: ColoredBox(
         color: backgroundColor ?? osoColorScheme.surface,
         child: Center(

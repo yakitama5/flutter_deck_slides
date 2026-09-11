@@ -112,19 +112,25 @@ void main() {
     expect(find.text('ご清聴ありがとうございました'), findsOneWidget);
     expect(find.text('とはいかず……'), findsOneWidget);
 
-    // One arrow press per slide: none of the presentation slides use steps.
-    for (final onSlide in <String>[
-      '絵本から、現実の話へ',
-      '自己紹介',
-      '絵本で伝えたかったこと',
-      '絵本のモデルとなった話',
-      '持ち帰り',
-      'ピープルソフトウェア株式会社',
-      OsoFinalThanksSlide.message,
+    // The arrow key advances a step at a time, so a slide with steps has to be
+    // walked through before the next slide is reached.
+    for (final (onSlide, steps) in <(String, int)>[
+      ('絵本から、現実の話へ', 1),
+      ('自己紹介', 1),
+      ('絵本で伝えたかったこと', 2),
+      ('絵本のモデルとなった話', 4),
+      ('持ち帰り', 1),
+      ('ピープルソフトウェア株式会社', 1),
+      (OsoFinalThanksSlide.message, 1),
     ]) {
       await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
       await tester.pumpAndSettle();
       expect(find.text(onSlide), findsOneWidget, reason: 'expected $onSlide');
+
+      for (var step = 1; step < steps; step++) {
+        await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
+        await tester.pumpAndSettle();
+      }
     }
 
     expect(tester.takeException(), isNull);
