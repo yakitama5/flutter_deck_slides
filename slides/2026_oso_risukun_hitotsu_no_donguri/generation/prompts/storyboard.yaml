@@ -35,11 +35,11 @@ pages:
     locked: true
     setting: forest
     environment_scale_min: 4.5
-    story_beat: "うさぎさんが友達としてリスくんへ一粒のどんぐりを渡す。"
+    story_beat: "ピプルくんが友達としてリスくんへ一粒のどんぐりを渡す。"
     must_have:
       - "canonical squirrel with red neckerchief"
-      - "canonical white rabbit with blue patterned scarf"
-      - "rabbit offering one acorn naturally"
+      - "canonical Pipl-kun with a pale-orange face and bright-yellow body"
+      - "Pipl-kun offering one acorn naturally"
       - "squirrel making a curious what-is-this face"
       - "bright enormous woodland seen as a close camera view"
     must_not_have:
@@ -50,11 +50,11 @@ pages:
     variants:
       a:
         shot: left_right_two_shot
-        composition: "squirrel on the left and rabbit on the right in a close zoomed-in part of the giant forest; use a natural handoff gesture"
+        composition: "squirrel on the left and Pipl-kun on the right in a close zoomed-in part of the giant forest; use a natural handoff gesture"
         focal_point: "the acorn between their hands"
       b:
         shot: foreground_handoff_detail
-        composition: "rabbit is slightly nearer to camera; foreground handoff leads the eye to the acorn while both faces remain readable"
+        composition: "Pipl-kun is slightly nearer to camera; foreground handoff leads the eye to the acorn while both faces remain readable"
         focal_point: "the natural exchange of the acorn"
       c:
         shot: lower_right_negative_space
@@ -141,15 +141,15 @@ pages:
     variants:
       a:
         shot: side_activity_rule_of_thirds
-        composition: "put the young tree on the left third; on the right the squirrel enjoys a small creation or game while the rabbit peeks in as an equal friend"
+        composition: "put the young tree on the left third; on the right the squirrel enjoys a small creation or game while Pipl-kun peeks in as an equal friend"
         focal_point: "the shared discovery of the small activity"
       b:
         shot: branch_foreground_frame
-        composition: "look through a young tree branch and leaves toward the squirrel and rabbit in its shade; keep the interaction intimate and small"
+        composition: "look through a young tree branch and leaves toward the squirrel and Pipl-kun in its shade; keep the interaction intimate and small"
         focal_point: "the two friends showing something to one another"
       c:
         shot: hands_and_object_close
-        composition: "bring the squirrel's hands and a small object or craft into the near foreground; let the young tree and rabbit sit softly in the background"
+        composition: "bring the squirrel's hands and a small object or craft into the near foreground; let the young tree and Pipl-kun sit softly in the background"
         focal_point: "the thing being made or shared"
 
   - id: page05
@@ -219,7 +219,7 @@ pages:
     story_beat: "自分の野原へ戻ったリスくんが、仲間へ対等な声で一緒にやろうと誘い始める。"
     must_have:
       - "the squirrel's young tree or home meadow"
-      - "squirrel inviting rabbit and/or bear friends with open friendly gestures"
+      - "squirrel inviting Pipl-kun and/or bear friends with open friendly gestures"
       - "peers at the same eye level"
       - "the change from being invited to inviting others"
     must_not_have:
@@ -231,7 +231,7 @@ pages:
     variants:
       a:
         shot: left_invitation_approach
-        composition: "place the squirrel on the left inviting friends; rabbit and bear approach from the right in a relaxed, equal-height grouping"
+        composition: "place the squirrel on the left inviting friends; Pipl-kun and bear approach from the right in a relaxed, equal-height grouping"
         focal_point: "the squirrel's open gesture and friends choosing to come closer"
       b:
         shot: shared_tree_circle

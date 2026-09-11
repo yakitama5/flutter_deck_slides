@@ -11,7 +11,7 @@ the illustration only; add story text on the Flutter slide, never in the image.
 - bright, gentle, child-friendly atmosphere
 - warm golden sunlight, bright dappled light, and soft natural colors
 - detailed but not photorealistic
-- preserve the established squirrel, rabbit, and world designs from the canonical references
+- preserve the established squirrel, Pipl-kun, and world designs from the canonical references
 - use depth, atmospheric perspective, and layers of foliage without making the forest dark
 
 ## Canonical protagonist: リスくん
@@ -28,17 +28,19 @@ the illustration only; add story text on the Flutter slide, never in the image.
 Do not redesign, age, humanize, or replace the protagonist. Do not add a hat,
 glasses, shirt, backpack, or other new costume.
 
-## Canonical rabbit: うさぎさん
+## Canonical supporting character: ピプルくん
 
-When the rabbit appears, preserve the rabbit from the canonical page 01 reference:
+When Pipl-kun appears, use `generation/refs/pipl_kun_reference.jpg` as the identity
+reference and adapt it to the established picture-book touch:
 
-- white fur
-- long ears with pale pink inner ears
-- small black eyes and faint rosy cheeks
-- blue patterned scarf
+- round pale-orange face on the front-left
+- two white curved crescent eyes and a white smiling mouth
+- large bright-yellow rounded body/back
+- yellow limbs and a simple dark contour
 - gentle, friendly, peer-like presence
 
-The rabbit is a friend or colleague, not a teacher, boss, or superior.
+Do not add rabbit ears, a blue scarf, clothes, or accessories. Pipl-kun is a
+friend or colleague, not a teacher, boss, or superior.
 
 ## Other characters
 
