@@ -87,7 +87,7 @@ abstract final class FestivalNotes {
 
   // 09 / 本文08: 物語はまだ途中だと気づく
   static const unfinished = '''
-リスくんは みんなの 笑顔を みながら 思いました。
+リスくんは これからの おまつりを 思いうかべました。
 
 「たのしいな。
 こんどは もっと たくさんの なかまと……」

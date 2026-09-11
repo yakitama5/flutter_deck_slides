@@ -23,7 +23,16 @@ void main() {
         await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
         await tester.pumpAndSettle();
         expect(find.byKey(ValueKey(page.slug)), findsOneWidget);
-        expect(find.text(page.caption), findsOneWidget);
+        if (page.embeddedTitle) {
+          expect(
+            find.text(page.caption),
+            findsNothing,
+            reason: 'Decorated lettering is already part of the cover art',
+          );
+          expect(find.image(AssetImage(page.asset)), findsOneWidget);
+        } else {
+          expect(find.text(page.caption), findsOneWidget);
+        }
         if (page.titleLayout) {
           expect(
             tester.getSize(find.text(page.caption)).height,
@@ -45,7 +54,15 @@ void main() {
       await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
       await tester.pumpAndSettle();
       expect(find.text(eventUrl), findsOneWidget);
-      expect(find.text('参加の\nお申し込み'), findsOneWidget);
+      final manifest = await AssetManifest.loadFromAssetBundle(rootBundle);
+      if (manifest.listAssets().contains('assets/event/qr.png')) {
+        expect(
+          find.image(const AssetImage('assets/event/qr.png')),
+          findsOneWidget,
+        );
+      } else {
+        expect(find.text('参加の\nお申し込み'), findsOneWidget);
+      }
       expect(tester.takeException(), isNull);
       await tester.sendKeyEvent(LogicalKeyboardKey.arrowLeft);
       await tester.pumpAndSettle();

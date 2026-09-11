@@ -27,18 +27,19 @@ class StoryArtwork extends StatelessWidget {
         page.asset,
         fit: BoxFit.contain,
         filterQuality: FilterQuality.high,
+        semanticLabel: page.embeddedTitle ? festivalTitle : null,
       ),
       if (page.titleLayout)
         Positioned(
-          top: 185,
-          left: 160,
-          right: 160,
+          top: 360,
+          left: 760,
+          right: 80,
           child: Text(
             page.caption,
             textAlign: TextAlign.center,
             style: const TextStyle(
               fontFamily: 'Kiwi Maru',
-              fontSize: 82,
+              fontSize: 72,
               fontWeight: FontWeight.w500,
               height: 1.65,
               color: storyInk,
@@ -46,7 +47,7 @@ class StoryArtwork extends StatelessWidget {
             ),
           ),
         ),
-      if (!page.titleLayout)
+      if (!page.titleLayout && !page.embeddedTitle)
         Positioned(
           bottom: 0,
           left: 0,

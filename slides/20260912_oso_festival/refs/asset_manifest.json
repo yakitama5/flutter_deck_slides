@@ -1,41 +1,44 @@
 [
   {
     "asset": "assets/story/01_cover.png",
-    "sha256": "a2bd7a80311dfd809519a1d6387d3cf69e9b4d90550b9190a3ed49ffa3eeb8bf",
-    "method": "built-in image_gen anchored edit",
-    "source": "slides/2026_oso_risukun_hitotsu_no_donguri/generation/refs/cover_master.png"
+    "sha256": "c53199564fa082c832e42b44780a3ffd87f146c02bb54382e309011bd29ca0c7",
+    "method": "built-in image_gen with canonical reference anchors; new composition",
+    "embedded_title": true
   },
   {
     "asset": "assets/story/02_idea.png",
-    "sha256": "1a878fd5c717f2b33ea796de2879fcf0b01df9544cace6c2e8631b11b5a1f909",
-    "method": "reused byte-for-byte",
-    "source": "slides/20260912_oso/assets/risukun_hitotsu_no_donguri/06_page06.png"
+    "sha256": "639f12745b7d70a725f74981c5c0c8fc883a4b4b97f086bf925868f963df56e3",
+    "method": "built-in image_gen with canonical reference anchors; new composition",
+    "embedded_title": false
   },
   {
     "asset": "assets/story/03_alone.png",
     "sha256": "859c89d39878adf0dfb8573d9b2234e332e867b2fa8ecb0b698a0df5e582b4eb",
-    "method": "built-in image_gen anchored edit"
+    "method": "built-in image_gen with canonical reference anchors; new composition",
+    "embedded_title": false
   },
   {
     "asset": "assets/story/04_friends.png",
-    "sha256": "f49e81c8e1383e0fd249eea6f0ad4bd9ca6097fb0a62e8e07e08d81c4e7cab70",
-    "method": "reused byte-for-byte",
-    "source": "slides/20260912_oso/assets/risukun_hitotsu_no_donguri/07_page07.png"
+    "sha256": "7b3f09bd302ba0e5d4581afc6e3aec57ef603622cf118b425af68f4b3889af00",
+    "method": "built-in image_gen with canonical reference anchors; new composition",
+    "embedded_title": false
   },
   {
     "asset": "assets/story/05_preparation.png",
     "sha256": "74278256d2b8e21fd6fbbceb058154feeb369c2e3382c60de95cc87f953a4c70",
-    "method": "built-in image_gen anchored edit"
+    "method": "built-in image_gen with canonical reference anchors; new composition",
+    "embedded_title": false
   },
   {
     "asset": "assets/story/06_ready.png",
     "sha256": "aca3ca48f7b8e97151e7e59e9ce8e1743e9c3a23f110dd5a5f54df9706e9dede",
-    "method": "built-in image_gen anchored edit"
+    "method": "built-in image_gen with canonical reference anchors; new composition",
+    "embedded_title": false
   },
   {
     "asset": "assets/story/07_gathering.png",
-    "sha256": "ceb329906ac534ccd3e7315d488f3c53462fd972d35569df3384ef0a0215e0e1",
-    "method": "reused byte-for-byte",
-    "source": "slides/20260912_oso/assets/risukun_hitotsu_no_donguri/08_page08.png"
+    "sha256": "a52986dfc0356873e8feabb174d836bcae35a6e709f478f9eeafaea4d7060c36",
+    "method": "built-in image_gen with canonical reference anchors; new composition",
+    "embedded_title": false
   }
 ]

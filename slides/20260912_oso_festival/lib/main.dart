@@ -93,18 +93,19 @@ class _ForestFestivalAppState extends State<ForestFestivalApp> {
         route: '/front-cover',
         title: festivalTitle,
         notes: FestivalNotes.frontCover,
-        child: const StorybookBookCover(
+        images: {'assets/story/01_cover.png'},
+        child: StorybookBookCover(
           coverColor: forestGreen,
           accentColor: bookGold,
-          child: Center(
-            child: Text(
-              'リスくんと\nもりのちいさなおまつり',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontFamily: 'Kiwi Maru',
-                fontSize: 64,
-                height: 1.7,
-                color: bookGold,
+          child: SizedBox(
+            width: 1400,
+            height: 788,
+            child: Padding(
+              padding: const EdgeInsets.all(40),
+              child: Image.asset(
+                'assets/story/01_cover.png',
+                fit: BoxFit.contain,
+                semanticLabel: festivalTitle,
               ),
             ),
           ),

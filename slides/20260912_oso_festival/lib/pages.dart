@@ -14,6 +14,7 @@ class FestivalPage {
     this.asset,
     this.notes, {
     this.titleLayout = false,
+    this.embeddedTitle = false,
     this.revealOrigin = const Alignment(0, 0.25),
   });
   final String slug;
@@ -21,6 +22,7 @@ class FestivalPage {
   final String asset;
   final String notes;
   final bool titleLayout;
+  final bool embeddedTitle;
   final Alignment revealOrigin;
 }
 
@@ -30,7 +32,7 @@ const festivalPages = [
     'リスくんと\nもりのちいさなおまつり',
     'assets/story/01_cover.png',
     FestivalNotes.title,
-    titleLayout: true,
+    embeddedTitle: true,
   ),
   FestivalPage(
     'idea',
@@ -73,7 +75,7 @@ const festivalPages = [
   FestivalPage(
     'unfinished',
     'でも、これはまだ\nとちゅうの おはなし。',
-    'assets/story/01_cover.png',
+    'assets/story/02_idea.png',
     FestivalNotes.unfinished,
     titleLayout: true,
   ),
