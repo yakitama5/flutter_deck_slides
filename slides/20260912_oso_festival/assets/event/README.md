@@ -1,8 +1,13 @@
-# 後から差し込む画像
+# イベント案内素材
 
-- `qr.png`: 正方形。ユーザーが用意したQRを配置すると最終ページで表示します。
-- `banner.png`: イベントバナー。縦横比を保って11ページ目に表示します。
+## 必須バナー
 
-未配置時も発表できます。QR欄には「参加のお申し込み」とURL、バナー欄には前作の森の絵が表示されます。ダミーQRは生成しません。
-画像は余白を含めて表示します。QRの四辺の白い余白は残してください。
-配置後は `flutter pub get` と再ビルド（開発中は再起動）が必要です。
+添付された公式バナー（660x371）をこのディレクトリの `banner.png` として配置します。`pubspec.yaml` には `assets/event/banner.png` を必須アセットとして登録済みです。11枚目のEventPageが `Image.asset` で読み込み、`BoxFit.contain` で縦横比を保って表示します。
+
+差し替える場合もファイル名とパスを変えません。追加・差し替え後はリポジトリのルートで `dart pub get` と再ビルド（開発中は再起動）を行います。
+
+## QRコード
+
+QR画像ファイルは配置しません。12枚目のEventQrCardが、`lib/pages.dart` の `eventUrl`（https://flutterkaigi.connpass.com/event/401279/）を `qr_flutter` の `QrImageView(data: eventUrl)` に渡して実行時に生成します。同じURLを `url_launcher` の `Link` でクリックできます。
+
+`qr.png`、`OptionalEventImage`、未配置時のフォールバックは使用しません。
