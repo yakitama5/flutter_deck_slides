@@ -11,6 +11,7 @@ workspace:
   - slides/202607_claudenotebooklm
   - slides/202608_risukun_super_tenkomori_car
   - slides/20260912_oso
+  - slides/20260912_oso_festival
 
 dev_dependencies:
   melos: ^7.3.0

@@ -154,3 +154,8 @@ flutter create --template=package packages/<name>
 - `.github/workflows/deploy.yaml`: `main` への push で全スライドを web ビルドし、GitHub Pages へデプロイ
   - 公開 URL: `https://yakitama5.github.io/flutter_deck_slides/<slide_name>/`
   - スライド一覧ページ: `https://yakitama5.github.io/flutter_deck_slides/`
+
+## 絵本LT「リスくんと もりのちいさなおまつり」
+
+OSO懇親会向けの続編を `slides/20260912_oso_festival` に追加しています。
+[構成・スピーカーノート・画像の由来・QR差し込み手順](slides/20260912_oso_festival/README.md)を参照してください。
