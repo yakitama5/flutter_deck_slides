@@ -40,7 +40,7 @@ void main() {
     );
     expect(SpeakerNotes.bookPages, hasLength(osoPages.length));
     expect(SpeakerNotes.frontCover.trim(), isNotEmpty);
-    expect(osoPages.last.speakerNotes, contains('おしまい'));
+    expect(SpeakerNotes.backCover, contains('おしまい'));
   });
 
   testWidgets('the storybook opens, turns through pages, and closes', (
