@@ -1,279 +1,204 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import 'package:qr_flutter/qr_flutter.dart';
 import 'package:url_launcher/link.dart';
 
 import 'pages.dart';
+import 'theme.dart';
 
-const forestGreen = Color(0xFF31533E);
-const bookGold = Color(0xFFE7C978);
-const paperCream = Color(0xFFFFFDF5);
-const storyInk = Color(0xFF543B21);
-
-final festivalTheme = ThemeData(
-  fontFamily: 'Kiwi Maru',
-  scaffoldBackgroundColor: paperCream,
-  colorScheme: ColorScheme.fromSeed(seedColor: forestGreen),
-);
-
+/// Like the original OSO book, every page is just its full illustration.
 class StoryArtwork extends StatelessWidget {
   const StoryArtwork({required this.page, super.key});
   final FestivalPage page;
 
   @override
-  Widget build(BuildContext context) => Stack(
-    fit: StackFit.expand,
-    children: [
-      Image.asset(
-        page.asset,
-        fit: BoxFit.contain,
-        filterQuality: FilterQuality.high,
-        semanticLabel: page.embeddedTitle ? festivalTitle : null,
-      ),
-      if (page.titleLayout)
-        Positioned(
-          top: 360,
-          left: 760,
-          right: 80,
-          child: Text(
-            page.caption,
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              fontFamily: 'Kiwi Maru',
-              fontSize: 72,
-              fontWeight: FontWeight.w500,
-              height: 1.65,
-              color: storyInk,
-              shadows: [Shadow(color: paperCream, blurRadius: 18)],
-            ),
-          ),
-        ),
-      if (!page.titleLayout && !page.embeddedTitle)
-        Positioned(
-          bottom: 0,
-          left: 0,
-          right: 0,
-          child: Container(
-            padding: const EdgeInsets.fromLTRB(48, 55, 48, 27),
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [Color(0x00FFFDF5), Color(0xEFFFFDF5), paperCream],
-                stops: [0, 0.42, 1],
-              ),
-            ),
-            child: Text(
-              page.caption,
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontFamily: 'Kiwi Maru',
-                fontSize: 52,
-                height: 1.4,
-                fontWeight: FontWeight.w500,
-                color: storyInk,
-              ),
-            ),
-          ),
-        ),
-    ],
-  );
-}
-
-/// A real optional asset slot. Missing media shows finished fallback content;
-/// adding the documented filenames activates them on the next build.
-class OptionalEventImage extends StatefulWidget {
-  const OptionalEventImage({
-    required this.asset,
-    required this.fallback,
-    super.key,
-  });
-  final String asset;
-  final Widget fallback;
-  @override
-  State<OptionalEventImage> createState() => _OptionalEventImageState();
-}
-
-class _OptionalEventImageState extends State<OptionalEventImage> {
-  late final Future<AssetManifest> _manifest =
-      AssetManifest.loadFromAssetBundle(rootBundle);
-  @override
-  Widget build(BuildContext context) => FutureBuilder<AssetManifest>(
-    future: _manifest,
-    builder: (context, snapshot) {
-      if (!(snapshot.data?.listAssets().contains(widget.asset) ?? false)) {
-        return widget.fallback;
-      }
-      return Image.asset(
-        widget.asset,
-        fit: BoxFit.contain,
-        errorBuilder: (_, _, _) => widget.fallback,
-      );
-    },
+  Widget build(BuildContext context) => Image.asset(
+    page.asset,
+    fit: BoxFit.contain,
+    filterQuality: FilterQuality.high,
+    semanticLabel: page.title,
   );
 }
 
 class EventPage extends StatelessWidget {
   const EventPage({super.key});
+
+  static const bannerAsset = 'assets/event/banner.png';
+
   @override
-  Widget build(BuildContext context) => ColoredBox(
-    color: paperCream,
-    child: Padding(
-      padding: const EdgeInsets.all(100),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'ここからは、わたしたちの おはなし。',
-            style: TextStyle(fontSize: 38, color: storyInk),
-          ),
-          const SizedBox(height: 35),
-          const Text(
-            eventTiming,
-            style: TextStyle(fontSize: 62, color: forestGreen),
-          ),
-          const Text(
-            'FlutterKaigi mini 岡山',
-            style: TextStyle(
-              fontSize: 84,
-              fontWeight: FontWeight.w500,
-              color: forestGreen,
-            ),
-          ),
-          const SizedBox(height: 42),
-          Expanded(
-            child: Row(
-              children: [
-                const Expanded(
-                  child: Text(
-                    'みんなの おかげで、\nひらけることに なりました。',
-                    style: TextStyle(
-                      fontSize: 48,
-                      height: 1.8,
-                      color: storyInk,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 72),
-                Expanded(
-                  child: OptionalEventImage(
-                    asset: 'assets/event/banner.png',
-                    fallback: Image.asset(
-                      'assets/story/06_ready.png',
+  Widget build(BuildContext context) => OsoMaterialSlide(
+    eyebrow: '中四国初の FLUTTERKAIGI MINI',
+    title: '来週、岡山で開催します',
+    child: Builder(
+      builder: (context) {
+        final theme = Theme.of(context);
+        return Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Expanded(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(36),
+                    child: Image.asset(
+                      bannerAsset,
+                      semanticLabel: 'FlutterKaigi mini #6 @Okayama 岡山開催',
                       fit: BoxFit.contain,
                     ),
                   ),
-                ),
-              ],
+                  const SizedBox(height: 28),
+                  Text(
+                    '知らない人も、知っている人も。\n「おもしろい」が見つかる場所。',
+                    textAlign: TextAlign.center,
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                      height: 1.5,
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
-      ),
+            const SizedBox(width: 40),
+            const Expanded(
+              child: OsoStatementCard(
+                icon: Icons.diversity_3_rounded,
+                title: 'FlutterKaigi と\n地域コミュニティ',
+                body: 'いっしょにひらく\nFlutterの技術イベント。',
+              ),
+            ),
+          ],
+        );
+      },
     ),
   );
 }
 
 class InvitationPage extends StatelessWidget {
   const InvitationPage({super.key});
+
   @override
-  Widget build(BuildContext context) => ColoredBox(
-    color: paperCream,
-    child: Padding(
-      padding: const EdgeInsets.all(100),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'まだまだ、ちいさな はじまり。',
-            style: TextStyle(fontSize: 44, color: storyInk),
+  Widget build(BuildContext context) => const OsoMaterialSlide(
+    eyebrow: 'まだまだ、ちいさな はじまり',
+    title: 'このお話を、ハッピーエンドに。',
+    child: Row(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Expanded(
+          flex: 6,
+          child: OsoStatementCard(
+            icon: Icons.celebration_rounded,
+            title: 'ぜひ、ご参加ください。\nお友だちも一緒に。',
+            body: '聞くだけでも、話してみても。\n小さな「おもしろい」が芽を出す。',
           ),
-          const SizedBox(height: 28),
-          const Text(
-            'いっしょに、大きくしていこう。',
-            style: TextStyle(
-              fontSize: 76,
-              color: forestGreen,
-              fontWeight: FontWeight.w500,
+        ),
+        SizedBox(width: 40),
+        Expanded(flex: 4, child: EventQrCard()),
+      ],
+    ),
+  );
+}
+
+/// Uses the same generated QR approach as the original OSO profile slide.
+class EventQrCard extends StatelessWidget {
+  const EventQrCard({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    return Card.filled(
+      color: colors.surfaceContainerLowest,
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              '参加のお申し込み',
+              style: theme.textTheme.headlineSmall?.copyWith(
+                color: colors.onSurface,
+                fontWeight: FontWeight.w800,
+              ),
             ),
-          ),
-          const SizedBox(height: 54),
-          Expanded(
-            child: Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Text(
-                        'あそびに 来てください。\nだれかを 誘ってください。',
-                        style: TextStyle(
-                          fontSize: 49,
-                          height: 1.9,
-                          color: storyInk,
-                        ),
-                      ),
-                      const SizedBox(height: 40),
-                      Expanded(
-                        child: Align(
-                          alignment: Alignment.centerLeft,
-                          child: Image.asset(
-                            'assets/story/07_gathering.png',
-                            fit: BoxFit.contain,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 80),
-                const SizedBox.square(
-                  dimension: 420,
-                  child: ColoredBox(
-                    color: Colors.white,
-                    child: Padding(
-                      padding: EdgeInsets.all(28),
-                      child: OptionalEventImage(
-                        asset: 'assets/event/qr.png',
-                        fallback: Center(
-                          child: Text(
-                            '参加の\nお申し込み',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              fontSize: 48,
-                              height: 1.7,
-                              color: forestGreen,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
+            const SizedBox(height: 24),
+            QrImageView(
+              data: eventUrl,
+              size: 350,
+              padding: const EdgeInsets.all(20),
+              backgroundColor: Colors.white,
+              semanticsLabel: 'FlutterKaigi mini 岡山の参加申し込みQRコード',
             ),
-          ),
-          const SizedBox(height: 40),
-          const Text(
-            'FlutterKaigi mini 岡山',
-            style: TextStyle(fontSize: 36, color: forestGreen),
-          ),
-          Link(
-            uri: Uri.parse(eventUrl),
-            target: LinkTarget.blank,
-            builder: (context, followLink) => InkWell(
-              onTap: followLink,
-              child: const Text(
-                eventUrl,
-                style: TextStyle(
-                  fontSize: 38,
-                  color: forestGreen,
-                  decoration: TextDecoration.underline,
+            const SizedBox(height: 24),
+            Link(
+              uri: Uri.parse(eventUrl),
+              target: LinkTarget.blank,
+              builder: (context, followLink) => InkWell(
+                onTap: followLink,
+                child: Text(
+                  eventUrl,
+                  textAlign: TextAlign.center,
+                  style: theme.textTheme.bodyLarge?.copyWith(
+                    color: colors.primary,
+                    decoration: TextDecoration.underline,
+                    height: 1.4,
+                  ),
                 ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
-    ),
-  );
+    );
+  }
+}
+
+/// Copied from 20260912_oso/lib/widgets.dart to preserve its exact card styling.
+class OsoStatementCard extends StatelessWidget {
+  const OsoStatementCard({
+    required this.icon,
+    required this.title,
+    required this.body,
+    super.key,
+  });
+
+  final IconData icon;
+  final String title;
+  final String body;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+
+    return Card.filled(
+      color: colors.primaryContainer,
+      child: Padding(
+        padding: const EdgeInsets.all(52),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, size: 96, color: colors.onPrimaryContainer),
+            const SizedBox(height: 36),
+            Text(
+              title,
+              style: theme.textTheme.headlineLarge?.copyWith(
+                color: colors.onPrimaryContainer,
+                fontWeight: FontWeight.w800,
+                height: 1.3,
+              ),
+            ),
+            const SizedBox(height: 24),
+            Text(
+              body,
+              style: theme.textTheme.titleLarge?.copyWith(
+                color: colors.onPrimaryContainer,
+                height: 1.6,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }

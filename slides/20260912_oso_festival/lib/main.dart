@@ -5,8 +5,10 @@ import 'package:flutter_deck/flutter_deck.dart';
 import 'package:flutter_deck_storybook/flutter_deck_storybook.dart';
 import 'package:flutter_deck_web_client/flutter_deck_web_client.dart';
 
+import 'cover_emblem.dart';
 import 'pages.dart';
 import 'speaker_notes.dart';
+import 'theme.dart';
 import 'widgets.dart';
 
 void main() => runApp(const ForestFestivalApp());
@@ -80,7 +82,7 @@ class _ForestFestivalAppState extends State<ForestFestivalApp> {
   Widget build(BuildContext context) => FlutterDeckApp(
     client: FlutterDeckWebClient(),
     themeMode: ThemeMode.light,
-    lightTheme: FlutterDeckThemeData.fromTheme(festivalTheme),
+    lightTheme: FlutterDeckThemeData.fromTheme(osoTheme),
     configuration: const FlutterDeckConfiguration(
       slideSize: FlutterDeckSlideSize.custom(width: 1920, height: 1080),
       showProgress: false,
@@ -93,33 +95,24 @@ class _ForestFestivalAppState extends State<ForestFestivalApp> {
         route: '/front-cover',
         title: festivalTitle,
         notes: FestivalNotes.frontCover,
-        images: {'assets/story/01_cover.png'},
-        child: StorybookBookCover(
-          coverColor: forestGreen,
-          accentColor: bookGold,
-          child: SizedBox(
-            width: 1400,
-            height: 788,
-            child: Padding(
-              padding: const EdgeInsets.all(40),
-              child: Image.asset(
-                'assets/story/01_cover.png',
-                fit: BoxFit.contain,
-                semanticLabel: festivalTitle,
-              ),
-            ),
+        child: const StorybookBookCover(
+          coverColor: osoSeedColor,
+          accentColor: osoAccentColor,
+          child: Padding(
+            padding: EdgeInsets.symmetric(horizontal: 72, vertical: 48),
+            child: StorybookCoverEmblem(accentColor: osoAccentColor),
           ),
         ),
       ),
       for (final page in festivalPages)
         _slide(
           route: '/story/${page.slug}',
-          title: page.caption.replaceAll('\n', ' '),
+          title: page.title.replaceAll('\n', ' '),
           notes: page.notes,
           images: {page.asset},
           child: StorybookPage(
             key: ValueKey(page.slug),
-            paperColor: paperCream,
+            paperColor: const Color(0xFFFFFDF5),
             designSize: const Size(1920, 1080),
             outerPadding: EdgeInsets.zero,
             contentPadding: EdgeInsets.zero,
@@ -138,8 +131,8 @@ class _ForestFestivalAppState extends State<ForestFestivalApp> {
         notes: FestivalNotes.backCover,
         child: const StorybookBookCover(
           backCover: true,
-          coverColor: forestGreen,
-          accentColor: bookGold,
+          coverColor: osoSeedColor,
+          accentColor: osoAccentColor,
         ),
       ),
       _slide(
@@ -147,11 +140,12 @@ class _ForestFestivalAppState extends State<ForestFestivalApp> {
         title: 'FlutterKaigi mini 岡山',
         notes: FestivalNotes.event,
         book: false,
+        images: {EventPage.bannerAsset},
         child: const EventPage(),
       ),
       _slide(
         route: '/invitation',
-        title: 'いっしょに、大きくしていこう。',
+        title: 'このお話を、ハッピーエンドに。',
         notes: FestivalNotes.invitation,
         book: false,
         child: const InvitationPage(),

@@ -4,25 +4,19 @@ import 'speaker_notes.dart';
 
 const festivalTitle = 'リスくんと もりのちいさなおまつり';
 const eventUrl = 'https://flutterkaigi.connpass.com/event/401279/';
-// Relative wording is deliberately tied to the OSO talk, not today's clock.
-const eventTiming = '来週、岡山で。';
 
 class FestivalPage {
   const FestivalPage(
     this.slug,
-    this.caption,
+    this.title,
     this.asset,
     this.notes, {
-    this.titleLayout = false,
-    this.embeddedTitle = false,
     this.revealOrigin = const Alignment(0, 0.25),
   });
   final String slug;
-  final String caption;
+  final String title;
   final String asset;
   final String notes;
-  final bool titleLayout;
-  final bool embeddedTitle;
   final Alignment revealOrigin;
 }
 
@@ -32,7 +26,6 @@ const festivalPages = [
     'リスくんと\nもりのちいさなおまつり',
     'assets/story/01_cover.png',
     FestivalNotes.title,
-    embeddedTitle: true,
   ),
   FestivalPage(
     'idea',
@@ -77,6 +70,5 @@ const festivalPages = [
     'でも、これはまだ\nとちゅうの おはなし。',
     'assets/story/02_idea.png',
     FestivalNotes.unfinished,
-    titleLayout: true,
   ),
 ];

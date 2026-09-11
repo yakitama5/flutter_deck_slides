@@ -1,31 +1,35 @@
 # リスくんと もりのちいさなおまつり
 
-『リスくんと ひとつのどんぐり』の続編です。リスくんが思いついた小さなおまつりを、うさぎさん・くまさん・はりねずみさんと準備していく12枚のFlutterDeckです。絵本パートは共通のStorybook演出、イベント案内パートは通常のスライド遷移で表示します。
+『リスくんと ひとつのどんぐり』の続編です。リスくんが思いついた小さなおまつりを、うさぎさん・くまさん・はりねずみさんと準備していく12枚のFlutterDeckです。外側の前カバーから本文8枚、後ろカバーをページめくりで見せ、その後にイベント案内と参加案内を通常のスライド遷移で表示します。
 
-## スライドの順序と画面テキスト
+絵本本文8枚は、画像全体を表示する構成です。ネイティブなcaption、白い帯、unfinishedの本文文字は重ねません。説明2枚は前作osoと同じOsoMaterialSlide、OsoBackdrop、OsoStatementCardを使い、前作テーマのフォント倍率2.2も引き継いでいます。
+
+## スライドの順序と画面表示
 
 外側の前カバー、本文8枚、後ろカバー、イベント案内、参加案内の順です。
 
-| No. | キー | 画面テキスト・内容 |
+| No. | キー | 画面表示・内容 |
 | ---: | --- | --- |
-| 1 | `frontCover` | 新表紙画像を深緑の枠内に表示。画像内の左上に枝葉の装飾と、3行の `リスくんと もりのちいさなおまつり` |
-| 2 | `title` | 表紙と同じ新表紙画像。右手前のリスくんが旗で迎え、左奥にうさぎさん・くまさんがいる構図。タイトルは画像内の3行文字 |
-| 3 | `idea` | `この もりで、おまつりを。` |
-| 4 | `alone` | `あれも、これも。……あれれ？` |
-| 5 | `friends` | `「いっしょに やろう！」` |
-| 6 | `preparation` | `それぞれの できることを。` |
-| 7 | `ready` | `ちいさな おまつりが、かたちに。` |
-| 8 | `gathering` | `あつまると、もっと たのしい。` |
-| 9 | `unfinished` | `でも、これはまだ\nとちゅうの おはなし。`（`02_idea` の背景を再使用し、右側余白にネイティブテキスト） |
-| 10 | `backCover` | 絵本の後ろカバー。画面に本文テキストは載せず、Deckタイトルは `つづきは、わたしたちの もりで。` |
-| 11 | `event` | `ここからは、わたしたちの おはなし。`／`来週、岡山で。`／`FlutterKaigi mini 岡山`／`みんなの おかげで、\nひらけることに なりました。` |
-| 12 | `invitation` | `まだまだ、ちいさな はじまり。`／`いっしょに、大きくしていこう。`／`あそびに 来てください。\nだれかを 誘ってください。`／`FlutterKaigi mini 岡山`／`https://flutterkaigi.connpass.com/event/401279/` |
+| 1 | `frontCover` | 前作と同じ深緑・金色のアイコン装飾だけを表示する外側の前カバー。タイトル文字は表示しません。 |
+| 2 | `title` | `assets/story/01_cover.png` を画像全体で表示。右手前のリスくんが旗で迎え、左奥にうさぎさん・くまさんがいる新構図で、枝葉装飾と3行のタイトル文字を画像内に含みます。 |
+| 3 | `idea` | `assets/story/02_idea.png` の画像のみ。画面文字、caption、白い帯はありません。 |
+| 4 | `alone` | `assets/story/03_alone.png` の画像のみ。画面文字、caption、白い帯はありません。 |
+| 5 | `friends` | `assets/story/04_friends.png` の画像のみ。右手前のリスくんへ左奥から3匹が向かう対角構図です。画面文字、caption、白い帯はありません。 |
+| 6 | `preparation` | `assets/story/05_preparation.png` の画像のみ。画面文字、caption、白い帯はありません。 |
+| 7 | `ready` | `assets/story/06_ready.png` の画像のみ。画面文字、caption、白い帯はありません。 |
+| 8 | `gathering` | `assets/story/07_gathering.png` の画像のみ。机を囲んで楽しむ大団円の近景です。画面文字、caption、白い帯はありません。 |
+| 9 | `unfinished` | `assets/story/02_idea.png` をそのまま再使用した画像のみ。unfinishedの文言は画面に重ねず、スピーカーノートで読み上げます。 |
+| 10 | `backCover` | 絵本の後ろカバー。本文テキストは画面に載せません。 |
+| 11 | `event` | eyebrowは「中四国初の FLUTTERKAIGI MINI」、タイトルは「来週、岡山で開催します」。必須バナー、説明文「知らない人も、知っている人も。／『おもしろい』が見つかる場所。」、カード「FlutterKaigi と 地域コミュニティ／いっしょにひらく Flutterの技術イベント。」を表示します。 |
+| 12 | `invitation` | eyebrowは「まだまだ、ちいさな はじまり」、タイトルは「このお話を、ハッピーエンドに。」。参加カード「ぜひ、ご参加ください。／お友だちも一緒に。」「聞くだけでも、話してみても。／小さな『おもしろい』が芽を出す。」、生成QR、見出し「参加のお申し込み」、クリック可能なイベントURLを表示します。 |
 
 ## スピーカーノート
 
-ノートは、前作の一粒から続く物語として始まり、ひとりの思いつき、仲間との準備、リスくんが思い描いたおまつり、そして「まだ途中のお話」へ進みます。後ろカバーで現実の話へ切り替え、FlutterKaigi mini 岡山への案内と、みんなで次のきっかけを育てる呼びかけで終わります。集まる場面はリスくんの想像上の物語として扱い、現実のイベントが開催済みだとは説明しません。
+`lib/speaker_notes.dart` の更新済み原文を12枚分そのまま使います。前作のどんぐりから続く物語、ひとりの思いつき、3匹の仲間との準備、リスくんが思い描いたおまつり、まだ途中のお話、後ろカバーまでを読み聞かせます。集まる場面はリスくんの想像上の物語として扱い、現実のイベント開催済みとは混同しません。
 
-全文は [`lib/speaker_notes.dart`](lib/speaker_notes.dart) を参照してください。
+eventのノートでは、物語から現実へ戻り、FlutterKaigi miniが来週岡山で開かれること、中四国初のminiイベントであること、Flutterを知らない人にも「おもしろい」が見つかる場であることを案内します。invitationでは、参加を呼びかけ、お友だちも誘い、みんなで小さなきっかけを育てることを伝えます。両方の末尾に次の案内先を置いています。
+
+https://flutterkaigi.connpass.com/event/401279/
 
 ## 起動
 
@@ -36,66 +40,70 @@ dart pub get
 dart run melos run dev
 ```
 
-選択後は Chrome で `slides/20260912_oso_festival` が起動します。Web成果物を確認するときは、ルートで `dart run tool/build_web.dart` を実行します。
+選択後はChromeで slides/20260912_oso_festival が起動します。Web成果物を確認するときは、ルートで次を実行します。
+
+```sh
+dart run tool/build_web.dart
+```
 
 ## QRコードとイベントバナー
 
-`pubspec.yaml` は `assets/event/` 全体を登録しています。次のファイルを配置すると、再ビルド時に画面へ差し込まれます。
+イベントバナーは添付された公式画像（660x371）を `assets/event/banner.png` として配置します。このファイルだけを `pubspec.yaml` に必須アセットとして登録し、EventPageで `Image.asset` と `BoxFit.contain` を使って表示します。差し替える場合も同じファイル名とパスを保ちます。
 
-- `assets/event/qr.png`: 正方形のQRコード。12枚目の参加案内に表示します。四辺の白い余白を残してください。
-- `assets/event/banner.png`: イベントバナー。11枚目に縦横比を保って表示します。
+QR画像ファイルは配置しません。`lib/pages.dart` の `eventUrl` をもとに、`lib/widgets.dart` のEventQrCardがqr_flutterの `QrImageView(data: eventUrl)` で毎回生成します。表示中のURLはurl_launcherの `Link` でクリックできます。`qr.png`、`OptionalEventImage`、バナーのフォールバックは使いません。
 
-未配置の場合も発表できるよう、QR欄は「参加のお申し込み」、バナー欄は `assets/story/06_ready.png` にフォールバックします。ファイルを追加・差し替えした後は `dart pub get` と再ビルド（開発中は再起動）を行ってください。
+バナーを追加・差し替えた後は、リポジトリのルートで `dart pub get` と再ビルド（開発中は再起動）を行います。
 
 ## 参照原画と新規構図
 
-前作の原画は [`../20260912_oso/assets/risukun_hitotsu_no_donguri/`](../20260912_oso/assets/risukun_hitotsu_no_donguri/) をキャラクター・画風・森のアンカーとして参照しています。`assets/story/` の7点はすべてそのアンカーから作った新しい構図で、前作画像の無加工流用はありません。
+前作の原画は [前作の絵本素材](../20260912_oso/assets/risukun_hitotsu_no_donguri/) をキャラクター、画風、森のアンカーとして参照しています。`assets/story/` の7点はすべて前作原画をアンカーにした新しい構図で、前作画像の無加工流用はありません。このREADME更新では画像7点とrefs記録を変更していません。
 
 | 新デッキの画像 | 参照・扱い |
 | --- | --- |
-| `assets/story/01_cover.png` | 前作の表紙原画をアンカーにした新規表紙。右手前のリスくん、左奥のうさぎさん・くまさん、左上の枝葉装飾と画像内の3行タイトルを含む。前カバーと `title` で使用 |
-| `assets/story/02_idea.png` | 前作 `06_page06.png` などをアンカーにした新規構図。木の根に座ったリスくんが空き広場を横向きに眺める |
-| `assets/story/03_alone.png` | このPRで作成した新規画像。ひとりで旗や準備を進める場面 |
-| `assets/story/04_friends.png` | 前作 `07_page07.png` のうさぎ・若木をアンカーにした新規構図。右手前のリスくんへ、左奥から3匹が向かう対角構図 |
-| `assets/story/05_preparation.png` | このPRで作成した新規画像。仲間と準備する場面 |
-| `assets/story/06_ready.png` | このPRで作成した新規画像。準備が整った場面。イベントバナー未配置時のフォールバックにも使用 |
-| `assets/story/07_gathering.png` | 前作 `08_page08.png` などをアンカーにした新規構図。机を囲んで楽しむ大団円の近景 |
-| `unfinished` | `assets/story/02_idea.png` を背景として再使用し、右側余白にネイティブテキストを重ねる |
-
-参加案内の左側にも `07_gathering.png` を挿絵として再使用しています。
+| `assets/story/01_cover.png` | 前作の表紙原画をアンカーにした新規表紙。右手前のリスくんが旗で迎え、左奥にうさぎさん・くまさん、左上に枝葉装飾を置き、3行タイトルを画像内に含みます。本文titleで使用し、外側前カバーには使用しません。 |
+| `assets/story/02_idea.png` | 前作 `06_page06.png` をアンカーにした新規構図。木の根に座ったリスくんが空き広場を横向きに眺めます。本文ideaとunfinishedで使用します。 |
+| `assets/story/03_alone.png` | 前回追加した続編用の新規画像。ひとりで旗や準備を進める場面です。 |
+| `assets/story/04_friends.png` | 前作 `07_page07.png` のうさぎ原画などをアンカーにした新規構図。右手前のリスくんへ左奥から3匹がやってくる対角構図です。 |
+| `assets/story/05_preparation.png` | 前回追加した続編用の新規画像。仲間と準備する場面です。 |
+| `assets/story/06_ready.png` | 前回追加した続編用の新規画像。準備が整った場面です。 |
+| `assets/story/07_gathering.png` | 前作 `08_page08.png` などをアンカーにした新規構図。机を囲んで楽しむ大団円の近景です。 |
 
 ## 差分方針
 
-- 前作 [`slides/20260912_oso`](../20260912_oso/) のコード・画像・設定は変更しません。
-- ページめくり、紙面リビール、前後カバーの開閉、効果音は共通パッケージ `flutter_deck_storybook` の演出を同じ方針で使用します。
+- 前作 [slides/20260912_oso](../20260912_oso/) のコード、画像、設定は変更しません。
+- ページめくり、紙面リビール、前後カバーの開閉、効果音は共通パッケージ `flutter_deck_storybook` の演出を同じ方針で使います。
+- 説明2枚は前作osoの `theme.dart`、OsoMaterialSlide、OsoBackdrop、OsoStatementCardと、フォント倍率2.2を同等に採用します。
 - 構成は12枚（前カバー + 本文8枚 + 後ろカバー + `event` + `invitation`）に固定します。
 
-イベントページはアクセス時のbot対策で本文を確認できないため、具体的な日時・会場は記載していません。発表時点の文脈に合わせて、画面の時期表現はユーザー指定どおり `来週、岡山で。` に固定しています。案内先は [FlutterKaigi mini 岡山のページ](https://flutterkaigi.connpass.com/event/401279/) です。
+イベントページはアクセス時のbot対策で本文を確認できないため、具体的な日時・会場は記載していません。発表時点の文脈に合わせて、画面の時期表現はユーザー指定どおり「来週、岡山で開催します」に固定しています。案内先は [FlutterKaigi mini 岡山のページ](https://flutterkaigi.connpass.com/event/401279/) です。
 
 ### 画風の固定基準
 
-最優先のアンカーは [`cover_master.png`](../2026_oso_risukun_hitotsu_no_donguri/generation/refs/cover_master.png) と [`page01_master.png`](../2026_oso_risukun_hitotsu_no_donguri/generation/refs/page01_master.png) です。前者でリスくんの顔・体型・黒い目・巻いたしっぽ・赤いバンダナと森の色を固定し、後者でうさぎさんの顔と青いバンダナを固定しています。共同作業と完成場面は前作 `08_page08.png` の広場・くまさん・はりねずみさんを補助参照にしました。
+最優先のアンカーは [cover_master.png](../2026_oso_risukun_hitotsu_no_donguri/generation/refs/cover_master.png) と [page01_master.png](../2026_oso_risukun_hitotsu_no_donguri/generation/refs/page01_master.png) です。前者でリスくんの顔・体型・黒い目・巻いたしっぽ・赤いバンダナと森の色を固定し、後者でうさぎさんの顔と青いバンダナを固定しています。共同作業と完成場面は前作 `08_page08.png` の広場・くまさん・はりねずみさんを補助参照にしました。
 
-内蔵 image_gen に渡したプロンプトと参照順は [`refs/image_prompts.json`](refs/image_prompts.json)、採用画像の由来とSHA-256は [`refs/asset_manifest.json`](refs/asset_manifest.json) に保存しています。参照原画は元の場所に残し、重複した refs 画像は追加していません。
+内蔵image_genに渡したプロンプトと参照順は [refs/image_prompts.json](refs/image_prompts.json)、採用画像の由来とSHA-256は [refs/asset_manifest.json](refs/asset_manifest.json) に保存しています。参照原画は元の場所に残し、重複したrefs画像は追加していません。
 
-表示は1920×1080の16:9、文字は前作同梱のKiwi Maruです。表紙画像にはタイトルの3行文字を含め、`unfinished` の本文テキストはネイティブに重ねています。その他の画面テキストは `lib/pages.dart`、案内レイアウトは `lib/widgets.dart` で編集できます。
+表示は1920x1080の16:9、文字は前作同梱のKiwi Maruです。titleの表紙画像にはタイトルの3行文字を含め、本文8枚にはネイティブな文字を重ねません。unfinishedはidea画像を再使用します。イベントと参加案内の画面テキスト、レイアウトは `lib/pages.dart` と `lib/widgets.dart` で編集できます。
 
 ## 確認用プレビュー
 
 ![全12枚の表示一覧](refs/slide_preview.jpg)
 
-## 追加・修正ファイル
+## 主なファイル
 
 - ルート `pubspec.yaml`: 新デッキをworkspaceへ登録
 - ルート `README.md`: 新デッキへの入口
 - このディレクトリの `pubspec.yaml` / `analysis_options.yaml` / `web/index.html`: アプリ定義
 - `lib/main.dart`: 12枚の並びと共通演出
-- `lib/pages.dart`: 本文テキスト・画像・案内URL
+- `lib/pages.dart`: 本文の画像、案内URL、ページ設定
 - `lib/speaker_notes.dart`: 全12枚の読み上げ草案
-- `lib/widgets.dart`: 絵と文字の配置、QR/バナー領域
+- `lib/widgets.dart`: 画像のみの本文、説明2枚、QR/バナー領域
+- `lib/theme.dart`: 前作oso相当のテーマ、OsoMaterialSlide、OsoBackdrop、フォント倍率2.2
+- `lib/cover_emblem.dart`: 前作由来の外側カバー用アイコン装飾
 - `assets/story/`: 前作原画をアンカーにした新規構図7点（無加工流用なし）
+- `assets/event/banner.png`: 必須の公式イベントバナー（660x371）
+- `assets/event/README.md`: QR生成とバナーの配置手順
 - `assets/fonts/`: 前作から引き継いだKiwi Maru 2種
-- `assets/event/README.md`: QR・バナーの挿入手順
 - `refs/image_prompts.json` / `asset_manifest.json` / `slide_preview.jpg`: 参照記録と確認用画像
 - `test/deck_test.dart`: 全ページ移動と画像差し込みの確認
 - `README.md`: 構成と運用方法
