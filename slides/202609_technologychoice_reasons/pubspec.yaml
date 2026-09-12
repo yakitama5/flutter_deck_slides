@@ -1,0 +1,31 @@
+name: technologychoice_reasons_202609
+description: "コーディング試験を振り返る、選定理由と動くFlutterサンプルのスライド。"
+publish_to: none
+resolution: workspace
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.13.1
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_deck: ^0.29.0
+  flutter_deck_web_client: ^0.4.0
+  slang: ^4.19.1
+  slang_flutter: ^4.19.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true
+  fonts:
+    - family: Kiwi Maru
+      fonts:
+        - asset: assets/fonts/KiwiMaru-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/KiwiMaru-Medium.ttf
+          weight: 500

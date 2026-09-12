@@ -1,0 +1,9 @@
+search: Search repositories
+query: Flutter UI
+result:
+  one: "$count repository found"
+  other: "$count repositories found"
+saved: Saved
+open: View repository
+language: English
+empty: Try another keyword.
