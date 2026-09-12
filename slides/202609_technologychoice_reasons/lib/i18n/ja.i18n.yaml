@@ -1,0 +1,8 @@
+search: リポジトリを検索
+query: Flutter UI
+result:
+  other: "$count 件のリポジトリが見つかりました"
+saved: 保存済み
+open: リポジトリを見る
+language: 日本語
+empty: 別のキーワードで試してみましょう。

@@ -13,6 +13,7 @@ workspace:
   - slides/20260912_oso
   - slides/20260912_oso_festival
   - slides/202609_technologychoice
+  - slides/202609_technologychoice_reasons
 
 dev_dependencies:
   melos: ^7.3.0

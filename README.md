@@ -9,6 +9,12 @@ Pub Workspace + [melos](https://melos.invertase.dev/) で複数管理する mono
 [スライド](https://yakitama5.github.io/flutter_deck_slides/202609_technologychoice/)と
 [読み上げ原稿・時間配分](slides/202609_technologychoice/SCRIPT.md)から確認できます。
 
+選定理由を章ごとに紹介するスライド版「技術選定に 自分の理由を」も追加しています。
+[スライド](https://yakitama5.github.io/flutter_deck_slides/202609_technologychoice_reasons/)では、
+青と紫の紙面に、配色・画面幅・Slangの動くFlutterサンプルを並べています。
+[構成と起動方法](slides/202609_technologychoice_reasons/README.md)・
+[読み上げ原稿](slides/202609_technologychoice_reasons/SCRIPT.md)を参照してください。
+
 ## ディレクトリ構成
 
 ```
