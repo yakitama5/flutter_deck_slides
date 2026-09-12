@@ -83,18 +83,116 @@ class InvitationPage extends StatelessWidget {
     child: Row(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Expanded(
-          flex: 6,
-          child: OsoStatementCard(
-            icon: Icons.celebration_rounded,
-            title: 'ぜひ、ご参加ください。\nお友だちも一緒に。',
-            body: '聞くだけでも、話してみても。\n小さな「おもしろい」が芽を出す。',
-          ),
-        ),
+        Expanded(flex: 6, child: EventDetailsCard()),
         SizedBox(width: 40),
         Expanded(flex: 4, child: EventQrCard()),
       ],
     ),
+  );
+}
+
+/// Event facts from the connpass listing, presented in the same card language.
+class EventDetailsCard extends StatelessWidget {
+  const EventDetailsCard({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    final valueStyle = theme.textTheme.titleMedium?.copyWith(
+      color: colors.onPrimaryContainer,
+      height: 1.45,
+    );
+    final labelStyle = theme.textTheme.labelLarge?.copyWith(
+      color: colors.onPrimaryContainer,
+      fontWeight: FontWeight.w800,
+      letterSpacing: 1.2,
+    );
+
+    return Card.filled(
+      color: colors.primaryContainer,
+      child: Padding(
+        padding: const EdgeInsets.all(52),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.event_available_rounded,
+              size: 96,
+              color: colors.onPrimaryContainer,
+            ),
+            const SizedBox(height: 28),
+            Text(
+              '開催情報',
+              style: theme.textTheme.headlineLarge?.copyWith(
+                color: colors.onPrimaryContainer,
+                fontWeight: FontWeight.w800,
+                height: 1.3,
+              ),
+            ),
+            const SizedBox(height: 28),
+            _EventDetailRow(
+              icon: Icons.calendar_month_rounded,
+              label: '日時',
+              value: '$eventDate\n$eventTime',
+              labelStyle: labelStyle,
+              valueStyle: valueStyle,
+            ),
+            const SizedBox(height: 24),
+            _EventDetailRow(
+              icon: Icons.location_on_rounded,
+              label: '会場',
+              value: '$eventVenue\n$eventAddress',
+              labelStyle: labelStyle,
+              valueStyle: valueStyle,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _EventDetailRow extends StatelessWidget {
+  const _EventDetailRow({
+    required this.icon,
+    required this.label,
+    required this.value,
+    required this.labelStyle,
+    required this.valueStyle,
+  });
+
+  final IconData icon;
+  final String label;
+  final String value;
+  final TextStyle? labelStyle;
+  final TextStyle? valueStyle;
+
+  @override
+  Widget build(BuildContext context) => Row(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Padding(
+        padding: const EdgeInsets.only(top: 4),
+        child: Icon(
+          icon,
+          size: 42,
+          color: Theme.of(context).colorScheme.onPrimaryContainer,
+        ),
+      ),
+      const SizedBox(width: 20),
+      Expanded(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(label, style: labelStyle),
+            const SizedBox(height: 6),
+            Text(value, style: valueStyle),
+          ],
+        ),
+      ),
+    ],
   );
 }
 

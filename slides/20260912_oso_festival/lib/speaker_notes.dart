@@ -124,6 +124,9 @@ https://flutterkaigi.connpass.com/event/401279/
 今回の絵本をハッピーエンドにするため、みなさんにもぜひご参加いただけると幸いです。
 connpassから参加できますので、ぜひご検討ください！
 https://flutterkaigi.connpass.com/event/401279/
+
+画面には開催日時と会場も表示しています。
+2026年9月19日（土）14:00〜17:00、能楽堂ホール tenjin9（〒700-0814 岡山県岡山市北区天神町9-24）です。
 ''';
 
   static const all = <String>[
