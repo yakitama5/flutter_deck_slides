@@ -411,7 +411,7 @@ class _OsoStorybookAppState extends State<OsoStorybookApp> {
                 child: OsoMessageCard(
                   number: '01',
                   icon: Icons.spa_rounded,
-                  headline: 'はじまりは、\nちいさな一粒。',
+                  headline: 'はじまりは\nちいさな一粒。',
                   body: '最初の一歩は、いつも小さい。',
                   color: colors.tertiaryContainer,
                   onColor: colors.onTertiaryContainer,
@@ -430,7 +430,7 @@ class _OsoStorybookAppState extends State<OsoStorybookApp> {
                   child: OsoMessageCard(
                     number: '02',
                     icon: Icons.auto_awesome_rounded,
-                    headline: '「おもしろい」は、\n次の誰かへ広がる。',
+                    headline: '「おもしろい」は\n次の誰かへ広がる。',
                     body: 'その感動が原動力になって、\nまた新しい一歩が生まれる。',
                     color: colors.primaryContainer,
                     onColor: colors.onPrimaryContainer,
@@ -449,7 +449,7 @@ class _OsoStorybookAppState extends State<OsoStorybookApp> {
       route: '/message/model-story',
       title: '絵本のモデルとなった話',
       eyebrow: 'THE STORY BEHIND THE STORY',
-      subtitle: 'ひと粒から、いまの活動まで。',
+      subtitle: 'ひと粒から いまの活動まで。',
       speakerNotes: SpeakerNotes.modelStory,
       steps: 4,
       child: Builder(
@@ -514,7 +514,7 @@ class _OsoStorybookAppState extends State<OsoStorybookApp> {
       route: '/experience/takeaway',
       title: '持ち帰り',
       eyebrow: 'TAKEAWAY',
-      subtitle: '些細なキッカケを、大事に。',
+      subtitle: '些細なキッカケを大事に',
       speakerNotes: SpeakerNotes.takeaway,
       child: const OsoTakeawayBody(),
     );

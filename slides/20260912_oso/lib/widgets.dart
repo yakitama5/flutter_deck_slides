@@ -643,7 +643,7 @@ class OsoTakeawayBody extends StatelessWidget {
                       ),
                       const SizedBox(height: 18),
                       Text(
-                        'まず、\nやってみる。',
+                        'まず\nやってみる',
                         style: theme.textTheme.displaySmall?.copyWith(
                           color: colors.onPrimaryContainer,
                           fontWeight: FontWeight.w900,
@@ -662,7 +662,7 @@ class OsoTakeawayBody extends StatelessWidget {
                       ),
                       const SizedBox(height: 30),
                       Text(
-                        'あなたの「一粒」を、大切に。',
+                        'あなたの「一粒」を大切に',
                         style: theme.textTheme.titleLarge?.copyWith(
                           color: colors.onPrimaryContainer,
                           fontWeight: FontWeight.w700,
@@ -686,8 +686,8 @@ class OsoTakeawayBody extends StatelessWidget {
                 child: _TakeawayBeat(
                   number: '01',
                   icon: Icons.touch_app_rounded,
-                  title: 'まず、やってみる',
-                  body: '些細なきっかけでも、ひとまず手を動かす。',
+                  title: 'まずやってみる',
+                  body: '些細なきっかけでも ひとまず手を動かす',
                 ),
               ),
               SizedBox(height: 20),
@@ -696,7 +696,7 @@ class OsoTakeawayBody extends StatelessWidget {
                   number: '02',
                   icon: Icons.favorite_rounded,
                   title: '「おもしろい」を大事に',
-                  body: 'その感動が、次の一歩の原動力になる。',
+                  body: 'その感動が次の一歩の原動力になる',
                 ),
               ),
               SizedBox(height: 20),
@@ -704,8 +704,8 @@ class OsoTakeawayBody extends StatelessWidget {
                 child: _TakeawayBeat(
                   number: '03',
                   icon: Icons.volunteer_activism_rounded,
-                  title: '次の誰かへ、手渡す',
-                  body: 'いつか誰かに渡せる、一粒になっていく。',
+                  title: '次の誰かへ手渡す',
+                  body: 'いつか誰かに渡せる一粒になっていく',
                 ),
               ),
             ],
@@ -870,7 +870,7 @@ class OsoCompanySlide extends StatelessWidget {
                         ),
                         const SizedBox(height: 30),
                         Text(
-                          'ちいさなキッカケが、\nたくさん見つかる会社です。',
+                          'ちいさなキッカケが\nたくさん見つかる会社です',
                           style: theme.textTheme.displaySmall?.copyWith(
                             color: colors.onSurface,
                             fontWeight: FontWeight.w800,
@@ -880,7 +880,7 @@ class OsoCompanySlide extends StatelessWidget {
                         ),
                         const SizedBox(height: 22),
                         Text(
-                          'あなたの「どんぐり」も、きっとここで見つかります。',
+                          'あなたの「どんぐり」もきっとここで見つかります',
                           style: theme.textTheme.titleLarge?.copyWith(
                             color: colors.onSurfaceVariant,
                             height: 1.45,
