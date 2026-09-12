@@ -39,19 +39,6 @@ const festivalPages = [
     revealOrigin: Alignment(-0.46, 0.35),
   ),
   FestivalPage(
-    'alone',
-    'あれも、これも。……あれれ？',
-    'assets/story/03_alone.png',
-    FestivalNotes.alone,
-    revealOrigin: Alignment(0.2, 0.1),
-  ),
-  FestivalPage(
-    'friends',
-    '「いっしょに やろう！」',
-    'assets/story/04_friends.png',
-    FestivalNotes.friends,
-  ),
-  FestivalPage(
     'preparation',
     'それぞれの できることを。',
     'assets/story/05_preparation.png',
@@ -59,20 +46,8 @@ const festivalPages = [
   ),
   FestivalPage(
     'ready',
-    'ちいさな おまつりが、かたちに。',
+    'あとは、みんなが 来てくれたら。',
     'assets/story/06_ready.png',
     FestivalNotes.ready,
-  ),
-  FestivalPage(
-    'gathering',
-    'あつまると、もっと たのしい。',
-    'assets/story/07_gathering.png',
-    FestivalNotes.gathering,
-  ),
-  FestivalPage(
-    'unfinished',
-    'でも、これはまだ\nとちゅうの おはなし。',
-    'assets/story/02_idea.png',
-    FestivalNotes.unfinished,
   ),
 ];
