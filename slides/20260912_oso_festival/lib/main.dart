@@ -83,8 +83,13 @@ class _ForestFestivalAppState extends State<ForestFestivalApp> {
     client: FlutterDeckWebClient(),
     themeMode: ThemeMode.light,
     lightTheme: FlutterDeckThemeData.fromTheme(osoTheme),
+    // No slideSize here. A fixed slide size sends flutter_deck down a branch
+    // that frames every slide in Colors.black, and the translucent circles of
+    // OsoBackdrop then smear over that frame instead of over the paper. The
+    // slides carry their own fixed canvas instead - OsoCanvas for the talk
+    // slides, the storybook widgets' own design size for the book - so the
+    // gutters stay in the deck's own colours at any window shape.
     configuration: const FlutterDeckConfiguration(
-      slideSize: FlutterDeckSlideSize.custom(width: 1920, height: 1080),
       showProgress: false,
       header: FlutterDeckHeaderConfiguration(showHeader: false),
       footer: FlutterDeckFooterConfiguration(showFooter: false),
@@ -113,6 +118,8 @@ class _ForestFestivalAppState extends State<ForestFestivalApp> {
           child: StorybookPage(
             key: ValueKey(page.slug),
             paperColor: const Color(0xFFFFFDF5),
+            coverColor: const Color(0xFF75523E),
+            accentColor: const Color(0xFFB97840),
             designSize: const Size(1920, 1080),
             outerPadding: EdgeInsets.zero,
             contentPadding: EdgeInsets.zero,
