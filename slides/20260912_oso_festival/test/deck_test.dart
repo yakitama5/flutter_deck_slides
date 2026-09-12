@@ -64,6 +64,9 @@ void main() {
     await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
     await tester.pumpAndSettle();
     expect(find.text(eventUrl), findsOneWidget);
+    expect(find.byType(EventDetailsCard), findsOneWidget);
+    expect(find.text('$eventDate\n$eventTime'), findsOneWidget);
+    expect(find.text('$eventVenue\n$eventAddress'), findsOneWidget);
     expect(find.byType(QrImageView), findsOneWidget);
     expect(find.byType(OsoBackdrop), findsOneWidget);
     expect(tester.takeException(), isNull);

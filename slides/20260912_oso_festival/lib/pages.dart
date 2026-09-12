@@ -4,6 +4,10 @@ import 'speaker_notes.dart';
 
 const festivalTitle = 'リスくんと もりのちいさなおまつり';
 const eventUrl = 'https://flutterkaigi.connpass.com/event/401279/';
+const eventDate = '2026年9月19日（土）';
+const eventTime = '14:00〜17:00';
+const eventVenue = '能楽堂ホール tenjin9';
+const eventAddress = '〒700-0814 岡山県岡山市北区天神町9-24';
 
 class FestivalPage {
   const FestivalPage(
