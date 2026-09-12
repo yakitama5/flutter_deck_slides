@@ -1,0 +1,90 @@
+{
+  "assets": [
+    {
+      "path": "assets/story/01_trend.png",
+      "kind": "AI-generated story illustration",
+      "generator": "built-in image_gen",
+      "width": 1672,
+      "height": 941,
+      "sha256": "250addefb03f102ef8da7d9dd2633d3521a94780f0d4d4f219b06c3dd884eb09"
+    },
+    {
+      "path": "assets/story/02_everyone.png",
+      "kind": "AI-generated story illustration",
+      "generator": "built-in image_gen",
+      "width": 1672,
+      "height": 941,
+      "sha256": "3c37d6e515f3188e74fc35f773d3b8e5f8230405fac1cbae96e4f06953bcc6af"
+    },
+    {
+      "path": "assets/story/03_copy.png",
+      "kind": "AI-generated story illustration",
+      "generator": "built-in image_gen",
+      "width": 1672,
+      "height": 941,
+      "sha256": "c0c08f857fb69ea3a17ce24a4c477ae8126ff70d5b1a655b7b7164ab720c5cde"
+    },
+    {
+      "path": "assets/story/04_trouble.png",
+      "kind": "AI-generated story illustration",
+      "generator": "built-in image_gen",
+      "width": 1672,
+      "height": 941,
+      "sha256": "15435e2f71838236ef9f04b6d04a5918f78385e18102267a0c126ecb45ad5ab9"
+    },
+    {
+      "path": "assets/story/05_owl.png",
+      "kind": "AI-generated story illustration",
+      "generator": "built-in image_gen",
+      "width": 1672,
+      "height": 941,
+      "sha256": "4062036dba365f11d431508d4fd3c4a0c30cebaee74999f7924efb981a130ade"
+    },
+    {
+      "path": "assets/story/06_why.png",
+      "kind": "AI-generated story illustration",
+      "generator": "built-in image_gen",
+      "width": 1672,
+      "height": 941,
+      "sha256": "ccd9feb06c2b27a9ee5c74ee2a9787cf11a5b90c8f3be753b6b054607a294bc4"
+    },
+    {
+      "path": "assets/story/07_purpose.png",
+      "kind": "AI-generated story illustration",
+      "generator": "built-in image_gen",
+      "width": 1672,
+      "height": 941,
+      "sha256": "7378cbcb68fe4999c5eae295dbc9f7d555367d950dbdc0f056527af8879d28a5"
+    },
+    {
+      "path": "assets/story/08_choose.png",
+      "kind": "AI-generated story illustration",
+      "generator": "built-in image_gen",
+      "width": 1672,
+      "height": 941,
+      "sha256": "0ff9233b415053af8de709628c848fbcd6deb347c36e1b971bbb37be7270a223"
+    },
+    {
+      "path": "assets/story/09_works.png",
+      "kind": "AI-generated story illustration",
+      "generator": "built-in image_gen",
+      "width": 1672,
+      "height": 941,
+      "sha256": "c202701a607170dbd4340964b120326e1a0bd2e68c94bc07762f9972dca797fb"
+    },
+    {
+      "path": "assets/story/10_reason.png",
+      "kind": "AI-generated story illustration",
+      "generator": "built-in image_gen",
+      "width": 1672,
+      "height": 941,
+      "sha256": "32d17cfd6508fba8814ffb00001bce75262daf0d108c1b4966b0c09e92bdff87"
+    },
+    {
+      "path": "assets/evidence/search_results_light.png",
+      "kind": "existing application screenshot",
+      "source": "https://github.com/yakitama5/material_github_searcher/blob/5480cbe8bea6e7adce9d12bd207c2c52895d132a/docs/images/search_results_light.png",
+      "sha256": "daec134743e9ce115fdb1ae1203e7a61d9e6a783b3b5d1cb618538e9820469bf"
+    }
+  ]
+}

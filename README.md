@@ -5,6 +5,10 @@ Pub Workspace + [melos](https://melos.invertase.dev/) で複数管理する mono
 
 詳細な設計・意思決定の経緯は [docs/IMPLEMENTATION_PLAN.md](docs/IMPLEMENTATION_PLAN.md) を参照してください。
 
+技術選定の絵本LT「リスくんと ぴったりのかご」は、
+[スライド](https://yakitama5.github.io/flutter_deck_slides/202609_technologychoice/)と
+[読み上げ原稿・時間配分](slides/202609_technologychoice/SCRIPT.md)から確認できます。
+
 ## ディレクトリ構成
 
 ```
