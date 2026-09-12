@@ -1,6 +1,6 @@
 /// 『リスくんと もりのちいさなおまつり』の発表用スピーカーノート。
 ///
-/// 表紙と3場面で、仲間との準備から現実の参加案内へつなぐ続編です。
+/// 表紙と2場面で、おまつりの思いつきから現実の参加案内へつなぐ続編です。
 abstract final class FestivalNotes {
   // 01: 外側の表紙
   static const frontCover = '''
@@ -17,35 +17,22 @@ abstract final class FestivalNotes {
   static const idea = '''
 ある あさ、リスくんは 思いつきました。
 
-「この もりで、おまつりを ひらきたいな。
-みんなの『おもしろい』を、もちよったら どうだろう」
+「この もりで、なにか おまつりを したい！」
 ''';
 
-  // 04 / 本文02: 仲間と一緒に準備する
-  static const preparation = '''
-リスくんが 声をかけると、うさぎさんも、くまさんも、
-はりねずみさんも「いっしょに やろう！」
-
-旗を かざって、机を ならべて。
-ひとりの 思いつきが、みんなの 手で 形に なりました。
-''';
-
-  // 05 / 本文03: みんなを待つ
+  // 04 / 本文02: みんなを待つ
   static const ready = '''
 ちいさな おまつりの 準備が できました。
 
-「あとは、みんなが 来てくれたら。
-どんな『おもしろい』に 出会えるかな」
-
-でも、お話は まだ とちゅう。
+「みんな、来てくれるかな〜。」
 ''';
 
-  // 06: 絵本の裏表紙
+  // 05: 絵本の裏表紙
   static const backCover = '''
 この お話の つづきは、みんなが 集まってから。
 ''';
 
-  // 07: 絵本から現実の FlutterKaigi mini 岡山へ
+  // 06: 絵本から現実の FlutterKaigi mini 岡山へ
   static const event = '''
 実は、私たちも岡山で、みんなの「おもしろい」が集まる場所を準備しています。
 来週、FlutterKaigi mini が岡山で開かれます。
@@ -58,7 +45,7 @@ Flutterを知らない人も知ってる人も、「おもしろい」が見つ�
 https://flutterkaigi.connpass.com/event/401279/
 ''';
 
-  // 08: 参加と継続を呼びかける
+  // 07: 参加と継続を呼びかける
   static const invitation = '''
 ですが、まだまだ参加人数が多いとは言えません。
 「リスくんとひとつのどんぐり」でもお話しした小さなきっかけが見つかる場所だとおもうので、ぜひ あそびに 来てください。
@@ -77,7 +64,6 @@ https://flutterkaigi.connpass.com/event/401279/
     frontCover,
     title,
     idea,
-    preparation,
     ready,
     backCover,
     event,

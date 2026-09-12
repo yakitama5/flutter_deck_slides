@@ -33,20 +33,14 @@ const festivalPages = [
   ),
   FestivalPage(
     'idea',
-    'この もりで、おまつりを。',
+    'おまつりを したい！',
     'assets/story/02_idea.png',
     FestivalNotes.idea,
     revealOrigin: Alignment(-0.46, 0.35),
   ),
   FestivalPage(
-    'preparation',
-    'それぞれの できることを。',
-    'assets/story/05_preparation.png',
-    FestivalNotes.preparation,
-  ),
-  FestivalPage(
     'ready',
-    'あとは、みんなが 来てくれたら。',
+    'みんな、来てくれるかな〜。',
     'assets/story/06_ready.png',
     FestivalNotes.ready,
   ),
