@@ -12,6 +12,7 @@ workspace:
   - slides/202608_risukun_super_tenkomori_car
   - slides/20260912_oso
   - slides/20260912_oso_festival
+  - slides/202609_technologychoice
 
 dev_dependencies:
   melos: ^7.3.0

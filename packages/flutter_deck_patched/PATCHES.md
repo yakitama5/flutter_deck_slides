@@ -13,6 +13,10 @@ Local changes:
   neighbouring paper through their changing silhouette.
 - `FlutterDeckApp` mounts its focusable deck subtree after the first layout
   frame, avoiding Flutter 3.47's initial Web view-focus race.
+- The presenter client initializes from the router's resolved presentation
+  mode, including Web where the constructor mode is null. The reserved
+  presenter route starts at slide zero until synchronized, avoiding an invalid
+  slide index and blank notes when opening the presenter window.
 - Source is formatted with the repository's Dart 3.13.1 formatter.
 - One upstream single-line `if` is wrapped in braces to satisfy the workspace
   lint configuration.

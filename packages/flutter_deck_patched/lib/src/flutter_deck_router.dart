@@ -126,9 +126,12 @@ class FlutterDeckRouter extends ChangeNotifier {
   }
 
   void _initRouterData({String? initialRoute, bool? isPresenterView}) {
-    _currentSlideIndex = initialRoute != null
+    final initialSlideIndex = initialRoute != null
         ? slides.indexWhere((s) => s.route == initialRoute)
         : 0;
+    // The presenter route is not a slide. Show the first slide until the
+    // client supplies the current presentation state.
+    _currentSlideIndex = initialSlideIndex >= 0 ? initialSlideIndex : 0;
     _currentSlideStep = 1;
     _isPresenterView = false;
 

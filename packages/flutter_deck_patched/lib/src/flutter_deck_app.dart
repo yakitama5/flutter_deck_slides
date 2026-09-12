@@ -229,7 +229,7 @@ class _FlutterDeckAppState extends State<FlutterDeckApp> {
       router: _flutterDeckRouter,
     );
 
-    if (widget.client != null && !(widget.isPresenterView ?? true)) {
+    if (widget.client != null && !_flutterDeckRouter.isPresenterView) {
       _presenterController.init();
     }
 
