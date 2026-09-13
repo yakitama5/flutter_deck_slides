@@ -163,7 +163,7 @@ class _DashmaruViewerState extends State<DashmaruViewer> {
             ),
             SizedBox(height: tight ? 8 : 12),
             Text(
-              'だしゅまる、3Dになる。',
+              'PRプレビュー・初回公開',
               style: TextStyle(
                 fontSize: compact ? 29 : (tight ? 36 : 42),
                 fontWeight: FontWeight.w800,
