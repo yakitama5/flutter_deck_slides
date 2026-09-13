@@ -1,0 +1,26 @@
+{
+  "height": 3.04,
+  "front": "+Z",
+  "up": "+Y",
+  "meshes": 26,
+  "triangles": 78772,
+  "animations": [
+    {
+      "name": "Walk",
+      "tracks": 12
+    },
+    {
+      "name": "Jump",
+      "tracks": 12
+    },
+    {
+      "name": "Wave",
+      "tracks": 12
+    },
+    {
+      "name": "Blink",
+      "tracks": 12
+    }
+  ],
+  "bytes": 2041872
+}

@@ -1,0 +1,3 @@
+# Local visual QA artifacts. Ship the authored GLB, not reference/QA images.
+/screenshots/
+/gltf_validation.json

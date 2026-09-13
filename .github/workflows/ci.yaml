@@ -30,5 +30,8 @@ jobs:
       - name: Test
         run: dart run melos run test --no-select
 
+      - name: Validate Dashmaru model and animations
+        run: python3 slides/20260919_flutterkaigi_mini/tool/check_dashmaru.py
+
       - name: Build web (全スライド)
         run: dart run tool/build_web.dart

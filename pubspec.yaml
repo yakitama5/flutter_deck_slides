@@ -14,6 +14,7 @@ workspace:
   - slides/20260912_oso_festival
   - slides/202609_technologychoice
   - slides/202609_technologychoice_reasons
+  - slides/20260919_flutterkaigi_mini
 
 dev_dependencies:
   melos: ^7.3.0
