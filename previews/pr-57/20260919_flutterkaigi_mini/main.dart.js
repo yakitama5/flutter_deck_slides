@@ -104224,7 +104224,7 @@ A.ayy.prototype={
 $2(a,b){var s,r,q=null,p=b.b<760,o=b.d,n=o<700,m=p?20:40,l=n?18:28,k=p?20:40,j=t.E,i=A.nb(A.a([B.K2,B.n8,A.j2("FLUTTERKAIGI MINI  /  2026.09.19",q,q,q,A.j4(q,q,B.bU,q,q,q,q,q,q,q,q,p?10:11,q,q,B.cH,q,q,!0,q,1.6,q,q,q,q,q,q),q,q)],j),B.aI,B.b1,B.bi,0),h=A.lx(q,n?8:12,q)
 if(p)s=29
 else s=n?36:42
-s=A.a([i,h,A.j2("PR\u30d7\u30ec\u30d3\u30e5\u30fc\u30fb\u521d\u56de\u516c\u958b",q,q,q,A.j4(q,q,B.d7,q,q,q,q,q,q,q,q,s,q,q,B.pS,q,1.2,!0,q,-1.5,q,q,q,q,q,q),q,q)],j)
+s=A.a([i,h,A.j2("PR\u30d7\u30ec\u30d3\u30e5\u30fc\u30fb\u66f4\u65b0\u78ba\u8a8d",q,q,q,A.j4(q,q,B.d7,q,q,q,q,q,q,q,q,s,q,q,B.pS,q,1.2,!0,q,-1.5,q,q,q,q,q,q),q,q)],j)
 if(!n)B.b.I(s,A.a([B.ZK,B.a4O],j))
 i=A.a([A.aJS(A.Ng(s,B.bW,B.bi),1)],j)
 if(!p)i.push(new A.dU(B.Jm,A.rf(B.VF,new A.eG(B.l,q,A.aJg(B.hI),A.oh(30),q,q,B.be),B.cD),q))
