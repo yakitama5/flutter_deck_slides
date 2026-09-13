@@ -3,24 +3,30 @@
   "front": "+Z",
   "up": "+Y",
   "meshes": 26,
-  "triangles": 78772,
+  "joints": 16,
+  "rig": "Smooth weighted body, three-joint wings, two-bone IK legs",
+  "triangles": 115028,
   "animations": [
     {
       "name": "Walk",
-      "tracks": 12
+      "tracks": 53
     },
     {
       "name": "Jump",
-      "tracks": 12
+      "tracks": 53
     },
     {
       "name": "Wave",
-      "tracks": 12
+      "tracks": 53
     },
     {
       "name": "Blink",
-      "tracks": 12
+      "tracks": 53
+    },
+    {
+      "name": "Idle",
+      "tracks": 53
     }
   ],
-  "bytes": 2041872
+  "bytes": 4670352
 }

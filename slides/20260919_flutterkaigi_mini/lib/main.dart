@@ -95,6 +95,8 @@ class _DashmaruViewerState extends State<DashmaruViewer> {
           _selectMotion(DashmaruMotion.wave),
       const SingleActivator(LogicalKeyboardKey.digit4): () =>
           _selectMotion(DashmaruMotion.blink),
+      const SingleActivator(LogicalKeyboardKey.digit5): () =>
+          _selectMotion(DashmaruMotion.idle),
       const SingleActivator(LogicalKeyboardKey.space): _togglePlay,
       const SingleActivator(LogicalKeyboardKey.keyR): _reset,
     },
@@ -377,13 +379,27 @@ class _DashmaruViewerState extends State<DashmaruViewer> {
     ),
   );
 
-  Widget _motionControls(bool compact) => Row(
-    children: [
-      for (final motion in DashmaruMotion.values) ...[
-        if (motion.index > 0) SizedBox(width: compact ? 8 : 12),
-        Expanded(child: _motionCard(motion, compact)),
-      ],
-    ],
+  Widget _motionControls(bool compact) => LayoutBuilder(
+    builder: (context, constraints) {
+      final columns = constraints.maxWidth < 520 ? 3 : 5;
+      final spacing = compact ? 8.0 : 12.0;
+      final width = (constraints.maxWidth - spacing * (columns - 1)) / columns;
+      return Wrap(
+        spacing: spacing,
+        runSpacing: spacing,
+        children: [
+          for (final motion in DashmaruMotion.values)
+            SizedBox(
+              width: width,
+              height: compact ? 89 : 132,
+              child: Tooltip(
+                message: '${motion.label}（キー ${motion.index + 1}）',
+                child: _motionCard(motion, compact),
+              ),
+            ),
+        ],
+      );
+    },
   );
 
   Widget _motionCard(DashmaruMotion motion, bool compact) {
@@ -393,6 +409,7 @@ class _DashmaruViewerState extends State<DashmaruViewer> {
       DashmaruMotion.jump => Icons.arrow_upward_rounded,
       DashmaruMotion.wave => Icons.waving_hand_rounded,
       DashmaruMotion.blink => Icons.visibility_rounded,
+      DashmaruMotion.idle => Icons.spa_rounded,
     };
     return Material(
       color: active ? _green : Colors.white,
@@ -405,7 +422,7 @@ class _DashmaruViewerState extends State<DashmaruViewer> {
         onTap: _ready ? () => _selectMotion(motion) : null,
         child: Padding(
           padding: EdgeInsets.symmetric(
-            horizontal: compact ? 10 : 20,
+            horizontal: compact ? 8 : 14,
             vertical: compact ? 15 : 18,
           ),
           child: Column(
