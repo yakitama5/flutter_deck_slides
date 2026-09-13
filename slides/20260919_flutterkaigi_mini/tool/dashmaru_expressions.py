@@ -1,16 +1,17 @@
 """Reference-based, curved face markings for the Dashmaru glTF sculpture.
 
 The drawing references use the same round eye outlines for a tiny-pupil blank
-look, happy arches and dizzy spirals. Geometry stays a rigid child of Head,
+look, happy arches and dizzy spirals. A tightly squeezed pair of eyelids adds
+an exertion expression for jumping. Geometry stays a rigid child of Head,
 matching the normal eyes while the soft body bends around it. The Flutter app
-selects a group independently of the locomotion animation.
+selects the visible group independently of the animation channels.
 """
 
 import math
 
 
 def build_expressions(g, head, head_position, patch, tube, surface, circle, ink, white):
-    """Add hidden FaceDeadpan, FaceSmile and FaceSpiral groups; return their IDs.
+    """Add hidden deadpan, smile, spiral and strain groups; return their IDs.
 
     All contour coordinates are authored in model space and converted to Head
     local space exactly once. Groups start scaled down for generic glTF viewers;
@@ -96,7 +97,55 @@ def build_expressions(g, head, head_position, patch, tube, surface, circle, ink,
                     group,
                     head_position,
                 )
+    groups.append(_build_strain(g, head, head_position, tube, surface, ink))
     return groups
+
+
+def _build_strain(g, head, head_position, tube, surface, ink):
+    """Squeeze both eyes inward into rounded > < shapes on the blue mask."""
+    group = g.node("FaceStrain", head, (0, 0, 0))
+    g.doc["nodes"][group]["scale"] = [0.001, 0.001, 0.001]
+    # Short quadratic arcs soften the inward point instead of making a sharp
+    # chevron joint. No eye whites remain visible when the lids squeeze shut.
+    curves = (
+        ((-0.100, 0.085), (-0.010, 0.067), (0.080, 0.012)),
+        ((0.080, 0.012), (0.100, 0.000), (0.080, -0.012)),
+        ((0.080, -0.012), (-0.010, -0.067), (-0.100, -0.085)),
+    )
+    for side, x, direction in (("Left", -0.167, 1), ("Right", 0.167, -1)):
+        points = []
+        for start, control, end in curves:
+            for i in range(24):
+                t = i / 24
+                u = 1 - t
+                dx, dy = (
+                    u * u * start[k] + 2 * u * t * control[k] + t * t * end[k]
+                    for k in range(2)
+                )
+                points.append(surface(x + direction * dx, 1.81 + dy, 0.055))
+        dx, dy = curves[-1][-1]
+        points.append(surface(x + direction * dx, 1.81 + dy, 0.055))
+        radius = 0.020
+        tube(
+            "Strain " + side + " squeezed eyelid",
+            points,
+            radius,
+            ink,
+            group,
+            closed=False,
+            origin=head_position,
+        )
+        for end, center in enumerate((points[0], points[-1])):
+            _round_cap(
+                g,
+                "Strain " + side + " stroke cap " + str(end),
+                center,
+                radius,
+                ink,
+                group,
+                head_position,
+            )
+    return group
 
 
 def _round_cap(g, name, center, radius, material, parent, origin):
