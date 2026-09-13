@@ -16,7 +16,9 @@ void main() {
 }
 
 class DashmaruApp extends StatelessWidget {
-  const DashmaruApp({super.key});
+  const DashmaruApp({super.key, this.world});
+
+  final DashmaruScene? world;
 
   @override
   Widget build(BuildContext context) => MaterialApp(
@@ -35,19 +37,21 @@ class DashmaruApp extends StatelessWidget {
         bodyLarge: TextStyle(color: _ink),
       ),
     ),
-    home: const DashmaruViewer(),
+    home: DashmaruViewer(world: world),
   );
 }
 
 class DashmaruViewer extends StatefulWidget {
-  const DashmaruViewer({super.key});
+  const DashmaruViewer({super.key, this.world});
+
+  final DashmaruScene? world;
 
   @override
   State<DashmaruViewer> createState() => _DashmaruViewerState();
 }
 
 class _DashmaruViewerState extends State<DashmaruViewer> {
-  final _world = DashmaruScene();
+  late final _world = widget.world ?? DashmaruScene();
   bool _ready = false;
   Object? _error;
 
@@ -62,6 +66,7 @@ class _DashmaruViewerState extends State<DashmaruViewer> {
     try {
       await _world.load(
         initialMotion: DashmaruMotion.parse(query['motion']),
+        initialExpression: DashmaruExpression.parse(query['expression']),
         initialTime: double.tryParse(query['time'] ?? ''),
         initialCamera: query['camera'],
       );
@@ -74,6 +79,10 @@ class _DashmaruViewerState extends State<DashmaruViewer> {
 
   void _selectMotion(DashmaruMotion motion) {
     if (_ready) setState(() => _world.selectMotion(motion));
+  }
+
+  void _selectExpression(DashmaruExpression expression) {
+    if (_ready) setState(() => _world.selectExpression(expression));
   }
 
   void _togglePlay() {
@@ -97,6 +106,10 @@ class _DashmaruViewerState extends State<DashmaruViewer> {
           _selectMotion(DashmaruMotion.blink),
       const SingleActivator(LogicalKeyboardKey.digit5): () =>
           _selectMotion(DashmaruMotion.idle),
+      const SingleActivator(LogicalKeyboardKey.digit6): () =>
+          _selectMotion(DashmaruMotion.run),
+      const SingleActivator(LogicalKeyboardKey.digit7): () =>
+          _selectMotion(DashmaruMotion.shake),
       const SingleActivator(LogicalKeyboardKey.space): _togglePlay,
       const SingleActivator(LogicalKeyboardKey.keyR): _reset,
     },
@@ -123,7 +136,9 @@ class _DashmaruViewerState extends State<DashmaruViewer> {
                     Expanded(child: _stage(compact)),
                     const SizedBox(height: 18),
                     _motionControls(compact),
-                    const SizedBox(height: 14),
+                    const SizedBox(height: 10),
+                    _expressionControls(),
+                    const SizedBox(height: 8),
                     _footer(compact),
                   ],
                 ),
@@ -152,13 +167,15 @@ class _DashmaruViewerState extends State<DashmaruViewer> {
               children: [
                 const FlutterLogo(size: 18),
                 const SizedBox(width: 8),
-                Text(
-                  'FLUTTERKAIGI MINI  /  2026.09.19',
-                  style: TextStyle(
-                    fontSize: compact ? 10 : 11,
-                    color: _green,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 1.6,
+                Flexible(
+                  child: Text(
+                    'FLUTTERKAIGI MINI  /  2026.09.19',
+                    style: TextStyle(
+                      fontSize: compact ? 10 : 11,
+                      color: _green,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 1.6,
+                    ),
                   ),
                 ),
               ],
@@ -251,7 +268,9 @@ class _DashmaruViewerState extends State<DashmaruViewer> {
                   ),
                 )
               : Semantics(
-                  label: 'だしゅまるの3Dモデル。${_world.motion.label}のアニメーション。',
+                  label:
+                      'だしゅまるの3Dモデル。${_world.motion.label}のアニメーション。'
+                      '表情は${_world.expression.label}。',
                   child: MouseRegion(
                     cursor: SystemMouseCursors.grab,
                     child: Listener(
@@ -320,17 +339,25 @@ class _DashmaruViewerState extends State<DashmaruViewer> {
           ),
         Positioned(
           bottom: 14,
-          left: 16,
-          right: 16,
+          left: compact ? 8 : 16,
+          right: compact ? 8 : 16,
           child: Row(
             children: [
               _cameraControls(compact),
               const Spacer(),
-              _toolButton(
-                icon: Icons.restart_alt_rounded,
-                label: 'リセット',
-                onPressed: _ready ? _reset : null,
-              ),
+              if (compact)
+                IconButton(
+                  tooltip: 'リセット',
+                  icon: const Icon(Icons.restart_alt_rounded),
+                  color: _ink,
+                  onPressed: _ready ? _reset : null,
+                )
+              else
+                _toolButton(
+                  icon: Icons.restart_alt_rounded,
+                  label: 'リセット',
+                  onPressed: _ready ? _reset : null,
+                ),
             ],
           ),
         ),
@@ -381,8 +408,8 @@ class _DashmaruViewerState extends State<DashmaruViewer> {
 
   Widget _motionControls(bool compact) => LayoutBuilder(
     builder: (context, constraints) {
-      final columns = constraints.maxWidth < 520 ? 3 : 5;
-      final spacing = compact ? 8.0 : 12.0;
+      final columns = constraints.maxWidth < 680 ? 4 : 7;
+      final spacing = compact ? 6.0 : 10.0;
       final width = (constraints.maxWidth - spacing * (columns - 1)) / columns;
       return Wrap(
         spacing: spacing,
@@ -391,9 +418,9 @@ class _DashmaruViewerState extends State<DashmaruViewer> {
           for (final motion in DashmaruMotion.values)
             SizedBox(
               width: width,
-              height: compact ? 89 : 132,
+              height: compact ? 64 : 82,
               child: Tooltip(
-                message: '${motion.label}（キー ${motion.index + 1}）',
+                message: '${motion.caption}（キー ${motion.index + 1}）',
                 child: _motionCard(motion, compact),
               ),
             ),
@@ -410,11 +437,13 @@ class _DashmaruViewerState extends State<DashmaruViewer> {
       DashmaruMotion.wave => Icons.waving_hand_rounded,
       DashmaruMotion.blink => Icons.visibility_rounded,
       DashmaruMotion.idle => Icons.spa_rounded,
+      DashmaruMotion.run => Icons.directions_run_rounded,
+      DashmaruMotion.shake => Icons.sync_alt_rounded,
     };
     return Material(
       color: active ? _green : Colors.white,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(16),
         side: BorderSide(color: active ? _green : _line),
       ),
       clipBehavior: Clip.antiAlias,
@@ -422,8 +451,8 @@ class _DashmaruViewerState extends State<DashmaruViewer> {
         onTap: _ready ? () => _selectMotion(motion) : null,
         child: Padding(
           padding: EdgeInsets.symmetric(
-            horizontal: compact ? 8 : 14,
-            vertical: compact ? 15 : 18,
+            horizontal: compact ? 6 : 12,
+            vertical: compact ? 10 : 13,
           ),
           child: Column(
             crossAxisAlignment: compact
@@ -435,7 +464,11 @@ class _DashmaruViewerState extends State<DashmaruViewer> {
                     ? MainAxisAlignment.center
                     : MainAxisAlignment.start,
                 children: [
-                  Icon(icon, size: 23, color: active ? Colors.white : _green),
+                  Icon(
+                    icon,
+                    size: compact ? 19 : 23,
+                    color: active ? Colors.white : _green,
+                  ),
                   if (!compact) ...[
                     const Spacer(),
                     Text(
@@ -449,31 +482,53 @@ class _DashmaruViewerState extends State<DashmaruViewer> {
                   ],
                 ],
               ),
-              const SizedBox(height: 10),
+              SizedBox(height: compact ? 5 : 9),
               Text(
                 motion.label,
                 style: TextStyle(
                   color: active ? Colors.white : _ink,
                   fontWeight: FontWeight.w700,
-                  fontSize: compact ? 13 : 16,
+                  fontSize: compact ? 12 : 14,
                 ),
               ),
-              if (!compact) ...[
-                const SizedBox(height: 5),
-                Text(
-                  motion.caption,
-                  style: TextStyle(
-                    color: active ? Colors.white70 : _muted,
-                    fontSize: 11,
-                  ),
-                ),
-              ],
             ],
           ),
         ),
       ),
     );
   }
+
+  Widget _expressionControls() => Wrap(
+    spacing: 6,
+    runSpacing: 4,
+    crossAxisAlignment: WrapCrossAlignment.center,
+    children: [
+      const Padding(
+        padding: EdgeInsets.only(right: 4),
+        child: Text('表情', style: TextStyle(color: _muted, fontSize: 12)),
+      ),
+      for (final expression in DashmaruExpression.values)
+        ChoiceChip(
+          label: Text(expression.label),
+          selected: _world.expression == expression,
+          onSelected: _ready ? (_) => _selectExpression(expression) : null,
+          showCheckmark: false,
+          selectedColor: const Color(0xFFDCEDE0),
+          backgroundColor: Colors.white,
+          side: BorderSide(
+            color: _world.expression == expression ? _green : _line,
+          ),
+          labelStyle: TextStyle(
+            color: _world.expression == expression ? _green : _muted,
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 6),
+          visualDensity: VisualDensity.compact,
+          materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        ),
+    ],
+  );
 
   Widget _footer(bool compact) => Row(
     children: [
@@ -502,12 +557,16 @@ class _DashmaruViewerState extends State<DashmaruViewer> {
               : (value) => setState(() => _world.setSpeed(value!)),
         ),
       ),
-      const Spacer(),
-      Text(
-        compact
-            ? '© FlutterKaigi'
-            : 'だしゅまる © FlutterKaigi  ·  3D fan recreation',
-        style: const TextStyle(fontSize: 10, color: _muted),
+      Expanded(
+        child: Text(
+          compact
+              ? '© FlutterKaigi'
+              : 'だしゅまる © FlutterKaigi  ·  3D fan recreation',
+          textAlign: TextAlign.end,
+          overflow: TextOverflow.ellipsis,
+          maxLines: 1,
+          style: const TextStyle(fontSize: 10, color: _muted),
+        ),
       ),
     ],
   );

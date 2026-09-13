@@ -3,13 +3,15 @@ import 'dart:math' as math;
 import 'package:flutter_scene/scene.dart' as scene;
 import 'package:vector_math/vector_math.dart' as vm;
 
-/// The five animations authored into the glTF model.
+/// The seven animations authored into the glTF model.
 enum DashmaruMotion {
   walk('Walk', '歩く', 'てくてく、いっしょに。'),
   jump('Jump', 'ジャンプ', '羽ばたいて、ふわっ。'),
   wave('Wave', '手を振る', 'またね、バイバイ！'),
   blink('Blink', 'まばたき', 'ぱちっ。ひとやすみ。'),
-  idle('Idle', '待機', 'ゆらゆら、のんびり。');
+  idle('Idle', '待機', 'ゆらゆら、のんびり。'),
+  run('Run', '走る', 'ぱたぱた、どたばた！'),
+  shake('Shake', 'ぶんぶん', 'ぶんぶん、ぷるぷる。');
 
   const DashmaruMotion(this.clipName, this.label, this.caption);
   final String clipName;
@@ -22,19 +24,38 @@ enum DashmaruMotion {
   );
 }
 
+/// Expressions remain independent of the current animation and its blend.
+enum DashmaruExpression {
+  normal('FaceNormal', '通常'),
+  deadpan('FaceDeadpan', '真顔'),
+  smile('FaceSmile', '笑顔'),
+  spiral('FaceSpiral', 'ぐるぐる');
+
+  const DashmaruExpression(this.nodeName, this.label);
+  final String nodeName;
+  final String label;
+
+  static DashmaruExpression parse(String? value) => values.firstWhere(
+    (expression) => expression.name == value?.toLowerCase(),
+    orElse: () => normal,
+  );
+}
+
 /// Owns the retained Flutter Scene graph and its glTF animation clips.
 ///
 /// glTF is Y-up / +Z-front. Flutter Scene converts the imported asset to its
 /// left-handed coordinates, making -Z the front in the runtime scene.
 class DashmaruScene {
-  final scene.Scene sceneGraph = scene.Scene();
+  late final scene.Scene sceneGraph = scene.Scene();
   final Map<DashmaruMotion, scene.AnimationClip> _clips = {};
   final Map<DashmaruMotion, double> durations = {};
   final Map<DashmaruMotion, double> _transitionWeights = {};
+  final Map<DashmaruExpression, scene.Node> _expressionNodes = {};
   static const _transitionDuration = 0.3;
   double _transitionElapsed = 0;
 
   DashmaruMotion motion = DashmaruMotion.idle;
+  DashmaruExpression expression = DashmaruExpression.normal;
   bool playing = true;
   bool orbiting = false;
   double speed = 1;
@@ -44,6 +65,7 @@ class DashmaruScene {
 
   Future<void> load({
     required DashmaruMotion initialMotion,
+    DashmaruExpression initialExpression = DashmaruExpression.normal,
     double? initialTime,
     String? initialCamera,
   }) async {
@@ -62,6 +84,18 @@ class DashmaruScene {
         ..loop = true;
       durations[motion] = animation.endTime;
     }
+
+    for (final expression in DashmaruExpression.values) {
+      final node = model.getChildByName(expression.nodeName);
+      if (node == null) {
+        throw StateError('3D モデルに ${expression.label} の表情がありません。');
+      }
+      // glTF has no visibility flag, so the alternate faces are authored at
+      // tiny scales. Restore their size once, then hide their entire subtree.
+      // None of these group transforms belongs to an animation track.
+      _expressionNodes[expression] = node..scale = vm.Vector3.all(1);
+    }
+    selectExpression(initialExpression);
 
     // Directional studio fill reveals the padded wings and rounded feet from
     // every angle, while retaining the authored pale blue and pink palette.
@@ -157,6 +191,13 @@ class DashmaruScene {
     }
   }
 
+  void selectExpression(DashmaruExpression value) {
+    expression = value;
+    for (final entry in _expressionNodes.entries) {
+      entry.value.visible = entry.key == value;
+    }
+  }
+
   void setSpeed(double value) {
     speed = value;
     for (final clip in _clips.values) {
@@ -179,6 +220,7 @@ class DashmaruScene {
     distance = 12;
     setCamera('front');
     setSpeed(1);
+    selectExpression(DashmaruExpression.normal);
     selectMotion(DashmaruMotion.idle, animateTransition: false);
   }
 
