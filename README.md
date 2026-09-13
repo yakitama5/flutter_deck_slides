@@ -5,6 +5,10 @@ Pub Workspace + [melos](https://melos.invertase.dev/) で複数管理する mono
 
 詳細な設計・意思決定の経緯は [docs/IMPLEMENTATION_PLAN.md](docs/IMPLEMENTATION_PLAN.md) を参照してください。
 
+FlutterKaigi mini 向けの [だしゅまる3Dデモ](slides/20260919_flutterkaigi_mini/README.md) を
+`slides/20260919_flutterkaigi_mini` に追加しています。FlutterSceneで描画し、
+歩行・ジャンプ・バイバイ・まばたきを再生できます。再生成可能なGLBモデルを同梱し、Web / macOSで起動できます。
+
 技術選定の絵本LT「リスくんと ぴったりのかご」は、
 [スライド](https://yakitama5.github.io/flutter_deck_slides/202609_technologychoice/)と
 [読み上げ原稿・時間配分](slides/202609_technologychoice/SCRIPT.md)から確認できます。
