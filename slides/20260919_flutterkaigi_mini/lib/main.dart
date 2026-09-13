@@ -163,7 +163,7 @@ class _DashmaruViewerState extends State<DashmaruViewer> {
             ),
             SizedBox(height: tight ? 8 : 12),
             Text(
-              'PRプレビュー・初回公開',
+              'PRプレビュー・更新確認',
               style: TextStyle(
                 fontSize: compact ? 29 : (tight ? 36 : 42),
                 fontWeight: FontWeight.w800,
