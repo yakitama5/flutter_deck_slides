@@ -6,25 +6,22 @@
 // 効かないため、base-href にパッケージ名を埋め込む処理は Dart 側で行う。
 //
 // リポジトリルートから実行すること。
+// WEB_BASE_PATH: 公開パス。WEB_SLIDES: 対象名（改行またはカンマ区切り、空なら全件）。
 import 'dart:io';
 
-const _basePath = '/flutter_deck_slides';
+import 'web_build_options.dart';
 
 void main() {
-  final repoRoot = Directory.current;
-  final slidesDir = Directory('${repoRoot.path}/slides');
-
-  if (!slidesDir.existsSync()) {
-    stderr.writeln('エラー: slides/ ディレクトリが見つかりません。リポジトリルートで実行してください。');
+  try {
+    _build(WebBuildOptions.fromEnvironment(Platform.environment));
+  } on FormatException catch (error) {
+    stderr.writeln('エラー: ${error.message}');
     exit(1);
   }
+}
 
-  final slideDirs = slidesDir
-      .listSync()
-      .whereType<Directory>()
-      .where((d) => File('${d.path}/pubspec.yaml').existsSync())
-      .toList()
-    ..sort((a, b) => a.path.compareTo(b.path));
+void _build(WebBuildOptions options) {
+  final slideDirs = options.slideDirectories(Directory.current);
 
   if (slideDirs.isEmpty) {
     stdout.writeln('ビルド対象のスライドがありません。');
@@ -34,8 +31,8 @@ void main() {
   var failureCount = 0;
 
   for (final dir in slideDirs) {
-    final slideName = dir.uri.pathSegments.where((s) => s.isNotEmpty).last;
-    final baseHref = '$_basePath/$slideName/';
+    final slideName = slideDirectoryName(dir);
+    final baseHref = options.slideBaseHref(slideName);
 
     stdout.writeln('▸ [$slideName] flutter build web --base-href $baseHref');
     final result = Process.runSync(
