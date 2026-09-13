@@ -22,24 +22,41 @@ void main() {
     const Size(390, 844),
     const Size(640, 360),
   ]) {
-    testWidgets('viewer controls fit ${size.width} × ${size.height}', (
-      tester,
-    ) async {
-      tester.view
-        ..devicePixelRatio = 1
-        ..physicalSize = size;
-      addTearDown(tester.view.resetPhysicalSize);
-      addTearDown(tester.view.resetDevicePixelRatio);
+    for (final motion in [DashmaruMotion.idle, DashmaruMotion.jump]) {
+      testWidgets(
+        'viewer controls fit ${size.width} × ${size.height}: ${motion.name}',
+        (tester) async {
+          tester.view
+            ..devicePixelRatio = 1
+            ..physicalSize = size;
+          addTearDown(tester.view.resetPhysicalSize);
+          addTearDown(tester.view.resetDevicePixelRatio);
 
-      // The loading shell has the same controls and stage constraints as the
-      // ready viewer, without requiring a GPU in the widget-test process.
-      await tester.pumpWidget(DashmaruApp(world: _LoadingScene()));
-      expect(tester.takeException(), isNull);
-      for (final label in ['歩く', 'ジャンプ', '手を振る', 'まばたき', '待機', '走る', 'ぶんぶん']) {
-        expect(find.text(label), findsOneWidget);
-      }
-      expect(find.byType(ChoiceChip), findsNWidgets(4));
-      await tester.pumpWidget(const SizedBox());
-    });
+          // The loading shell has the same controls and stage constraints as the
+          // ready viewer, without requiring a GPU in the widget-test process.
+          await tester.pumpWidget(
+            DashmaruApp(world: _LoadingScene()..motion = motion),
+          );
+          expect(tester.takeException(), isNull);
+          for (final label in [
+            '歩く',
+            'ジャンプ',
+            '手を振る',
+            'まばたき',
+            '待機',
+            '走る',
+            'ぶんぶん',
+          ]) {
+            expect(find.text(label), findsOneWidget);
+          }
+          expect(find.byType(ChoiceChip), findsNWidgets(4));
+          expect(
+            find.text('ジャンプ中は踏ん張る表情'),
+            motion == DashmaruMotion.jump ? findsOneWidget : findsNothing,
+          );
+          await tester.pumpWidget(const SizedBox());
+        },
+      );
+    }
   }
 }

@@ -749,7 +749,13 @@ class Model:
                 )
 
     def check_expressions(self):
-        names = ("FaceNormal", "FaceDeadpan", "FaceSmile", "FaceSpiral")
+        names = (
+            "FaceNormal",
+            "FaceDeadpan",
+            "FaceSmile",
+            "FaceSpiral",
+            "FaceStrain",
+        )
         named = {}
         parents = {}
         for index, node in enumerate(self.nodes):
@@ -808,7 +814,7 @@ class Model:
             "Motion clips must not overwrite the user's chosen expression",
         )
         return (
-            "Normal, deadpan, smiling and spiral eyes follow the head "
+            "Normal, deadpan, smiling, spiral and strained eyes follow the head "
             "independently of motion"
         )
 

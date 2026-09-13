@@ -24,7 +24,7 @@ enum DashmaruMotion {
   );
 }
 
-/// Expressions remain independent of the current animation and its blend.
+/// The user's preferred expression, restored after the jump's exertion face.
 enum DashmaruExpression {
   normal('FaceNormal', '通常'),
   deadpan('FaceDeadpan', '真顔'),
@@ -51,11 +51,14 @@ class DashmaruScene {
   final Map<DashmaruMotion, double> durations = {};
   final Map<DashmaruMotion, double> _transitionWeights = {};
   final Map<DashmaruExpression, scene.Node> _expressionNodes = {};
+  scene.Node? _jumpExpressionNode;
   static const _transitionDuration = 0.3;
   double _transitionElapsed = 0;
 
   DashmaruMotion motion = DashmaruMotion.idle;
   DashmaruExpression expression = DashmaruExpression.normal;
+  String get displayedExpressionLabel =>
+      motion == DashmaruMotion.jump ? '踏ん張る' : expression.label;
   bool playing = true;
   bool orbiting = false;
   double speed = 1;
@@ -95,6 +98,11 @@ class DashmaruScene {
       // None of these group transforms belongs to an animation track.
       _expressionNodes[expression] = node..scale = vm.Vector3.all(1);
     }
+    final jumpExpression = model.getChildByName('FaceStrain');
+    if (jumpExpression == null) {
+      throw StateError('3D モデルにジャンプ用の踏ん張る表情がありません。');
+    }
+    _jumpExpressionNode = jumpExpression..scale = vm.Vector3.all(1);
     selectExpression(initialExpression);
 
     // Directional studio fill reveals the padded wings and rounded feet from
@@ -171,6 +179,7 @@ class DashmaruScene {
     }
     _transitionElapsed = 0;
     motion = value;
+    _updateExpressionVisibility();
     playing = true;
     final selected = _clips[value]!;
     if (selected.weight == 0 || !animateTransition) selected.seek(0);
@@ -193,9 +202,15 @@ class DashmaruScene {
 
   void selectExpression(DashmaruExpression value) {
     expression = value;
+    _updateExpressionVisibility();
+  }
+
+  void _updateExpressionVisibility() {
+    final jumping = motion == DashmaruMotion.jump;
     for (final entry in _expressionNodes.entries) {
-      entry.value.visible = entry.key == value;
+      entry.value.visible = !jumping && entry.key == expression;
     }
+    _jumpExpressionNode?.visible = jumping;
   }
 
   void setSpeed(double value) {
