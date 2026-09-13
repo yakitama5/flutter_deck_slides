@@ -1,0 +1,71 @@
+name: Publish GitHub Pages
+
+on:
+  workflow_run:
+    workflows: [CI, Build production web]
+    types: [completed]
+  pull_request_target:
+    branches: [main]
+    types: [closed]
+  workflow_dispatch:
+    inputs:
+      build_run_id:
+        description: Optional successful CI/production run ID to republish
+        required: false
+        type: string
+
+# All site mutations and deployment use one queue. A later PR must not discard
+# another PR's pending publication or cleanup.
+concurrency:
+  group: pages
+  queue: max
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    if: >-
+      github.event_name != 'workflow_run' ||
+      (github.event.workflow_run.conclusion == 'success' &&
+       (github.event.workflow_run.name == 'Build production web' ||
+        github.event.workflow_run.event == 'pull_request'))
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
+      actions: read
+      pull-requests: read
+      deployments: write
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      # Never check out or execute a PR ref in this privileged workflow.
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          persist-credentials: false
+      - name: Merge static artifacts and prune closed PRs
+        id: site
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tool/pages/publish.py
+      - uses: actions/configure-pages@v5
+        if: steps.site.outputs.ready == 'true'
+      - uses: actions/upload-pages-artifact@v3
+        if: steps.site.outputs.ready == 'true'
+        with:
+          path: ${{ steps.site.outputs.site }}
+      - uses: actions/deploy-pages@v4
+        if: steps.site.outputs.ready == 'true'
+        id: deployment
+      - name: Update PR deployment links
+        if: always() && steps.site.outputs.ready == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PAGES_RESULT: ${{ steps.deployment.outcome }}
+        run: python3 tool/pages/publish.py finish

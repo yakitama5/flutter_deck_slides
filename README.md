@@ -164,10 +164,51 @@ flutter create --template=package packages/<name>
 
 ## CI / デプロイ
 
-- `.github/workflows/ci.yaml`: push / PR で analyze・format・test・build を実行
-- `.github/workflows/deploy.yaml`: `main` への push で全スライドを web ビルドし、GitHub Pages へデプロイ
+- `.github/workflows/ci.yaml`: push / PR で analyze・format・test・build を実行。Webに影響するPRではプレビュー成果物も作成
+- `.github/workflows/deploy.yaml`: `main` への push で全スライドの本番用Web成果物を作成
+- `.github/workflows/publish-pages.yaml`: ビルド成功後、本番と各PRの成果物をまとめてGitHub Pagesへ公開
   - 公開 URL: `https://yakitama5.github.io/flutter_deck_slides/<slide_name>/`
   - スライド一覧ページ: `https://yakitama5.github.io/flutter_deck_slides/`
+
+### PRごとのWebプレビュー
+
+同じリポジトリのブランチから `main` 向けにPRを作成すると、CI成功後に
+PRの **View deployment**（環境名 `pr-<PR番号>`）からプレビューを開けます。
+URLはPR更新後も同じです。公開ジョブのActions Summaryにもリンクを表示します。
+
+```text
+https://yakitama5.github.io/flutter_deck_slides/previews/pr-<PR番号>/
+https://yakitama5.github.io/flutter_deck_slides/previews/pr-<PR番号>/<slide_name>/
+```
+
+- `slides/` 内の変更は該当スライドをプレビューします。`packages/`、ビルドツール、ワークフロー、依存設定の変更では全スライドを対象にします。
+- Webに関係しないルートのドキュメントだけの変更ではプレビューを作りません。
+- PRにコミットを追加すると再公開します。ビルド中や失敗時は直前に成功した表示が残るため、Deploymentに記録されたコミットを確認してください。
+- PRをマージ／クローズするとプレビューを削除し、Deploymentを終了状態にします。本番と他のPRは維持します。
+- forkからのPRはCIのみ実行し、プレビューの自動公開は対象外です。
+
+公開先の設定はGitHub **Settings → Pages → Source: GitHub Actions** です。
+追加のPATや外部ホスティングは不要で、ジョブごとに権限を限定した `GITHUB_TOKEN` を使用します。
+公開専用の `gh-pages` ブランチに静的成果物を保持し、`main` には生成済みWebファイルを追加しません。
+PRコードを実行するビルドと、`main` のコードだけを実行する公開処理を分離しています。
+
+Pagesはサイト全体で1 GBまでのため、公開前に950 MBの上限を検証します。
+容量超過時は不要なPRを閉じてから公開ジョブを再実行してください。
+ビルド成果物のActions保存期間は7日ですが、一度公開したプレビューはPRを閉じるまで保持します。
+
+復旧時は **Publish GitHub Pages → Run workflow** を使用できます。
+`build_run_id` に成功した **CI** または **Build production web** の実行IDを指定すると再公開し、
+空欄なら保存済みサイトの再公開と終了済みPRの削除を行います。初回は本番ビルドを先に公開します。
+
+ローカルでも同じ公開パスを再現できます。両コマンドには同じ環境変数を渡してください。
+
+```sh
+export WEB_BASE_PATH=/flutter_deck_slides/previews/pr-123
+export WEB_SLIDES=20260919_flutterkaigi_mini
+export PR_NUMBER=123
+dart run tool/build_web.dart
+dart run tool/prepare_pages.dart
+```
 
 ## 絵本LT「リスくんと もりのちいさなおまつり」
 
