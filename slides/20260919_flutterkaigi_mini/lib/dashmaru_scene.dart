@@ -3,12 +3,13 @@ import 'dart:math' as math;
 import 'package:flutter_scene/scene.dart' as scene;
 import 'package:vector_math/vector_math.dart' as vm;
 
-/// The four animations authored into the glTF model.
+/// The five animations authored into the glTF model.
 enum DashmaruMotion {
   walk('Walk', '歩く', 'てくてく、いっしょに。'),
-  jump('Jump', 'ジャンプ', 'うれしくて、ぴょん。'),
+  jump('Jump', 'ジャンプ', '羽ばたいて、ふわっ。'),
   wave('Wave', '手を振る', 'またね、バイバイ！'),
-  blink('Blink', 'まばたき', 'ぱちっ。ひとやすみ。');
+  blink('Blink', 'まばたき', 'ぱちっ。ひとやすみ。'),
+  idle('Idle', '待機', 'ゆらゆら、のんびり。');
 
   const DashmaruMotion(this.clipName, this.label, this.caption);
   final String clipName;
@@ -17,7 +18,7 @@ enum DashmaruMotion {
 
   static DashmaruMotion parse(String? value) => values.firstWhere(
     (motion) => motion.clipName.toLowerCase() == value?.toLowerCase(),
-    orElse: () => wave,
+    orElse: () => idle,
   );
 }
 
@@ -29,8 +30,11 @@ class DashmaruScene {
   final scene.Scene sceneGraph = scene.Scene();
   final Map<DashmaruMotion, scene.AnimationClip> _clips = {};
   final Map<DashmaruMotion, double> durations = {};
+  final Map<DashmaruMotion, double> _transitionWeights = {};
+  static const _transitionDuration = 0.3;
+  double _transitionElapsed = 0;
 
-  DashmaruMotion motion = DashmaruMotion.wave;
+  DashmaruMotion motion = DashmaruMotion.idle;
   bool playing = true;
   bool orbiting = false;
   double speed = 1;
@@ -59,10 +63,10 @@ class DashmaruScene {
       durations[motion] = animation.endTime;
     }
 
-    // An even studio fill keeps the white belly and pink cheek faithful to the
-    // reference palette, including the downward-facing part of the round body.
+    // Directional studio fill reveals the padded wings and rounded feet from
+    // every angle, while retaining the authored pale blue and pink palette.
     sceneGraph.environmentSettings = scene.EnvironmentSettings(
-      environment: scene.EnvironmentMap.constantDiffuse(vm.Vector3.all(0.85)),
+      environment: scene.EnvironmentMap.studio(),
       toneMapping: scene.ToneMappingMode.pbrNeutral,
       exposure: 1.0,
       environmentIntensity: 1.0,
@@ -72,7 +76,8 @@ class DashmaruScene {
     );
     sceneGraph.directionalLight = scene.DirectionalLight(
       direction: vm.Vector3(0.4, -1, 0.5),
-      intensity: 1.35,
+      intensity: 2.0,
+      priority: 1,
       castsShadow: true,
       shadowCascadeCount: 1,
       shadowMaxDistance: 16,
@@ -80,6 +85,15 @@ class DashmaruScene {
       shadowSoftness: 0.11,
       shadowDepthBias: 0.003,
       shadowNormalBias: 0.008,
+    );
+    // A low front bounce keeps the white bib readable under the round belly.
+    sceneGraph.add(
+      scene.Node(name: 'Soft front bounce')..addComponent(
+        scene.DirectionalLightComponent.aimed(
+          scene.DirectionalLight(intensity: 0.85),
+          vm.Vector3(0, 0.4, 1),
+        ),
+      ),
     );
 
     final plinth = scene.Node(
@@ -99,7 +113,7 @@ class DashmaruScene {
     )..position = vm.Vector3(0, -0.053, 0);
     sceneGraph.add(plinth);
     setCamera(initialCamera ?? 'front');
-    selectMotion(initialMotion);
+    selectMotion(initialMotion, animateTransition: false);
     if (initialTime != null) {
       _clips[motion]!.seek(initialTime);
       setPlaying(false);
@@ -107,28 +121,47 @@ class DashmaruScene {
     }
   }
 
-  void selectMotion(DashmaruMotion value) {
-    for (final clip in _clips.values) {
-      clip
-        ..stop()
-        ..weight = 0;
+  void selectMotion(DashmaruMotion value, {bool animateTransition = true}) {
+    if (animateTransition && value == motion) {
+      setPlaying(true);
+      return;
     }
+
+    // Preserve the current mixture when a second choice interrupts a fade.
+    // Rewinding an outgoing clip here would visibly snap the wings and body.
+    _transitionWeights.clear();
+    if (animateTransition) {
+      for (final entry in _clips.entries) {
+        _transitionWeights[entry.key] = entry.value.weight;
+      }
+    }
+    _transitionElapsed = 0;
     motion = value;
     playing = true;
-    _clips[value]!
-      ..weight = 1
-      ..playbackTimeScale = speed
-      ..replay();
+    final selected = _clips[value]!;
+    if (selected.weight == 0 || !animateTransition) selected.seek(0);
+    for (final entry in _clips.entries) {
+      final clip = entry.value;
+      if (!animateTransition) clip.weight = entry.key == value ? 1 : 0;
+      clip
+        ..playbackTimeScale = speed
+        ..playing = clip.weight > 0 || entry.key == value;
+    }
   }
 
   void setPlaying(bool value) {
     playing = value;
-    _clips[motion]?.playing = value;
+    for (final entry in _clips.entries) {
+      entry.value.playing =
+          value && (entry.value.weight > 0 || entry.key == motion);
+    }
   }
 
   void setSpeed(double value) {
     speed = value;
-    _clips[motion]?.playbackTimeScale = value;
+    for (final clip in _clips.values) {
+      clip.playbackTimeScale = value;
+    }
   }
 
   void setCamera(String preset) {
@@ -146,7 +179,7 @@ class DashmaruScene {
     distance = 12;
     setCamera('front');
     setSpeed(1);
-    selectMotion(DashmaruMotion.wave);
+    selectMotion(DashmaruMotion.idle, animateTransition: false);
   }
 
   void drag(double dx, double dy) {
@@ -162,6 +195,21 @@ class DashmaruScene {
   void tick(Duration elapsed, double deltaSeconds) {
     final delta = math.min(deltaSeconds, 0.05);
     if (orbiting) yaw += delta * 0.35;
+    if (playing && _transitionWeights.isNotEmpty) {
+      _transitionElapsed += delta;
+      final progress = (_transitionElapsed / _transitionDuration).clamp(
+        0.0,
+        1.0,
+      );
+      final eased = progress * progress * (3 - 2 * progress);
+      for (final entry in _clips.entries) {
+        final start = _transitionWeights[entry.key]!;
+        final target = entry.key == motion ? 1.0 : 0.0;
+        entry.value.weight = start + (target - start) * eased;
+        if (progress == 1 && entry.key != motion) entry.value.pause();
+      }
+      if (progress == 1) _transitionWeights.clear();
+    }
     // One explicit scene step avoids the renderer's implicit wall-clock tick.
     sceneGraph.update(delta);
   }
