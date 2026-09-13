@@ -3,7 +3,8 @@
 
 Run from any directory: python3 path/to/tool/check_dashmaru.py [path/to/model.glb]
 This checks the delivered binary, independently of the model-building code. It is
-not a replacement for watching the five gestures in Flutter Scene.
+not a replacement for watching the seven gestures in Flutter Scene. An optional
+--baseline model.glb verifies that the established Walk clip was preserved.
 """
 
 import argparse
@@ -413,7 +414,7 @@ class Model:
                     restored = multiply(worlds[joint], inverse_binds[skin_index][slot])
                     require(
                         close(restored, worlds[node_index]),
-                        f"{label}: inverse bind does not preserve the default mesh pose",
+                        f"{label}: inverse bind must preserve the default mesh pose",
                     )
                 blended_vertices += blend_count
                 name = mesh.get("name", "").lower()
@@ -434,7 +435,7 @@ class Model:
     def check_animations(self):
         animations = self.doc.get("animations", [])
         names = [animation.get("name") for animation in animations]
-        required = {"Idle", "Walk", "Jump", "Wave", "Blink"}
+        required = {"Idle", "Walk", "Run", "Jump", "Wave", "Blink", "Shake"}
         require(len(names) == len(set(names)), "Animation names are not unique")
         require(
             required <= set(names),
@@ -523,9 +524,9 @@ class Model:
                     same_pose(values[0], values[-1], path),
                     f"{label}: first and last poses must match for a seamless loop",
                 )
-                # A steady walk starts inside its gait cycle, avoiding a stop at
+                # Locomotion starts inside its gait cycle, avoiding a stop at
                 # every repeat. The player blends its fully keyed pose on entry.
-                if name != "Walk":
+                if name not in ("Walk", "Run"):
                     require(
                         same_pose(values[0], neutral, path)
                         and same_pose(values[-1], neutral, path),
@@ -587,16 +588,34 @@ class Model:
                 if node == named_nodes[node_name]
             )
 
-        for leg in ("LeftLeg", "RightLeg"):
-            require(
-                moves(gesture_track("Walk", leg, "rotation")),
-                f"Walk: {leg} does not move",
+        def rotation_component(rows):
+            # Track the dominant quaternion vector component, keeping q/-q
+            # continuous so representation changes cannot count as flap beats.
+            continuous = [rows[0]]
+            for row in rows[1:]:
+                if sum(a * b for a, b in zip(continuous[-1], row)) < 0:
+                    row = tuple(-value for value in row)
+                continuous.append(row)
+            axis = max(
+                range(3),
+                key=lambda index: (
+                    max(row[index] for row in continuous)
+                    - min(row[index] for row in continuous)
+                ),
             )
-        for knee in ("LeftKnee", "RightKnee"):
-            require(
-                moves(gesture_track("Walk", knee, "rotation")),
-                f"Walk: {knee} never bends",
-            )
+            return axis, [row[axis] for row in continuous]
+
+        for clip in ("Walk", "Run"):
+            for leg in ("LeftLeg", "RightLeg"):
+                require(
+                    moves(gesture_track(clip, leg, "rotation")),
+                    f"{clip}: {leg} does not move",
+                )
+            for knee in ("LeftKnee", "RightKnee"):
+                require(
+                    moves(gesture_track(clip, knee, "rotation")),
+                    f"{clip}: {knee} never bends",
+                )
         jump = gesture_track("Jump", "Dashmaru", "translation")
         require(
             max(row[1] for row in jump) > jump[0][1] + 0.05,
@@ -610,13 +629,30 @@ class Model:
             "Wave: neither wing moves",
         )
         for wing in ("LeftWing", "RightWing"):
+            for clip in ("Jump", "Run"):
+                require(
+                    moves(gesture_track(clip, wing, "rotation")),
+                    f"{clip}: {wing} never flaps",
+                )
+                bend = gesture_track(clip, wing + "Bend", "rotation")
+                axis, values = rotation_component(bend)
+                neutral = self.nodes[named_nodes[wing + "Bend"]].get(
+                    "rotation", (0, 0, 0, 1)
+                )[axis]
+                require(
+                    min(values) < neutral - 0.04 and max(values) > neutral + 0.04,
+                    f"{clip}: {wing} must flex to both sides of its resting bend",
+                )
+            _, values = rotation_component(gesture_track("Jump", wing, "rotation"))
+            directions = [
+                1 if b > a else -1
+                for a, b in zip(values, values[1:])
+                if abs(b - a) > 0.001
+            ]
+            reversals = sum(a != b for a, b in zip(directions, directions[1:]))
             require(
-                moves(gesture_track("Jump", wing, "rotation")),
-                f"Jump: {wing} never flaps",
-            )
-            require(
-                moves(gesture_track("Jump", wing + "Bend", "rotation")),
-                f"Jump: {wing} stays rigid throughout the flap",
+                max(values) - min(values) > 0.25 and reversals >= 4,
+                f"Jump: {wing} must make several visible up/down flap strokes",
             )
         require(
             any(
@@ -629,6 +665,18 @@ class Model:
             node_moves("Idle", "Torso") and node_moves("Idle", "Head"),
             "Idle: torso and head need visible breathing/secondary motion",
         )
+        for part in ("Torso", "Head", "Crest"):
+            require(
+                node_moves("Shake", part),
+                f"Shake: {part} needs visible motion or secondary wobble",
+            )
+        for part in ("Torso", "Head"):
+            rows = gesture_track("Shake", part, "rotation")
+            require(
+                max(row[2] for row in rows) - min(row[2] for row in rows) > 0.08
+                or max(row[1] for row in rows) - min(row[1] for row in rows) > 0.08,
+                f"Shake: {part} must visibly sway or turn from side to side",
+            )
         for eye in ("LeftEye", "RightEye"):
             rows = gesture_track("Blink", eye, "scale")
             require(
@@ -674,22 +722,151 @@ class Model:
                     min(heights) > -0.015,
                     f"{name}: a foot penetrates the floor at frame {frame}",
                 )
-                if name != "Jump":
+                if name not in ("Jump", "Run"):
                     require(
                         min(heights) < 0.025,
                         f"{name}: neither foot supports the body at frame {frame}",
                     )
                 bottoms.append(heights)
-            if name == "Walk":
+            if name in ("Walk", "Run"):
                 require(
                     all(max(row[foot] for row in bottoms) > 0.055 for foot in range(2)),
-                    "Walk: each foot must lift clear of the floor during its swing",
+                    f"{name}: each foot must lift clear of the floor during its swing",
+                )
+            if name == "Run":
+                require(
+                    any(min(row) > 0.055 for row in bottoms),
+                    "Run: gait needs an airborne phase with both feet clear",
+                )
+                require(
+                    all(min(row[foot] for row in bottoms) < 0.025 for foot in range(2)),
+                    "Run: each foot must have a supporting phase on the floor",
                 )
             if name == "Jump":
                 require(
                     any(min(row) > 0.15 for row in bottoms),
                     "Jump: both feet never leave the floor together",
                 )
+
+    def check_expressions(self):
+        names = ("FaceNormal", "FaceDeadpan", "FaceSmile", "FaceSpiral")
+        named = {}
+        parents = {}
+        for index, node in enumerate(self.nodes):
+            name = node.get("name")
+            if name in (*names, "Head", "LeftEye", "RightEye"):
+                require(name not in named, f"Duplicate expression node {name}")
+                named[name] = index
+            for child in node.get("children", []):
+                parents[child] = index
+
+        def descendants(index):
+            result = set()
+            pending = list(self.nodes[index].get("children", []))
+            while pending:
+                child = pending.pop()
+                require(child not in result, "Expression hierarchy contains a cycle")
+                result.add(child)
+                pending.extend(self.nodes[child].get("children", []))
+            return result
+
+        require("Head" in named, "Expressions need a Head joint")
+        groups = {}
+        for name in names:
+            require(name in named, f"Missing expression group {name}")
+            index = named[name]
+            require(
+                parents.get(index) == named["Head"],
+                f"{name}: expression group must follow the Head joint",
+            )
+            scale = self.nodes[index].get("scale", (1, 1, 1))
+            if name == "FaceNormal":
+                require(close(scale, (1, 1, 1)), "Default expression must be visible")
+            else:
+                require(
+                    all(0 < value <= 0.0011 for value in scale),
+                    f"{name}: alternative must start hidden with positive scale",
+                )
+            group = descendants(index)
+            require(
+                any("mesh" in self.nodes[child] for child in group),
+                f"{name}: expression contains no visible geometry",
+            )
+            groups[name] = group
+        for eye in ("LeftEye", "RightEye"):
+            require(
+                eye in named and named[eye] in groups["FaceNormal"],
+                f"{eye}: blinking eye must be inside the normal expression group",
+            )
+        expression_nodes = {named[name] for name in names}
+        require(
+            all(
+                channel["target"]["node"] not in expression_nodes
+                for animation in self.doc.get("animations", [])
+                for channel in animation["channels"]
+            ),
+            "Motion clips must not overwrite the user's chosen expression",
+        )
+        return (
+            "Normal, deadpan, smiling and spiral eyes follow the head "
+            "independently of motion"
+        )
+
+    def check_walk_baseline(self, baseline):
+        def walk_tracks(model):
+            animation = next(
+                (
+                    clip
+                    for clip in model.doc.get("animations", [])
+                    if clip.get("name") == "Walk"
+                ),
+                None,
+            )
+            require(animation is not None, "Walk regression: model has no Walk clip")
+            tracks = {}
+            for channel in animation["channels"]:
+                target = channel["target"]
+                node = model.nodes[target["node"]]
+                key = (node.get("name"), target["path"])
+                require(
+                    key not in tracks, f"Walk regression: ambiguous node name {key}"
+                )
+                sampler = animation["samplers"][channel["sampler"]]
+                tracks[key] = (
+                    sampler.get("interpolation", "LINEAR"),
+                    model.read(sampler["input"]),
+                    model.read(sampler["output"]),
+                )
+            return tracks
+
+        previous, current = walk_tracks(baseline), walk_tracks(self)
+        for key, (interpolation, times, rows) in previous.items():
+            require(key in current, f"Walk regression: removed existing channel {key}")
+            actual_interpolation, actual_times, actual_rows = current[key]
+            require(
+                interpolation == actual_interpolation
+                and len(times) == len(actual_times)
+                and all(close(a, b) for a, b in zip(times, actual_times)),
+                f"Walk regression: changed timing or interpolation for {key}",
+            )
+            require(
+                len(rows) == len(actual_rows)
+                and all(same_pose(a, b, key[1]) for a, b in zip(rows, actual_rows)),
+                f"Walk regression: changed established poses for {key}",
+            )
+        defaults = {
+            "translation": (0, 0, 0),
+            "rotation": (0, 0, 0, 1),
+            "scale": (1, 1, 1),
+        }
+        nodes = {node.get("name"): node for node in self.nodes}
+        for name, path in current.keys() - previous.keys():
+            neutral = nodes[name].get(path, defaults[path])
+            require(
+                all(same_pose(row, neutral, path) for row in current[(name, path)][2]),
+                f"Walk regression: added channel {(name, path)} must stay at rest",
+            )
+        return f"Walk retains all {len(previous)} existing channels and their keyframes"
 
 
 def main():
@@ -700,12 +877,21 @@ def main():
         type=Path,
         default=Path(__file__).resolve().parents[1] / "assets/models/dashmaru.glb",
     )
+    parser.add_argument(
+        "--baseline",
+        type=Path,
+        help="Previous GLB whose established Walk channels must remain unchanged",
+    )
     args = parser.parse_args()
     try:
         model = Model(args.model)
         mesh_count, triangle_count = model.check_meshes()
         skin_summary = model.check_skins()
         summaries = model.check_animations()
+        expression_summary = model.check_expressions()
+        walk_summary = (
+            model.check_walk_baseline(Model(args.baseline)) if args.baseline else None
+        )
     except (
         InvalidModel,
         OSError,
@@ -724,9 +910,12 @@ def main():
     for summary in summaries:
         print(f"  {summary}")
     print(f"  {skin_summary}")
+    print(f"  {expression_summary}")
+    if walk_summary:
+        print(f"  {walk_summary}")
     print("  Every loop joins matching poses and keys all shared properties.")
-    print("  Non-walking clips return to neutral; all scales stay positive.")
-    print("  Baked foot poses stay above the floor; walking retains a supporting foot.")
+    print("  Gesture clips return to neutral; all scales stay positive.")
+    print("  Feet stay above the floor; walking has support and running has flight.")
     return 0
 
 

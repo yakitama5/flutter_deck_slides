@@ -12,6 +12,8 @@ import math
 import struct
 from pathlib import Path
 
+from dashmaru_expressions import build_expressions
+
 PI = math.pi
 sin, cos, sqrt = math.sin, math.cos, math.sqrt
 OUT = Path(__file__).resolve().parents[1] / "assets" / "models"
@@ -229,7 +231,7 @@ class Glb:
             "up": "+Y",
             "meshes": len(self.doc["meshes"]),
             "joints": len(joints),
-            "rig": "Smooth weighted body, three-joint wings, two-bone IK legs",
+            "rig": "Soft body and crest, distributed wing flex, two-bone IK legs",
             "triangles": sum(
                 self.doc["accessors"][m["primitives"][0]["indices"]]["count"] // 3
                 for m in self.doc["meshes"]
@@ -254,6 +256,14 @@ WHITE = g.material("Snow, eyes and bib | white", (255, 255, 255))
 RED = g.material("Japan badge | raspberry #E83568", (232, 53, 104))
 BROWN = g.material("Beak and feet | warm brown #634936", (99, 73, 54))
 
+# Broad cloth-like grazing light gives the pale down and feathers a soft edge.
+# This standard glTF material extension is also read by Flutter Scene.
+g.doc["extensionsUsed"] = ["KHR_materials_sheen"]
+for material, color in [(MINT, [0.12, 0.20, 0.22]), (BLUE, [0.06, 0.18, 0.25])]:
+    g.doc["materials"][material]["extensions"] = {
+        "KHR_materials_sheen": {"sheenColorFactor": color, "sheenRoughnessFactor": 0.9}
+    }
+
 
 def smooth(a, b, t):
     t = max(0, min(1, (t - a) / (b - a)))
@@ -273,11 +283,21 @@ def bone(name, position, parent=0):
 hips = bone("Hips", (0, 0.68, 0))
 torso = bone("Torso", (0, 1.20, 0), hips)
 head = bone("Head", (0, 1.75, 0), torso)
+crest = bone("Crest", (0, 2.50, 0), head)
+crest_tip = bone("CrestTip", (0, 2.87, 0), crest)
 wing_nodes, wing_bends, wing_tips, legs, knees, ankles = [], [], [], [], [], []
+wing_soft = []
 for side, sign in [("Left", -1), ("Right", 1)]:
     shoulder = bone(side + "Wing", (sign * 0.84, 2.00, 0), head)
     bend = bone(side + "WingBend", (sign * 1.00, 1.65, 0), shoulder)
     tip = bone(side + "WingTip", (sign * 1.03, 1.28, 0), bend)
+    wing_soft.append(
+        [
+            bone(side + "WingSoftUpper", (sign * 0.96, 1.83, 0), shoulder),
+            bone(side + "WingSoftMiddle", (sign * 1.02, 1.47, 0), bend),
+            bone(side + "WingSoftTip", (sign * 1.04, 1.10, 0), tip),
+        ]
+    )
     wing_nodes.append(shoulder)
     wing_bends.append(bend)
     wing_tips.append(tip)
@@ -307,6 +327,10 @@ g.doc["skins"] = [
 
 def body_weights(v):
     y = v[1]
+    if y > 2.48:
+        base = smooth(2.48, 2.72, y)
+        tip = smooth(2.72, 3.04, y)
+        return [(head, 1 - base), (crest, base * (1 - tip)), (crest_tip, base * tip)]
     upper = smooth(1.06, 1.47, y)
     lower = smooth(0.69, 1.10, y)
     return [
@@ -507,10 +531,11 @@ outlined_patch("Red roundel", circle(0, 0.94, 0.204), RED, 0.017, 0.023)
 # Each eye has its own pivot, so Blink closes only the eye, retaining the mask.
 eyes = []
 lids = []
+normal_face = g.node("FaceNormal", head, (0, 0, 0))
 for side, x in [("Left", -0.167), ("Right", 0.167)]:
     eyey = 1.81
     origin = surface(x, eyey, 0.04)
-    pivot = g.node(side + "Eye", head, vsub(origin, bind_positions[head]))
+    pivot = g.node(side + "Eye", normal_face, vsub(origin, bind_positions[head]))
     eyes.append(pivot)
     patch(
         side + " eye ink",
@@ -542,7 +567,7 @@ for side, x in [("Left", -0.167), ("Right", 0.167)]:
         center=(x, eyey),
         rings=5,
     )
-    lid = g.node(side + "Lid", head, vsub(origin, bind_positions[head]))
+    lid = g.node(side + "Lid", normal_face, vsub(origin, bind_positions[head]))
     lids.append(lid)
     g.doc["nodes"][lid]["scale"] = [0.001, 0.001, 0.001]
     lid_points = []
@@ -560,6 +585,18 @@ for side, x in [("Left", -0.167), ("Right", 0.167)]:
         closed=False,
         origin=origin,
     )
+
+expression_groups = build_expressions(
+    g,
+    head,
+    bind_positions[head],
+    patch,
+    tube,
+    surface,
+    circle,
+    INK,
+    WHITE,
+)
 
 # Circular beak base, tapering forward to the pointed side silhouette.
 verts = []
@@ -667,16 +704,32 @@ for side_index, (side, sign) in enumerate([("Left", -1), ("Right", 1)]):
 
     def wing_weights(v, i=side_index):
         d = 2.02 - v[1]
-        # The very top is attached to the torso; the shoulder then carries the
-        # main sweep while two softer joints distribute the bend to the tip.
+        # Split the existing weights across offset flex joints, at most four
+        # per vertex. Their rest skin matrices equal their parents', preserving
+        # the exact walking deformation while other clips send a travelling
+        # bend along the feather instead of hinging it at one fixed crease.
         if d < 0.21:
             w = smooth(-0.02, 0.21, d)
-            return [(head, 1 - w), (wing_nodes[i], w)]
-        if d < 0.59:
+            anchors = [(head, 1 - w), (wing_nodes[i], w)]
+        elif d < 0.59:
             w = smooth(0.21, 0.59, d)
-            return [(wing_nodes[i], 1 - w), (wing_bends[i], w)]
-        w = smooth(0.59, 0.91, d)
-        return [(wing_bends[i], 1 - w), (wing_tips[i], w)]
+            anchors = [(wing_nodes[i], 1 - w), (wing_bends[i], w)]
+        else:
+            w = smooth(0.59, 0.91, d)
+            anchors = [(wing_bends[i], 1 - w), (wing_tips[i], w)]
+        splits = {
+            wing_nodes[i]: (wing_soft[i][0], 0.70 * smooth(0.12, 0.34, d)),
+            wing_bends[i]: (wing_soft[i][1], 0.70 * smooth(0.40, 0.64, d)),
+            wing_tips[i]: (wing_soft[i][2], 0.70 * smooth(0.78, 0.96, d)),
+        }
+        result = []
+        for node, weight in anchors:
+            if node == head:
+                result.append((node, weight))
+            else:
+                soft, split = splits[node]
+                result.extend([(node, weight * (1 - split)), (soft, weight * split)])
+        return result
 
     g.mesh(
         side + " sculpted three-feather wing",
@@ -830,12 +883,13 @@ def idle(t):
         bob=0.012 * breath,
         lean=0.012 * sin(phase),
         nod=0.018 * sin(phase),
-        breathe=-0.035 * breath,
+        breathe=-0.07 * breath,
     )
     for i, sign in enumerate([-1, 1]):
         p[(wing_nodes[i], "rotation")] = quat((0, 0, 1), sign * 0.025 * breath)
         p[(wing_bends[i], "rotation")] = quat((1, 0, 0), 0.018 * sin(phase))
     p[(tail, "rotation")] = quat((1, 0, 0), 0.035 * sin(phase))
+    jiggle_crest(p, phase, 0.10 * breath)
     blink_eyes(p, pulse(t, 0.70, 0.028))
     return p
 
@@ -877,37 +931,126 @@ def walk(t):
     return p
 
 
+def flex_wing(p, i, phase, strength=1):
+    """Delayed alternating curvature runs from the shoulder to the soft tip."""
+    sign = -1 if i == 0 else 1
+    for node, amount, delay in [
+        (wing_bends[i], 0.90, 0.65),
+        (wing_tips[i], 0.88, 1.35),
+        (wing_soft[i][0], 0.32, 0.25),
+        (wing_soft[i][1], 0.42, 0.95),
+        (wing_soft[i][2], 0.50, 1.70),
+    ]:
+        p[(node, "rotation")] = quat(
+            (0, 0, 1), sign * strength * amount * sin(phase - delay)
+        )
+
+
+def jiggle_crest(p, phase, strength=1):
+    p[(crest, "rotation")] = qmul(
+        quat((0, 0, 1), strength * 0.22 * sin(phase - 0.55)),
+        quat((1, 0, 0), strength * 0.10 * sin(phase)),
+    )
+    p[(crest_tip, "rotation")] = quat((0, 0, 1), strength * 0.30 * sin(phase - 1.10))
+
+
 def jump(t):
     p = rest()
     crouch = pulse(t, 0.14, 0.14)
-    air = smooth(0.23, 0.31, t) * (1 - smooth(0.72, 0.79, t))
-    flight_t = max(0, min(1, (t - 0.23) / 0.56))
+    air = smooth(0.23, 0.31, t) * (1 - smooth(0.74, 0.81, t))
+    flight_t = max(0, min(1, (t - 0.23) / 0.58))
     height = 0.66 * 4 * flight_t * (1 - flight_t)
-    land = pulse(t, 0.83, 0.10)
-    bob = -0.095 * crouch - 0.075 * land
+    land = pulse(t, 0.85, 0.10)
+    flap_phase = 2 * PI * 5 * (t - 0.20) / 0.65
+    wings = smooth(0.03, 0.22, t) * (1 - smooth(0.81, 0.99, t))
+    bob = -0.105 * crouch - 0.095 * land
     bend_body(
         p,
         bob=bob,
-        lean=0,
-        nod=0.055 * crouch - 0.04 * air,
-        breathe=0.13 * crouch + 0.10 * land - 0.035 * air,
+        nod=0.085 * crouch - 0.055 * air,
+        breathe=0.23 * crouch + 0.22 * land - 0.07 * air,
     )
+    p[(head, "scale")] = (1 + 0.055 * land, 1 - 0.07 * land, 1 + 0.035 * land)
     p[(0, "translation")] = (0, height, 0)
-    # Upstroke before takeoff; three broad downstrokes with a delayed wrist.
-    flap_phase = 2 * PI * 3 * (t - 0.21) / 0.60
-    wings = smooth(0.04, 0.23, t) * (1 - smooth(0.78, 0.97, t))
     for i, sign in enumerate([-1, 1]):
-        shoulder = wings * (0.83 + 0.49 * cos(flap_phase))
+        shoulder = wings * (1.02 + 0.83 * cos(flap_phase))
         p[(wing_nodes[i], "rotation")] = quat((0, 0, 1), sign * shoulder)
-        p[(wing_bends[i], "rotation")] = quat(
-            (0, 0, 1), sign * wings * 0.30 * sin(flap_phase - 0.65)
+        flex_wing(p, i, flap_phase, wings)
+        plant_leg(p, i, 0.17 + 0.11 * air, 0.02 - 0.075 * air, bob, -0.16 * air)
+    p[(tail, "rotation")] = quat((1, 0, 0), -0.17 * air + 0.12 * land)
+    jiggle_crest(p, flap_phase, 0.35 * wings + 0.6 * land)
+    blink_eyes(p, 0.85 * land)
+    return p
+
+
+def run(t):
+    p = rest()
+    phase = 2 * PI * t
+    step_phase = 2 * phase
+    bob = -0.045 + 0.03 * cos(step_phase)
+    # A short flight interval separates each planted, heavy-footed step.
+    stride = t % 0.5
+    flight = 0.07 * sin(PI * (stride - 0.34) / 0.16) ** 2 if stride > 0.34 else 0
+    p[(0, "translation")] = (0, flight, 0)
+    bend_body(
+        p,
+        bob=bob,
+        lean=0.065 * sin(phase),
+        nod=0.15 + 0.035 * sin(step_phase),
+        breathe=0.10 * cos(step_phase),
+    )
+    p[(torso, "rotation")] = qmul(p[(torso, "rotation")], quat((1, 0, 0), 0.09))
+    p[(head, "scale")] = (1 + 0.025 * cos(step_phase), 1 - 0.035 * cos(step_phase), 1)
+    for i, sign in enumerate([-1, 1]):
+        stride = (t + i * 0.5) % 1
+        if stride < 0.34:
+            foot_z = 0.02 + 0.23 * (1 - 2 * stride / 0.34)
+            lift, pitch = 0, 0
+        else:
+            swing = (stride - 0.34) / 0.66
+            foot_z = 0.02 - 0.23 + 0.46 * smooth(0, 1, swing)
+            lift = 0.22 * sin(PI * swing) ** 2
+            pitch = -0.18 * sin(PI * swing)
+        plant_leg(p, i, 0.17 + lift, foot_z, bob, pitch)
+        p[(wing_nodes[i], "rotation")] = qmul(
+            quat((0, 0, 1), sign * (0.75 + 0.57 * sin(step_phase))),
+            quat((1, 0, 0), -0.18),
         )
-        p[(wing_tips[i], "rotation")] = quat(
-            (0, 0, 1), sign * wings * 0.24 * sin(flap_phase - 1.05)
+        flex_wing(p, i, step_phase, 0.85)
+    p[(tail, "rotation")] = quat((1, 0, 0), 0.13 * sin(step_phase - 0.6))
+    jiggle_crest(p, step_phase, 0.60)
+    return p
+
+
+def shake(t):
+    p = rest()
+    envelope = smooth(0, 0.16, t) * (1 - smooth(0.73, 1, t))
+    phase = 2 * PI * 3.5 * t
+    bob = -0.018 * envelope * (1 - cos(2 * phase))
+    bend_body(
+        p,
+        bob=bob,
+        lean=0.14 * envelope * sin(phase),
+        breathe=0.18 * envelope * sin(2 * phase),
+    )
+    p[(hips, "translation")] = (0.045 * envelope * sin(phase), 0.68 + bob, 0)
+    p[(head, "rotation")] = qmul(
+        quat((0, 1, 0), 0.46 * envelope * sin(phase - 0.25)),
+        quat((0, 0, 1), -0.065 * envelope * sin(phase - 0.65)),
+    )
+    p[(head, "scale")] = (
+        1 + 0.05 * envelope * sin(2 * phase),
+        1 - 0.04 * envelope * sin(2 * phase),
+        1,
+    )
+    for i, sign in enumerate([-1, 1]):
+        p[(wing_nodes[i], "rotation")] = quat(
+            (0, 0, 1), sign * 0.14 * envelope * (1 + sin(phase))
         )
-        plant_leg(p, i, 0.17 + 0.10 * air, 0.02 - 0.075 * air, bob, -0.16 * air)
-    p[(tail, "rotation")] = quat((1, 0, 0), -0.14 * air + 0.08 * land)
-    blink_eyes(p, 0.75 * land)
+        flex_wing(p, i, phase + i * PI, 0.48 * envelope)
+        plant_leg(p, i, hip_bob=bob)
+    p[(tail, "rotation")] = quat((0, 1, 0), 0.19 * envelope * sin(phase - 0.8))
+    jiggle_crest(p, phase, 1.2 * envelope)
     return p
 
 
@@ -920,7 +1063,7 @@ def wave(t):
         bob=-0.014 * envelope,
         lean=-0.075 * envelope,
         nod=0.025 * sin(phase) * envelope,
-        breathe=0.025 * envelope,
+        breathe=0.10 * envelope,
     )
     # The shoulder raises the wing once; middle and tip follow the wave with
     # delayed curves, keeping the rooted edge on the body throughout the arc.
@@ -928,12 +1071,8 @@ def wave(t):
         quat((0, 0, 1), envelope * (1.62 + 0.10 * sin(phase))),
         quat((0, 1, 0), -0.95 * envelope),
     )
-    p[(wing_bends[1], "rotation")] = quat(
-        (0, 0, 1), envelope * (0.22 + 0.26 * sin(phase - 0.5))
-    )
-    p[(wing_tips[1], "rotation")] = quat(
-        (0, 0, 1), envelope * (0.14 + 0.30 * sin(phase - 0.95))
-    )
+    flex_wing(p, 1, phase, 1.05 * envelope)
+    jiggle_crest(p, phase, 0.25 * envelope)
     p[(wing_nodes[0], "rotation")] = quat((0, 0, 1), -0.07 * envelope)
     p[(wing_bends[0], "rotation")] = quat((1, 0, 0), 0.05 * sin(phase) * envelope)
     for i in range(2):
@@ -952,17 +1091,19 @@ def blink(t):
 # return to bind pose; walking stays in its continuous periodic gait.
 for name, duration, samples, pose in [
     ("Walk", 1.4, 84, walk),
-    ("Jump", 2.1, 126, jump),
+    ("Jump", 2.4, 192, jump),
     ("Wave", 3.2, 192, wave),
     ("Blink", 2.2, 132, blink),
     ("Idle", 4.8, 288, idle),
+    ("Run", 0.76, 92, run),
+    ("Shake", 2.8, 196, shake),
 ]:
     animate(
         name,
         duration,
         samples,
         pose
-        if name == "Walk"
+        if name in {"Walk", "Run"}
         else lambda t, fn=pose: rest() if t <= 0 or t >= 1 else fn(t),
     )
 g.save()
