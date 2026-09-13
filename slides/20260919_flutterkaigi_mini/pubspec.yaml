@@ -1,0 +1,25 @@
+name: flutterkaigi_mini_20260919
+description: "FlutterKaigi mini — Flutter Scene で動くだしゅまる。"
+publish_to: none
+resolution: workspace
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.13.1
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_scene: 0.23.0
+  vector_math: ^2.2.0
+  hooks: ^2.0.2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true
+  assets:
+    - flutter_scene_generated/
