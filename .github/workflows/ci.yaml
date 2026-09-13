@@ -5,11 +5,21 @@ on:
     branches: [main]
   pull_request:
 
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   analyze-and-test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
 
       - uses: jdx/mise-action@v2
 
@@ -33,5 +43,36 @@ jobs:
       - name: Validate Dashmaru model and animations
         run: python3 slides/20260919_flutterkaigi_mini/tool/check_dashmaru.py
 
-      - name: Build web (全スライド)
+      - name: Test Pages tooling
+        run: |
+          dart run tool/web_build_test.dart
+          python3 -m unittest discover -s tool/pages -p 'test_*.py'
+
+      - name: Select PR preview slides
+        if: github.event_name == 'pull_request'
+        id: preview
+        run: python3 tool/pages/select_preview_slides.py
+
+      - name: Build web
+        if: github.event_name != 'pull_request' || steps.preview.outputs.has_slides == 'true'
+        env:
+          WEB_BASE_PATH: ${{ github.event_name == 'pull_request' && format('/flutter_deck_slides/previews/pr-{0}', github.event.pull_request.number) || '/flutter_deck_slides' }}
+          WEB_SLIDES: ${{ steps.preview.outputs.slides }}
         run: dart run tool/build_web.dart
+
+      - name: Prepare PR preview
+        if: github.event_name == 'pull_request' && steps.preview.outputs.has_slides == 'true'
+        env:
+          WEB_BASE_PATH: /flutter_deck_slides/previews/pr-${{ github.event.pull_request.number }}
+          WEB_SLIDES: ${{ steps.preview.outputs.slides }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: dart run tool/prepare_pages.dart
+
+      - name: Upload PR preview (no deployment credentials)
+        if: github.event_name == 'pull_request' && steps.preview.outputs.has_slides == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: web-preview
+          path: dist
+          if-no-files-found: error
+          retention-days: 7
