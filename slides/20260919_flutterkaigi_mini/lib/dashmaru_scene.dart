@@ -3,6 +3,8 @@ import 'dart:math' as math;
 import 'package:flutter_scene/scene.dart' as scene;
 import 'package:vector_math/vector_math.dart' as vm;
 
+import 'dashmaru_background.dart';
+
 /// The eight animations authored into the glTF model.
 enum DashmaruMotion {
   walk('Walk', '歩く', 'てくてく、いっしょに。'),
@@ -68,11 +70,13 @@ class DashmaruScene {
   final Map<DashmaruMotion, double> durations = {};
   final Map<DashmaruMotion, double> _transitionWeights = {};
   final Map<DashmaruExpression, scene.Node> _expressionNodes = {};
+  scene.PhysicallyBasedMaterial? _plinthMaterial;
   static const _transitionDuration = 0.3;
   double _transitionElapsed = 0;
 
   DashmaruMotion motion = DashmaruMotion.idle;
   DashmaruExpression expression = DashmaruExpression.normal;
+  DashmaruBackground background = DashmaruBackground.mint;
   DashmaruExpression get displayedExpression => DashmaruExpression.forPlayback(
     motion: motion,
     preferred: expression,
@@ -93,10 +97,12 @@ class DashmaruScene {
   Future<void> load({
     required DashmaruMotion initialMotion,
     DashmaruExpression initialExpression = DashmaruExpression.normal,
+    DashmaruBackground initialBackground = DashmaruBackground.mint,
     double? initialTime,
     String? initialCamera,
     double? initialZoom,
   }) async {
+    selectBackground(initialBackground);
     await scene.Scene.initializeStaticResources();
     final model = await scene.loadScene('assets/models/dashmaru.glb');
     sceneGraph.add(model);
@@ -173,6 +179,10 @@ class DashmaruScene {
       ),
     );
 
+    _plinthMaterial = scene.PhysicallyBasedMaterial()
+      ..metallicFactor = 0
+      ..roughnessFactor = 0.92;
+    selectBackground(background);
     final plinth = scene.Node(
       name: 'Display plinth',
       mesh: scene.Mesh(
@@ -182,10 +192,7 @@ class DashmaruScene {
           height: 0.085,
           radialSegments: 96,
         ),
-        scene.PhysicallyBasedMaterial()
-          ..baseColorFactor = vm.Vector4(0.77, 0.87, 0.79, 1)
-          ..metallicFactor = 0
-          ..roughnessFactor = 0.92,
+        _plinthMaterial!,
       ),
     )..position = vm.Vector3(0, -0.085 / 2, 0);
     sceneGraph.add(plinth);
@@ -244,6 +251,12 @@ class DashmaruScene {
     _updateExpressionVisibility();
   }
 
+  void selectBackground(DashmaruBackground value) {
+    background = value;
+    final (red, green, blue) = value.plinthColor;
+    _plinthMaterial?.baseColorFactor = vm.Vector4(red, green, blue, 1);
+  }
+
   void _updateExpressionVisibility() {
     final displayed = displayedExpression;
     for (final entry in _expressionNodes.entries) {
@@ -274,6 +287,7 @@ class DashmaruScene {
     setCamera('front');
     setSpeed(1);
     selectExpression(DashmaruExpression.normal);
+    selectBackground(DashmaruBackground.mint);
     selectMotion(DashmaruMotion.idle, animateTransition: false);
   }
 
