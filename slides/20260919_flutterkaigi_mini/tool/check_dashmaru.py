@@ -310,6 +310,52 @@ class Model:
             )
         return len(meshes), triangles
 
+    def check_bib_clearance(self):
+        # Check exported triangle interiors, not just their projected vertices:
+        # a coarse chord can cut into the belly even when every vertex clears it.
+        meshes = {mesh["name"]: mesh for mesh in self.doc["meshes"]}
+        require("Body" in meshes and "White bib" in meshes, "Missing body or bib")
+        body = meshes["Body"]["primitives"][0]
+        positions = self.read(body["attributes"]["POSITION"])
+        lower = [min(vertex[axis] for vertex in positions) for axis in range(3)]
+        upper = [max(vertex[axis] for vertex in positions) for axis in range(3)]
+        center = [(lo + hi) / 2 for lo, hi in zip(lower, upper)]
+        radii = [(hi - lo) / 2 for lo, hi in zip(lower, upper)]
+        require(all(radius > 0 for radius in radii), "Body has no ellipsoid volume")
+        bib = meshes["White bib"]["primitives"][0]
+        vertices = self.read(bib["attributes"]["POSITION"])
+        indices = [row[0] for row in self.read(bib["indices"])]
+        minimum = math.inf
+        for start in range(0, len(indices), 3):
+            triangle = [vertices[index] for index in indices[start : start + 3]]
+            for weights in (
+                (0.5, 0.5, 0),
+                (0.5, 0, 0.5),
+                (0, 0.5, 0.5),
+                (1 / 3, 1 / 3, 1 / 3),
+            ):
+                x, y, z = (
+                    sum(
+                        vertex[axis] * weight
+                        for vertex, weight in zip(triangle, weights)
+                    )
+                    for axis in range(3)
+                )
+                radial = ((x - center[0]) / radii[0]) ** 2 + (
+                    (y - center[1]) / radii[1]
+                ) ** 2
+                body_z = center[2] + radii[2] * math.sqrt(max(0, 1 - radial))
+                clearance = z - body_z
+                minimum = min(minimum, clearance)
+                require(
+                    clearance > -0.001,
+                    f"White bib triangle {start // 3} cuts into the body "
+                    f"(sampled gap {clearance:.6f})",
+                )
+        return (
+            f"White bib triangle interiors clear the body (minimum gap {minimum:.6f})"
+        )
+
     def world_matrices(self, overrides=None):
         parents = {}
         for parent, node in enumerate(self.nodes):
@@ -1058,6 +1104,7 @@ def main():
     try:
         model = Model(args.model)
         mesh_count, triangle_count = model.check_meshes()
+        bib_summary = model.check_bib_clearance()
         skin_summary = model.check_skins()
         summaries = model.check_animations(args.subframes)
         expression_summary = model.check_expressions()
@@ -1083,6 +1130,7 @@ def main():
         print(f"  {summary}")
     print(f"  {skin_summary}")
     print(f"  {expression_summary}")
+    print(f"  {bib_summary}")
     if walk_summary:
         print(f"  {walk_summary}")
     print("  Every loop joins matching poses and keys all shared properties.")

@@ -12,6 +12,7 @@ class _LoadingScene extends DashmaruScene {
     DashmaruExpression initialExpression = DashmaruExpression.normal,
     double? initialTime,
     String? initialCamera,
+    double? initialZoom,
   }) => Completer<void>().future;
 }
 

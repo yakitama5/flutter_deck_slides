@@ -13,6 +13,7 @@ import struct
 from pathlib import Path
 
 from dashmaru_expressions import build_expressions
+from dashmaru_materials import polish_materials
 
 PI = math.pi
 sin, cos, sqrt = math.sin, math.cos, math.sqrt
@@ -256,14 +257,6 @@ WHITE = g.material("Snow, eyes and bib | white", (255, 255, 255))
 RED = g.material("Japan badge | raspberry #E83568", (232, 53, 104))
 BROWN = g.material("Beak and feet | warm brown #634936", (99, 73, 54))
 
-# Broad cloth-like grazing light gives the pale down and feathers a soft edge.
-# This standard glTF material extension is also read by Flutter Scene.
-g.doc["extensionsUsed"] = ["KHR_materials_sheen"]
-for material, color in [(MINT, [0.12, 0.20, 0.22]), (BLUE, [0.06, 0.18, 0.25])]:
-    g.doc["materials"][material]["extensions"] = {
-        "KHR_materials_sheen": {"sheenColorFactor": color, "sheenRoughnessFactor": 0.9}
-    }
-
 
 def smooth(a, b, t):
     t = max(0, min(1, (t - a) / (b - a)))
@@ -420,14 +413,24 @@ def patch(
     origin=(0, 0, 0),
     center=None,
     rings=14,
+    conform_edge=False,
 ):
     # Radial tessellation maps the marking onto the ellipsoid, not a flat decal.
     if center is None:
         center = tuple(sum(p[j] for p in contour) / len(contour) for j in range(2))
+    if conform_edge:
+        # Clamp the boundary once before interpolating inward. Otherwise paths
+        # beyond the body's silhouette collapse onto the same horizon and leave
+        # long triangle chords cutting through the curved belly.
+        contour = [surface(x, y)[:2] for x, y in contour]
     n = len(contour)
     vertices = [vsub(surface(*center, offset), origin)]
     for k in range(1, rings + 1):
         r = k / rings
+        if conform_edge:
+            # Concentrate rings near the silhouette, where curvature in this
+            # projected parameterization is greatest. The offset stays small.
+            r = 1 - (1 - r) ** 2
         for x, y in contour:
             vertices.append(
                 vsub(
@@ -495,8 +498,26 @@ def tube(name, points, radius, material, parent=0, closed=True, origin=(0, 0, 0)
     return g.mesh(name, vertices, faces, material, parent)
 
 
-def outlined_patch(name, contour, material, width=0.018, offset=0.012, center=None):
-    patch(name, contour, material, offset, center=center)
+def outlined_patch(
+    name,
+    contour,
+    material,
+    width=0.018,
+    offset=0.012,
+    center=None,
+    *,
+    rings=14,
+    conform_edge=False,
+):
+    patch(
+        name,
+        contour,
+        material,
+        offset,
+        center=center,
+        rings=rings,
+        conform_edge=conform_edge,
+    )
     tube(
         name + " outline",
         [surface(x, y, offset + 0.002) for x, y in contour],
@@ -529,9 +550,17 @@ bib = bezier(
         ((-0.27, 0.574), (-0.49, 0.61), (-0.70, 0.80)),
         ((-0.59, 1.02), (-0.46, 1.22), (-0.32, 1.34)),
     ],
-    20,
+    60,
 )
-outlined_patch("White bib", bib, WHITE, 0.017, center=(0, 0.97))
+outlined_patch(
+    "White bib",
+    bib,
+    WHITE,
+    0.017,
+    center=(0, 0.97),
+    rings=28,
+    conform_edge=True,
+)
 outlined_patch("Red roundel", circle(0, 0.94, 0.204), RED, 0.017, 0.023)
 
 # Each eye has its own pivot, so Blink closes only the eye, retaining the mask.
@@ -604,16 +633,25 @@ expression_groups = build_expressions(
     WHITE,
 )
 
-# Circular beak base, tapering forward to the pointed side silhouette.
+# Keep the long conical silhouette, with a closed shoulder buried in the face
+# and a tiny rounded nose. The broad middle follows the original cone exactly.
+beak_profile = bezier(
+    (0.910, 0.0),
+    [
+        ((0.910, 0.118), (0.935, 0.144), (0.955, 0.144)),
+        ((0.969, 0.144), (0.980, 0.141067), (0.990, 0.1384)),
+        ((1.157, 0.093867), (1.324, 0.049333), (1.491, 0.0048)),
+        ((1.4974, 0.003093), (1.509, 0.0028), (1.509, 0.0)),
+    ],
+    12,
+) + [(1.509, 0.0)]
 verts = []
 faces = []
-for j in range(17):
-    t = j / 16
-    r = 0.144 * (1 - t)
+for z, r in beak_profile:
     for i in range(64):
         a = 2 * PI * i / 64
-        verts.append((r * cos(a), 1.568 + r * sin(a), RZ + 0.019 + 0.54 * t))
-for j in range(16):
+        verts.append((r * cos(a), 1.568 + r * sin(a), z))
+for j in range(len(beak_profile) - 1):
     for i in range(64):
         a = j * 64 + i
         b = j * 64 + (i + 1) % 64
@@ -624,35 +662,79 @@ g.mesh("Pointed brown beak", verts, faces, BROWN)
 # and an undulating black snowline that wraps all the way around.
 hatbase = 2.50
 hatheight = 0.54
+
+
+def mountain_radius(y):
+    straight = 0.337 + (0.118 - 0.337) * (y - hatbase) / hatheight
+    if 2.543 < y < 2.560:
+        # A very small Hermite fillet eases the shoulder where the mountain
+        # emerges from the head; the long trapezoidal sides stay straight.
+        t = (y - 2.543) / 0.017
+        return (
+            (2 * t**3 - 3 * t**2 + 1) * 0.327
+            + (t**3 - 2 * t**2 + t) * 0.017 * -2.5
+            + (-2 * t**3 + 3 * t**2) * (0.337 - 0.219 * 0.060 / 0.54)
+            + (t**3 - t**2) * 0.017 * (-0.219 / 0.54)
+        )
+    if y <= 2.543:
+        return 0.337 + (0.327 - 0.337) * (y - hatbase) / 0.043
+    return straight
+
+
 verts = []
 faces = []
-for j in range(17):
-    t = j / 16
-    y = hatbase + hatheight * t
-    r = 0.337 * (1 - t) + 0.118 * t
+mountain_heights = (
+    [hatbase + 0.043 * j / 8 for j in range(8)]
+    + [2.543 + 0.017 * j / 12 for j in range(12)]
+    + [2.560 + 0.400 * j / 24 for j in range(25)]
+)
+for y in mountain_heights:
+    r = mountain_radius(y)
     for i in range(96):
         a = 2 * PI * i / 96
         verts.append((r * cos(a), y, r * sin(a)))
-for j in range(16):
+for j in range(len(mountain_heights) - 1):
     for i in range(96):
         a = j * 96 + i
         b = j * 96 + (i + 1) % 96
         faces.extend([(a, a + 96, b), (b, a + 96, b + 96)])
+# Both caps lie inside the body or snow layer. Stopping the blue core below the
+# snow summit keeps its old sharp rim from poking through the rounded snowcap.
+for j, y in [
+    (0, mountain_heights[0]),
+    (len(mountain_heights) - 1, mountain_heights[-1]),
+]:
+    cap = len(verts)
+    verts.append((0, y, 0))
+    for i in range(96):
+        a, b = j * 96 + i, j * 96 + (i + 1) % 96
+        faces.append((cap, a, b) if j == 0 else (cap, b, a))
 g.mesh("Fuji blue mountain", verts, faces, BLUE)
 verts = []
 faces = []
 snowline = []
-for j in range(13):
-    t = j / 12
+snow_rings = 27
+for j in range(snow_rings):
     for i in range(96):
         a = 2 * PI * i / 96
         bottom = 2.880 + 0.024 * cos(3 * a + 0.8) + 0.01 * cos(5 * a)
-        y = bottom + (3.04 - bottom) * t
-        r = 0.337 + (0.118 - 0.337) * (y - hatbase) / hatheight + 0.002
+        if j <= 18:
+            y = bottom + (3.020 - bottom) * j / 18
+            r = mountain_radius(y) + 0.002
+        else:
+            t = (j - 18) / 8
+            u = 1 - t
+            # A 0.02-high quadratic shoulder meets a flat summit tangentially.
+            y = u * u * 3.020 + 2 * u * t * 3.040 + t * t * 3.040
+            r = (
+                u * u * (mountain_radius(3.020) + 0.002)
+                + 2 * u * t * 0.120
+                + t * t * 0.106
+            )
         verts.append((r * cos(a), y, r * sin(a)))
         if j == 0:
             snowline.append((r * cos(a), y, r * sin(a)))
-for j in range(12):
+for j in range(snow_rings - 1):
     for i in range(96):
         a = j * 96 + i
         b = j * 96 + (i + 1) % 96
@@ -661,7 +743,7 @@ for j in range(12):
 verts.append((0, 3.04, 0))
 cap = len(verts) - 1
 for i in range(96):
-    faces.append((cap, 12 * 96 + (i + 1) % 96, 12 * 96 + i))
+    faces.append((cap, (snow_rings - 1) * 96 + (i + 1) % 96, (snow_rings - 1) * 96 + i))
 g.mesh("Fuji white snowcap", verts, faces, WHITE)
 tube("Fuji wavy snowline", snowline, 0.015, INK)
 
@@ -811,21 +893,41 @@ for i, (side, x) in enumerate([("Left", -0.29), ("Right", 0.29)]):
 # Short raised fan on the back, visibly projecting beyond the body in profile.
 verts = []
 faces = []
-for j in range(25):
-    t = j / 24
+tail_sections = []
+# The closed root is buried inside the body. The visible fan retains its width,
+# lift and short projection while its far edge rounds over instead of ending
+# in an open tube.
+root_height = 0.09 * sin(PI * 0.08)
+for j in range(9):
+    a = PI * 0.5 * j / 8
+    tail_sections.append((0.16 * sin(a), root_height * sin(a), 0.02, 0.085 * cos(a)))
+for j in range(1, 33):
+    t = 0.96 * j / 32
     width = 0.16 + 0.16 * sin(t * PI * 0.72)
     cy = 0.02 - 0.10 * sin(t * PI) + 0.10 * t
     cz = -0.40 * t
+    height = 0.09 * sin(PI * (0.08 + 0.84 * t))
+    tail_sections.append((width, height, cy, cz))
+width, height, cy, cz = tail_sections[-1]
+for j in range(1, 13):
+    a = PI * 0.5 * j / 12
+    tail_sections.append(
+        (
+            width * cos(a),
+            height * cos(a),
+            cy + (0.12 - cy) * sin(a),
+            cz - 0.016 * sin(a),
+        )
+    )
+for width, height, cy, cz in tail_sections:
     for i in range(48):
         a = 2 * PI * i / 48
-        verts.append(
-            (width * cos(a), cy + 0.09 * sin(a) * sin(PI * (0.08 + 0.84 * t)), cz)
-        )
-for j in range(24):
+        verts.append((width * cos(a), cy + height * sin(a), cz))
+for j in range(len(tail_sections) - 1):
     for i in range(48):
         a = j * 48 + i
         b = j * 48 + (i + 1) % 48
-        faces.extend([(a, b, a + 48), (b, b + 48, a + 48)])
+        faces.extend([(a, a + 48, b), (b, a + 48, b + 48)])
 g.mesh("Blue raised tail fan", verts, faces, BLUE, tail)
 
 
@@ -1195,4 +1297,5 @@ for name, duration, samples, pose in [
         if name in {"Walk", "Run"}
         else lambda t, fn=pose: rest() if t <= 0 or t >= 1 else fn(t),
     )
+polish_materials(g.doc)
 g.save()

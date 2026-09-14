@@ -94,6 +94,7 @@ class DashmaruScene {
     DashmaruExpression initialExpression = DashmaruExpression.normal,
     double? initialTime,
     String? initialCamera,
+    double? initialZoom,
   }) async {
     await scene.Scene.initializeStaticResources();
     final model = await scene.loadScene('assets/models/dashmaru.glb');
@@ -123,16 +124,20 @@ class DashmaruScene {
     }
     selectExpression(initialExpression);
 
-    // Directional studio fill reveals the padded wings and rounded feet from
-    // every angle, while retaining the authored pale blue and pink palette.
+    // A broad studio reflection and asymmetric key reveal the rounded forms.
+    // The palette stays in the model; light only describes its volume.
+    sceneGraph.antiAliasingMode =
+        scene.Scene.isAntiAliasingModeSupported(scene.AntiAliasingMode.msaa)
+        ? scene.AntiAliasingMode.msaa
+        : scene.AntiAliasingMode.smaa;
     sceneGraph.environmentSettings = scene.EnvironmentSettings(
       environment: scene.EnvironmentMap.studio(),
       toneMapping: scene.ToneMappingMode.pbrNeutral,
       exposure: 1.0,
-      environmentIntensity: 1.0,
+      environmentIntensity: 0.90,
       ambientOcclusionEnabled: true,
-      ambientOcclusionIntensity: 0.35,
-      ambientOcclusionHalfResolution: true,
+      ambientOcclusionIntensity: 0.22,
+      ambientOcclusionHalfResolution: false,
     );
     sceneGraph.directionalLight = scene.DirectionalLight(
       direction: vm.Vector3(0.4, -1, 0.5),
@@ -141,8 +146,9 @@ class DashmaruScene {
       castsShadow: true,
       shadowCascadeCount: 1,
       shadowMaxDistance: 16,
-      shadowMapResolution: 1024,
-      shadowSoftness: 0.11,
+      shadowMapResolution: 2048,
+      shadowFilter: scene.DirectionalShadowFilter.rotatedPoisson,
+      shadowSoftness: 0.14,
       shadowDepthBias: 0.003,
       shadowNormalBias: 0.008,
     );
@@ -152,6 +158,16 @@ class DashmaruScene {
         scene.DirectionalLightComponent.aimed(
           scene.DirectionalLight(intensity: 0.85),
           vm.Vector3(0, 0.4, 1),
+        ),
+      ),
+    );
+
+    // A soft rear bounce keeps the cyan readable when inspecting the tail.
+    sceneGraph.add(
+      scene.Node(name: 'Soft rear bounce')..addComponent(
+        scene.DirectionalLightComponent.aimed(
+          scene.DirectionalLight(intensity: 0.35),
+          vm.Vector3(0.25, 0.25, -1),
         ),
       ),
     );
@@ -170,9 +186,12 @@ class DashmaruScene {
           ..metallicFactor = 0
           ..roughnessFactor = 0.92,
       ),
-    )..position = vm.Vector3(0, -0.053, 0);
+    )..position = vm.Vector3(0, -0.085 / 2, 0);
     sceneGraph.add(plinth);
     setCamera(initialCamera ?? 'front');
+    if (initialZoom != null && initialZoom.isFinite && initialZoom > 0) {
+      distance = (12 / initialZoom).clamp(4.5, 16);
+    }
     selectMotion(initialMotion, animateTransition: false);
     if (initialTime != null) {
       _clips[motion]!.seek(initialTime);
@@ -264,7 +283,7 @@ class DashmaruScene {
   }
 
   void zoom(double scrollDelta) {
-    distance = (distance + scrollDelta * 0.012).clamp(9, 16);
+    distance = (distance + scrollDelta * 0.012).clamp(4.5, 16);
   }
 
   void tick(Duration elapsed, double deltaSeconds) {

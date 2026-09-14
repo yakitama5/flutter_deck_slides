@@ -69,6 +69,7 @@ class _DashmaruViewerState extends State<DashmaruViewer> {
         initialExpression: DashmaruExpression.parse(query['expression']),
         initialTime: double.tryParse(query['time'] ?? ''),
         initialCamera: query['camera'],
+        initialZoom: double.tryParse(query['zoom'] ?? ''),
       );
       if (mounted) setState(() => _ready = true);
     } catch (error, stack) {
