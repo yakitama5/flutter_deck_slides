@@ -3,7 +3,7 @@
 
 Run from any directory: python3 path/to/tool/check_dashmaru.py [path/to/model.glb]
 This checks the delivered binary, independently of the model-building code. It is
-not a replacement for watching the seven gestures in Flutter Scene. An optional
+not a replacement for watching the eight gestures in Flutter Scene. An optional
 --baseline model.glb checks gait timing and the established upper-body Walk pose.
 Use --subframes 3 to also check three interpolated poses between every baked key.
 """
@@ -526,7 +526,7 @@ class Model:
     def check_animations(self, subframes=0):
         animations = self.doc.get("animations", [])
         names = [animation.get("name") for animation in animations]
-        required = {"Idle", "Walk", "Run", "Jump", "Wave", "Blink", "Shake"}
+        required = {"Idle", "Walk", "Run", "Jump", "Wave", "Blink", "Shake", "Sit"}
         require(len(names) == len(set(names)), "Animation names are not unique")
         require(
             required <= set(names),
@@ -789,6 +789,16 @@ class Model:
                 or max(row[1] for row in rows) - min(row[1] for row in rows) > 0.08,
                 f"Shake: {part} must visibly sway or turn from side to side",
             )
+        sit_hips = gesture_track("Sit", "Hips", "translation")
+        require(
+            min(row[1] for row in sit_hips) < sit_hips[0][1] - 0.45,
+            "Sit: the belly must lower visibly into a seated pose",
+        )
+        for part in ("Torso", "Head", "Crest", "LeftWing", "RightWing"):
+            require(
+                node_moves("Sit", part),
+                f"Sit: {part} needs a soft settling or breathing movement",
+            )
         for eye in ("LeftEye", "RightEye"):
             rows = gesture_track("Blink", eye, "scale")
             require(
@@ -796,7 +806,95 @@ class Model:
                 f"Blink: {eye} does not visibly close",
             )
         summaries.extend(self.check_foot_contacts(clips, subframes))
+        summaries.append(self.check_sitting_contacts(clips["Sit"], subframes))
         return summaries
+
+    def check_sitting_contacts(self, tracks, subframes=0):
+        """A seated belly carries weight while intact legs reach forward."""
+        surfaces = []
+        for node in self.nodes:
+            if "mesh" not in node:
+                continue
+            mesh = self.doc["meshes"][node["mesh"]]
+            name = mesh.get("name", "")
+            if name != "Body" and "flexible leg" not in name:
+                continue
+            require("skin" in node, f"Sit: {name} needs a continuous skin")
+            skin = self.doc["skins"][node["skin"]]
+            binds = self.read(skin["inverseBindMatrices"])
+            vertices = []
+            for primitive in mesh["primitives"]:
+                attrs = primitive["attributes"]
+                positions = self.read(attrs["POSITION"])
+                indices = self.read(attrs["JOINTS_0"])
+                weights = self.read(attrs["WEIGHTS_0"])
+                vertices.extend(
+                    (
+                        position,
+                        tuple(
+                            (slot, weight)
+                            for slot, weight in zip(slots, row)
+                            if weight > 0
+                        ),
+                    )
+                    for position, slots, row in zip(positions, indices, weights)
+                )
+            surfaces.append((name, skin, binds, vertices))
+        require(len(surfaces) == 3, "Sit: expected a belly and two flexible legs")
+        animation = next(a for a in self.doc["animations"] if a["name"] == "Sit")
+        modes = {
+            (c["target"]["node"], c["target"]["path"]): animation["samplers"][
+                c["sampler"]
+            ].get("interpolation", "LINEAR")
+            for c in animation["channels"]
+        }
+        named_nodes = {node.get("name"): i for i, node in enumerate(self.nodes)}
+        ankle_nodes = [named_nodes[side + "Ankle"] for side in ("Left", "Right")]
+        rest_worlds = self.world_matrices()
+        planted, bottoms = 0, []
+        for frame, pose in sampled_poses(tracks, subframes, modes):
+            worlds = self.world_matrices(pose)
+            heights = {}
+            for name, skin, binds, vertices in surfaces:
+                matrices = [
+                    multiply(worlds[joint], bind)
+                    for joint, bind in zip(skin["joints"], binds)
+                ]
+                heights[name] = min(
+                    sum(
+                        weight
+                        * (
+                            matrices[slot][1] * x
+                            + matrices[slot][5] * y
+                            + matrices[slot][9] * z
+                            + matrices[slot][13]
+                        )
+                        for slot, weight in influences
+                    )
+                    for (x, y, z), influences in vertices
+                )
+                require(
+                    heights[name] > -0.002,
+                    f"Sit: {name} penetrates the floor at frame {frame:g}",
+                )
+            bottoms.append(heights["Body"])
+            if heights["Body"] < 0.012:
+                planted += 1
+                require(
+                    all(
+                        worlds[ankle][14] > rest_worlds[ankle][14] + 0.50
+                        for ankle in ankle_nodes
+                    ),
+                    f"Sit: both feet must extend in front of the seated belly at frame {frame:g}",
+                )
+        require(
+            planted >= len(bottoms) * 0.35,
+            "Sit: the belly must rest on the floor for a sustained seated hold",
+        )
+        return (
+            f"Sit seat: {len(bottoms):,} poses, belly min Y {min(bottoms):+.6f}, "
+            f"{planted} seated poses with both feet extended; belly and legs clear the floor"
+        )
 
     def check_foot_contacts(self, clips, subframes=0):
         feet = []

@@ -3,7 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter_scene/scene.dart' as scene;
 import 'package:vector_math/vector_math.dart' as vm;
 
-/// The seven animations authored into the glTF model.
+/// The eight animations authored into the glTF model.
 enum DashmaruMotion {
   walk('Walk', '歩く', 'てくてく、いっしょに。'),
   jump('Jump', 'ジャンプ', '羽ばたいて、ふわっ。'),
@@ -11,7 +11,8 @@ enum DashmaruMotion {
   blink('Blink', 'まばたき', 'ぱちっ。ひとやすみ。'),
   idle('Idle', '待機', 'ゆらゆら、のんびり。'),
   run('Run', '走る', 'ぱたぱた、とてとて。'),
-  shake('Shake', 'ぶんぶん', 'ぶんぶん、ぷるぷる。');
+  shake('Shake', 'ぶんぶん', 'ぶんぶん、ぷるぷる。'),
+  sit('Sit', '座る', 'ちょこんと、ひとやすみ。');
 
   const DashmaruMotion(this.clipName, this.label, this.caption);
   final String clipName;

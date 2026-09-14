@@ -34,7 +34,11 @@
     {
       "name": "Shake",
       "tracks": 89
+    },
+    {
+      "name": "Sit",
+      "tracks": 89
     }
   ],
-  "bytes": 9063956
+  "bytes": 9497528
 }

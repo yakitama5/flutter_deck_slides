@@ -111,6 +111,8 @@ class _DashmaruViewerState extends State<DashmaruViewer> {
           _selectMotion(DashmaruMotion.run),
       const SingleActivator(LogicalKeyboardKey.digit7): () =>
           _selectMotion(DashmaruMotion.shake),
+      const SingleActivator(LogicalKeyboardKey.digit8): () =>
+          _selectMotion(DashmaruMotion.sit),
       const SingleActivator(LogicalKeyboardKey.space): _togglePlay,
       const SingleActivator(LogicalKeyboardKey.keyR): _reset,
     },
@@ -409,7 +411,7 @@ class _DashmaruViewerState extends State<DashmaruViewer> {
 
   Widget _motionControls(bool compact) => LayoutBuilder(
     builder: (context, constraints) {
-      final columns = constraints.maxWidth < 680 ? 4 : 7;
+      final columns = constraints.maxWidth < 720 ? 4 : 8;
       final spacing = compact ? 6.0 : 10.0;
       final width = (constraints.maxWidth - spacing * (columns - 1)) / columns;
       return Wrap(
@@ -422,7 +424,7 @@ class _DashmaruViewerState extends State<DashmaruViewer> {
               height: compact ? 64 : 82,
               child: Tooltip(
                 message: '${motion.caption}（キー ${motion.index + 1}）',
-                child: _motionCard(motion, compact),
+                child: _motionCard(motion, compact || width < 105),
               ),
             ),
         ],
@@ -440,6 +442,7 @@ class _DashmaruViewerState extends State<DashmaruViewer> {
       DashmaruMotion.idle => Icons.spa_rounded,
       DashmaruMotion.run => Icons.directions_run_rounded,
       DashmaruMotion.shake => Icons.sync_alt_rounded,
+      DashmaruMotion.sit => Icons.airline_seat_legroom_extra_rounded,
     };
     return Material(
       color: active ? _green : Colors.white,

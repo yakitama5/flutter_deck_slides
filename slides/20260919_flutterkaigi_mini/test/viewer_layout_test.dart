@@ -23,7 +23,11 @@ void main() {
     const Size(390, 844),
     const Size(640, 360),
   ]) {
-    for (final motion in [DashmaruMotion.idle, DashmaruMotion.jump]) {
+    for (final motion in [
+      DashmaruMotion.idle,
+      DashmaruMotion.jump,
+      DashmaruMotion.sit,
+    ]) {
       testWidgets(
         'viewer controls fit ${size.width} × ${size.height}: ${motion.name}',
         (tester) async {
@@ -47,6 +51,7 @@ void main() {
             '待機',
             '走る',
             'ぶんぶん',
+            '座る',
           ]) {
             expect(find.text(label), findsOneWidget);
           }

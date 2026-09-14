@@ -1280,6 +1280,52 @@ def blink(t):
     return p
 
 
+def sit(t):
+    """Settle onto the belly, stretch both feet out, then rise without a snap."""
+    p = rest()
+    seated = smooth(0.07, 0.32, t) * (1 - smooth(0.77, 0.96, t))
+    feet_out = smooth(0.15, 0.36, t) * (1 - smooth(0.73, 0.91, t))
+    hold = smooth(0.31, 0.40, t) * (1 - smooth(0.68, 0.77, t))
+    phase = 2 * PI * (t - 0.34) / 0.35
+    breathe = seated * 0.075 + hold * 0.015 * sin(phase)
+    # The lowest belly vertex is 0.12 below Hips. Compensate its Y scale so
+    # seated breathing keeps it 0.006 above the stage instead of hovering.
+    bob = -0.554 * seated - 0.042 * breathe
+    anticipation = pulse(t, 0.14, 0.14) + pulse(t, 0.83, 0.14)
+    bend_body(
+        p,
+        bob=bob,
+        nod=-0.055 * anticipation + 0.025 * hold * sin(phase - 0.4),
+        breathe=breathe,
+    )
+    p[(torso, "rotation")] = quat((1, 0, 0), 0.16 * anticipation - 0.055 * seated)
+    for i, sign in enumerate([-1, 1]):
+        # A soft knee remains hidden inside the belly. The short leg extends
+        # elastically toward the lifted toes, with both heels still grounded.
+        pitch = -0.52 * feet_out
+        ball = 0.055 * feet_out + 0.02 * hold * sin(phase - i * 0.3)
+        tip = -0.025 * feet_out
+        p[(forefeet[i], "rotation")] = quat((1, 0, 0), ball)
+        p[(toes[i], "rotation")] = quat((1, 0, 0), tip)
+        plant_leg(
+            p,
+            i,
+            foot_y=foot_clearance(i, pitch, ball, tip),
+            foot_z=0.02 + 0.68 * feet_out,
+            hip_bob=0.78 * bob,
+            pitch=pitch,
+        )
+        p[(wing_nodes[i], "rotation")] = qmul(
+            quat((0, 0, 1), sign * (0.10 * seated + 0.18 * anticipation)),
+            quat((1, 0, 0), -0.09 * seated),
+        )
+        flex_wing(p, i, phase, 0.035 * hold)
+    p[(tail, "rotation")] = quat((1, 0, 0), -0.16 * seated)
+    jiggle_crest(p, phase, 0.065 * hold + 0.10 * anticipation)
+    blink_eyes(p, max(pulse(t, 0.42, 0.018), pulse(t, 0.68, 0.018)))
+    return p
+
+
 # Sampled smooth curves are portable to glTF players and Flutter Scene. Gestures
 # return to bind pose; walking stays in its continuous periodic gait.
 for name, duration, samples, pose in [
@@ -1290,6 +1336,7 @@ for name, duration, samples, pose in [
     ("Idle", 4.8, 288, idle),
     ("Run", 0.76, 92, run),
     ("Shake", 2.8, 196, shake),
+    ("Sit", 6.4, 256, sit),
 ]:
     animate(
         name,
