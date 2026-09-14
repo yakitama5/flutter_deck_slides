@@ -10,7 +10,7 @@ enum DashmaruMotion {
   wave('Wave', '手を振る', 'またね、バイバイ！'),
   blink('Blink', 'まばたき', 'ぱちっ。ひとやすみ。'),
   idle('Idle', '待機', 'ゆらゆら、のんびり。'),
-  run('Run', '走る', 'ぱたぱた、どたばた！'),
+  run('Run', '走る', 'ぱたぱた、とてとて。'),
   shake('Shake', 'ぶんぶん', 'ぶんぶん、ぷるぷる。');
 
   const DashmaruMotion(this.clipName, this.label, this.caption);

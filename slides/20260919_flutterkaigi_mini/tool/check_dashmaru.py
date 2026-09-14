@@ -4,7 +4,8 @@
 Run from any directory: python3 path/to/tool/check_dashmaru.py [path/to/model.glb]
 This checks the delivered binary, independently of the model-building code. It is
 not a replacement for watching the seven gestures in Flutter Scene. An optional
---baseline model.glb verifies that the established Walk clip was preserved.
+--baseline model.glb checks gait timing and the established upper-body Walk pose.
+Use --subframes 3 to also check three interpolated poses between every baked key.
 """
 
 import argparse
@@ -44,6 +45,45 @@ def close(a, b):
 def same_pose(a, b, path):
     # q and -q represent the same orientation.
     return close(a, b) or (path == "rotation" and close(a, tuple(-v for v in b)))
+
+
+def interpolate(a, b, fraction, path, mode="LINEAR"):
+    """Match glTF TRS interpolation, including Flutter Scene's short-arc SLERP."""
+    if mode == "STEP":
+        return a
+    if path != "rotation":
+        return tuple(x + (y - x) * fraction for x, y in zip(a, b))
+    cosine = sum(x * y for x, y in zip(a, b))
+    if cosine < 0:
+        b, cosine = tuple(-value for value in b), -cosine
+    if cosine >= 0.999:
+        value = tuple(x + (y - x) * fraction for x, y in zip(a, b))
+        length = math.sqrt(sum(v * v for v in value))
+        return tuple(v / length for v in value)
+    sine = math.sqrt(1 - cosine * cosine)
+    angle = math.atan2(sine, cosine)
+    before = math.sin((1 - fraction) * angle) / sine
+    after = math.sin(fraction * angle) / sine
+    return tuple(x * before + y * after for x, y in zip(a, b))
+
+
+def sampled_poses(tracks, subframes, modes):
+    count = len(next(iter(tracks.values())))
+    for frame in range(count):
+        yield frame, {key: rows[frame] for key, rows in tracks.items()}
+        if frame + 1 == count:
+            break
+        for subframe in range(1, subframes + 1):
+            fraction = subframe / (subframes + 1)
+            yield (
+                frame + fraction,
+                {
+                    key: interpolate(
+                        rows[frame], rows[frame + 1], fraction, key[1], modes[key]
+                    )
+                    for key, rows in tracks.items()
+                },
+            )
 
 
 IDENTITY = (1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1)
@@ -344,7 +384,7 @@ class Model:
                 require(abs(determinant) > 1e-8, f"{label}: singular inverse bind")
             inverse_binds[index] = matrices
 
-        deformed = {"body": 0, "wing": 0, "leg": 0}
+        deformed = {"body": 0, "wing": 0, "leg": 0, "foot": 0}
         blended_vertices = 0
         for node_index, node in enumerate(self.nodes):
             if "mesh" not in node:
@@ -430,9 +470,12 @@ class Model:
             deformed["wing"] >= 2, "Both wings must flex across blended bone weights"
         )
         require(deformed["leg"] >= 2, "Both legs must bend across blended bone weights")
+        require(
+            deformed["foot"] >= 2, "Both feet must flex across blended bone weights"
+        )
         return f"{len(skins)} skins; {blended_vertices:,} vertices blend between bones"
 
-    def check_animations(self):
+    def check_animations(self, subframes=0):
         animations = self.doc.get("animations", [])
         names = [animation.get("name") for animation in animations]
         required = {"Idle", "Walk", "Run", "Jump", "Wave", "Blink", "Shake"}
@@ -616,6 +659,27 @@ class Model:
                     moves(gesture_track(clip, knee, "rotation")),
                     f"{clip}: {knee} never bends",
                 )
+            for side in ("Left", "Right"):
+                for joint, minimum in (("Forefoot", 0.20), ("Toe", 0.045)):
+                    _, values = rotation_component(
+                        gesture_track(clip, side + joint, "rotation")
+                    )
+                    require(
+                        max(values) - min(values) > minimum,
+                        f"{clip}: {side}{joint} needs visible, independent sole articulation",
+                    )
+        run_hips = gesture_track("Run", "Hips", "translation")
+        require(
+            max(row[0] for row in run_hips) - min(row[0] for row in run_hips) > 0.18,
+            "Run: hips must transfer weight visibly between the supporting feet",
+        )
+        run_torso = gesture_track("Run", "Torso", "rotation")
+        run_head = gesture_track("Run", "Head", "rotation")
+        require(
+            sum(torso[2] * head[2] < 0 for torso, head in zip(run_torso, run_head))
+            > len(run_head) * 0.65,
+            "Run: the head should counterbalance the sideways body sway",
+        )
         jump = gesture_track("Jump", "Dashmaru", "translation")
         require(
             max(row[1] for row in jump) > jump[0][1] + 0.05,
@@ -683,56 +747,131 @@ class Model:
                 min(row[1] for row in rows) < rows[0][1] * 0.5,
                 f"Blink: {eye} does not visibly close",
             )
-        self.check_foot_contacts(clips)
+        summaries.extend(self.check_foot_contacts(clips, subframes))
         return summaries
 
-    def check_foot_contacts(self, clips):
+    def check_foot_contacts(self, clips, subframes=0):
         feet = []
         for index, node in enumerate(self.nodes):
             if "mesh" not in node:
                 continue
             mesh = self.doc["meshes"][node["mesh"]]
             if "rounded foot" in mesh.get("name", "").lower():
-                require("skin" not in node, "Foot geometry must follow its ankle joint")
-                positions = [
-                    vertex
-                    for primitive in mesh["primitives"]
-                    for vertex in self.read(primitive["attributes"]["POSITION"])
-                ]
-                feet.append((index, positions))
-        require(len(feet) == 2, "Expected two rounded feet for ground-contact checks")
-        for name, tracks in clips.items():
-            bottoms = []
-            # Inspect the actual transformed foot vertices at every baked key,
-            # independently of the exporter's IK and motion formulae.
-            for frame in range(len(next(iter(tracks.values())))):
-                worlds = self.world_matrices(
-                    {key: rows[frame] for key, rows in tracks.items()}
+                require(
+                    "skin" in node,
+                    "Foot geometry must deform across ankle, forefoot and toe joints",
                 )
-                heights = []
-                for node, positions in feet:
-                    world = worlds[node]
-                    heights.append(
-                        min(
-                            world[1] * x + world[5] * y + world[9] * z + world[13]
-                            for x, y, z in positions
+                skin = self.doc["skins"][node["skin"]]
+                binds = self.read(skin["inverseBindMatrices"])
+                vertices = []
+                for primitive in mesh["primitives"]:
+                    attrs = primitive["attributes"]
+                    positions = self.read(attrs["POSITION"])
+                    indices = self.read(attrs["JOINTS_0"])
+                    weights = self.read(attrs["WEIGHTS_0"])
+                    vertices.extend(
+                        (
+                            position,
+                            tuple(
+                                (slot, weight)
+                                for slot, weight in zip(slots, row)
+                                if weight > 0
+                            ),
                         )
+                        for position, slots, row in zip(positions, indices, weights)
                     )
+                low = min(position[2] for position, _ in vertices)
+                high = max(position[2] for position, _ in vertices)
+                vertices = [
+                    (
+                        position,
+                        weights,
+                        position[2] < low + 0.35 * (high - low),
+                        position[2] > low + 0.65 * (high - low),
+                    )
+                    for position, weights in vertices
+                ]
+                used = {slot for _, weights, _, _ in vertices for slot, _ in weights}
+                names = {self.nodes[skin["joints"][slot]]["name"] for slot in used}
+                side = "Left" if "Left" in mesh["name"] else "Right"
+                require(
+                    {side + "Ankle", side + "Forefoot", side + "Toe"} <= names,
+                    f"{side} foot must have ankle, ball and toe influences",
+                )
+                feet.append((skin, binds, vertices))
+        require(len(feet) == 2, "Expected two rounded feet for ground-contact checks")
+        modes = {
+            animation["name"]: {
+                (channel["target"]["node"], channel["target"]["path"]): animation[
+                    "samplers"
+                ][channel["sampler"]].get("interpolation", "LINEAR")
+                for channel in animation["channels"]
+            }
+            for animation in self.doc["animations"]
+        }
+        summaries = []
+        for name, tracks in clips.items():
+            bottoms, rolls = [], []
+            # Inspect every delivered sole vertex, including optional samples
+            # between keys. This samples interpolation, rather than proving
+            # all continuous times or arbitrary crossfades between clips.
+            for frame, pose in sampled_poses(tracks, subframes, modes[name]):
+                worlds = self.world_matrices(pose)
+                heights, regions = [], []
+                for skin, binds, vertices in feet:
+                    matrices = [
+                        multiply(worlds[joint], bind)
+                        for joint, bind in zip(skin["joints"], binds)
+                    ]
+                    bottom, heel, toe = math.inf, math.inf, math.inf
+                    for (x, y, z), influences, is_heel, is_toe in vertices:
+                        height = sum(
+                            weight
+                            * (
+                                matrices[slot][1] * x
+                                + matrices[slot][5] * y
+                                + matrices[slot][9] * z
+                                + matrices[slot][13]
+                            )
+                            for slot, weight in influences
+                        )
+                        bottom = min(bottom, height)
+                        if is_heel:
+                            heel = min(heel, height)
+                        if is_toe:
+                            toe = min(toe, height)
+                    heights.append(bottom)
+                    regions.append((heel, toe))
                 require(
                     min(heights) > -0.015,
-                    f"{name}: a foot penetrates the floor at frame {frame}",
+                    f"{name}: a foot penetrates the floor at frame {frame:g} ({min(heights):.4f})",
                 )
                 if name not in ("Jump", "Run"):
                     require(
                         min(heights) < 0.025,
-                        f"{name}: neither foot supports the body at frame {frame}",
+                        f"{name}: neither foot supports the body at frame {frame:g}",
                     )
                 bottoms.append(heights)
+                rolls.append(regions)
             if name in ("Walk", "Run"):
                 require(
                     all(max(row[foot] for row in bottoms) > 0.055 for foot in range(2)),
                     f"{name}: each foot must lift clear of the floor during its swing",
                 )
+                for foot in range(2):
+                    support = [
+                        roll[foot]
+                        for bottom, roll in zip(bottoms, rolls)
+                        if bottom[foot] < 0.025
+                    ]
+                    require(
+                        any(toe > heel + 0.025 for heel, toe in support),
+                        f"{name}: foot {foot} needs a heel-first contact with its toes lifted",
+                    )
+                    require(
+                        any(heel > toe + 0.025 for heel, toe in support),
+                        f"{name}: foot {foot} needs a toe push-off with its heel lifted",
+                    )
             if name == "Run":
                 require(
                     any(min(row) > 0.055 for row in bottoms),
@@ -747,6 +886,12 @@ class Model:
                     any(min(row) > 0.15 for row in bottoms),
                     "Jump: both feet never leave the floor together",
                 )
+            summaries.append(
+                f"{name} feet: {len(bottoms):,} poses, min Y {min(min(row) for row in bottoms):+.6f}, "
+                f"lowest-foot max {max(min(row) for row in bottoms):+.6f}, "
+                f"both airborne {sum(min(row) > 0.055 for row in bottoms)}/{len(bottoms)}"
+            )
+        return summaries
 
     def check_expressions(self):
         names = (
@@ -854,11 +999,18 @@ class Model:
                 and all(close(a, b) for a, b in zip(times, actual_times)),
                 f"Walk regression: changed timing or interpolation for {key}",
             )
-            require(
-                len(rows) == len(actual_rows)
-                and all(same_pose(a, b, key[1]) for a, b in zip(rows, actual_rows)),
-                f"Walk regression: changed established poses for {key}",
-            )
+            # The requested heel/toe pass changes leg IK, but the timing and
+            # established upper-body cadence must remain untouched.
+            if key[0] not in {
+                side + part
+                for side in ("Left", "Right")
+                for part in ("Leg", "Knee", "Ankle")
+            }:
+                require(
+                    len(rows) == len(actual_rows)
+                    and all(same_pose(a, b, key[1]) for a, b in zip(rows, actual_rows)),
+                    f"Walk regression: changed established upper-body pose for {key}",
+                )
         defaults = {
             "translation": (0, 0, 0),
             "rotation": (0, 0, 0, 1),
@@ -866,12 +1018,18 @@ class Model:
         }
         nodes = {node.get("name"): node for node in self.nodes}
         for name, path in current.keys() - previous.keys():
+            if name in {
+                side + part
+                for side in ("Left", "Right")
+                for part in ("Forefoot", "Toe")
+            }:
+                continue
             neutral = nodes[name].get(path, defaults[path])
             require(
                 all(same_pose(row, neutral, path) for row in current[(name, path)][2]),
                 f"Walk regression: added channel {(name, path)} must stay at rest",
             )
-        return f"Walk retains all {len(previous)} existing channels and their keyframes"
+        return "Walk retains its timing and established upper-body poses; leg and toe articulation may change"
 
 
 def main():
@@ -885,14 +1043,23 @@ def main():
     parser.add_argument(
         "--baseline",
         type=Path,
-        help="Previous GLB whose established Walk channels must remain unchanged",
+        help="Previous GLB whose Walk timing and upper-body poses must remain unchanged",
+    )
+    parser.add_argument(
+        "--subframes",
+        type=int,
+        default=0,
+        metavar="N",
+        help="Extra foot-contact samples per key interval (0: keys only; 3: quarter steps)",
     )
     args = parser.parse_args()
+    if args.subframes < 0:
+        parser.error("--subframes must be zero or a positive integer")
     try:
         model = Model(args.model)
         mesh_count, triangle_count = model.check_meshes()
         skin_summary = model.check_skins()
-        summaries = model.check_animations()
+        summaries = model.check_animations(args.subframes)
         expression_summary = model.check_expressions()
         walk_summary = (
             model.check_walk_baseline(Model(args.baseline)) if args.baseline else None
@@ -920,7 +1087,9 @@ def main():
         print(f"  {walk_summary}")
     print("  Every loop joins matching poses and keys all shared properties.")
     print("  Gesture clips return to neutral; all scales stay positive.")
-    print("  Feet stay above the floor; walking has support and running has flight.")
+    print(
+        "  Feet stay above the floor; locomotion rolls from heel contact to toe push-off."
+    )
     return 0
 
 

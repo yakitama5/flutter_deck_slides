@@ -231,7 +231,7 @@ class Glb:
             "up": "+Y",
             "meshes": len(self.doc["meshes"]),
             "joints": len(joints),
-            "rig": "Soft body and crest, distributed wing flex, two-bone IK legs",
+            "rig": "Soft body and crest, distributed wing flex, two-bone IK legs and articulated forefeet",
             "triangles": sum(
                 self.doc["accessors"][m["primitives"][0]["indices"]]["count"] // 3
                 for m in self.doc["meshes"]
@@ -287,6 +287,7 @@ crest = bone("Crest", (0, 2.50, 0), head)
 crest_tip = bone("CrestTip", (0, 2.87, 0), crest)
 wing_nodes, wing_bends, wing_tips, legs, knees, ankles = [], [], [], [], [], []
 wing_soft = []
+forefeet, toes = [], []
 for side, sign in [("Left", -1), ("Right", 1)]:
     shoulder = bone(side + "Wing", (sign * 0.84, 2.00, 0), head)
     bend = bone(side + "WingBend", (sign * 1.00, 1.65, 0), shoulder)
@@ -307,6 +308,9 @@ for side, sign in [("Left", -1), ("Right", 1)]:
     legs.append(leg)
     knees.append(knee)
     ankles.append(ankle)
+    forefoot = bone(side + "Forefoot", (sign * 0.3248, 0.105, 0.25), ankle)
+    forefeet.append(forefoot)
+    toes.append(bone(side + "Toe", (sign * 0.3248, 0.10, 0.385), forefoot))
 tail = bone("Tail", (0, 0.94, -0.78), hips)
 
 # All authored vertices use model-space bind coordinates. Eye parts are rigid
@@ -340,7 +344,9 @@ def body_weights(v):
     ]
 
 
-def ellipsoid(name, center, radii, material, parent=0, segments=80, rings=48):
+def ellipsoid(
+    name, center, radii, material, parent=0, segments=80, rings=48, weights=None
+):
     vertices = []
     for j in range(rings + 1):
         lat = PI * j / rings
@@ -359,7 +365,7 @@ def ellipsoid(name, center, radii, material, parent=0, segments=80, rings=48):
             a = j * segments + i
             b = j * segments + (i + 1) % segments
             faces.extend([(a, b, a + segments), (b, b + segments, a + segments)])
-    return g.mesh(name, vertices, faces, material, parent, center)
+    return g.mesh(name, vertices, faces, material, parent, center, weights)
 
 
 BODY_Y = 1.58
@@ -739,6 +745,9 @@ for side_index, (side, sign) in enumerate([("Left", -1), ("Right", 1)]):
         weights=wing_weights,
     )
 
+# Sagittal samples are the complete foot silhouette for rotations around X.
+# Contact fitting uses these authored points, including the blended bend zones.
+foot_profiles = []
 for i, (side, x) in enumerate([("Left", -0.29), ("Right", 0.29)]):
     vertices, faces = [], []
     segments, rings = 64, 44
@@ -764,15 +773,40 @@ for i, (side, x) in enumerate([("Left", -0.29), ("Right", 0.29)]):
         return [(ankles[i], 1 - w), (knees[i], w)]
 
     g.mesh(side + " flexible leg", vertices, faces, BROWN, weights=leg_weights)
+
+    def foot_weights(v, i=i):
+        # A wide, smooth ball transition avoids a toy hinge. The short toe
+        # segment curls independently while the rear sole follows the ankle.
+        ball = smooth(0.13, 0.32, v[2])
+        tip = smooth(0.32, 0.46, v[2])
+        return [
+            (ankles[i], 1 - ball),
+            (forefeet[i], ball * (1 - tip)),
+            (toes[i], ball * tip),
+        ]
+
     ellipsoid(
         side + " rounded foot",
-        (x * 0.12, 0, 0.14),
+        (x * 1.12, 0.17, 0.16),
         (0.23, 0.168, 0.32),
         BROWN,
-        ankles[i],
-        96,
-        56,
+        segments=96,
+        rings=56,
+        weights=foot_weights,
     )
+    profile = []
+    for j in range(57):
+        lat = PI * j / 56
+        # At each latitude, every ring point lies between these two extrema
+        # in Z. Include the full ring because a flexed sole can have its
+        # lowest point inside a blend zone, away from its outline.
+        for k in range(49):
+            z = 0.16 + 0.32 * sin(lat) * cos(PI * k / 48)
+            y = 0.17 + 0.168 * cos(lat)
+            profile.append(
+                (y - 0.17, z - 0.02, tuple(w for _, w in foot_weights((x, y, z))))
+            )
+    foot_profiles.append(profile)
 
 # Short raised fan on the back, visibly projecting beyond the body in profile.
 verts = []
@@ -842,24 +876,84 @@ def bend_body(p, bob=0, lean=0, nod=0, breathe=0):
     p[(torso, "scale")] = (1 + breathe * 0.30, 1 - breathe * 0.25, 1 + breathe * 0.25)
 
 
-def plant_leg(p, i, foot_y=0.17, foot_z=0.02, hip_bob=0, pitch=0):
-    # Two-bone IK in the sagittal plane. On the stance phase the ankle stays
-    # on the floor; the knee bends during swing, anticipation and landing.
-    # Tiny length changes give the short toy-like legs a soft, stretchy gait.
+def plant_leg(p, i, foot_y=0.17, foot_z=0.02, hip_bob=0, pitch=0, hip_x=0):
+    # Solve a two-bone chain in a plane that tilts towards the planted foot.
+    # This lets the hips transfer weight sideways without dragging the sole.
     hip_y = 0.64 + hip_bob
-    dy, dz = foot_y - hip_y, foot_z - 0.02
-    d = sqrt(dy * dy + dz * dz)
+    dx, dy, dz = -hip_x, foot_y - hip_y, foot_z - 0.02
+    side_tilt = math.atan2(dx, -dy)
+    plane_y = -sqrt(dx * dx + dy * dy)
+    d = sqrt(plane_y * plane_y + dz * dz)
     stretch = max(1, d / 0.4699)
     length = 0.235 * stretch
-    aim = math.atan2(-dz, -dy)
+    aim = math.atan2(-dz, -plane_y)
     flex = math.acos(max(-1, min(1, d / (2 * length))))
     upper, lower = aim - flex, 2 * flex
-    p[(legs[i], "translation")] = (bind_positions[legs[i]][0], hip_y, 0.02)
-    p[(legs[i], "rotation")] = quat((1, 0, 0), upper)
+    hip_rotation = qmul(quat((0, 0, 1), side_tilt), quat((1, 0, 0), upper))
+    knee_rotation = quat((1, 0, 0), lower)
+    leg_rotation = qmul(hip_rotation, knee_rotation)
+    inverse_leg = tuple(-v for v in leg_rotation[:3]) + (leg_rotation[3],)
+    p[(legs[i], "translation")] = (bind_positions[legs[i]][0] + hip_x, hip_y, 0.02)
+    p[(legs[i], "rotation")] = hip_rotation
     p[(knees[i], "translation")] = (0, -length, 0)
-    p[(knees[i], "rotation")] = quat((1, 0, 0), lower)
+    p[(knees[i], "rotation")] = knee_rotation
     p[(ankles[i], "translation")] = (0, -length, 0)
-    p[(ankles[i], "rotation")] = quat((1, 0, 0), pitch - upper - lower)
+    p[(ankles[i], "rotation")] = qmul(inverse_leg, quat((1, 0, 0), pitch))
+
+
+def foot_clearance(i, pitch, ball, tip):
+    """Find the actual skinned sole height before placing the ankle."""
+    cp, sp, cb, sb, ct, st = (
+        cos(pitch),
+        sin(pitch),
+        cos(ball),
+        sin(ball),
+        cos(tip),
+        sin(tip),
+    )
+    ball_y, ball_z = -0.065, 0.23
+    tip_y, tip_z = -0.07, 0.365
+    bottom = 1
+    for y, z, (ankle_weight, ball_weight, tip_weight) in foot_profiles[i]:
+        by = ball_y + cb * (y - ball_y) - sb * (z - ball_z)
+        bz = ball_z + sb * (y - ball_y) + cb * (z - ball_z)
+        ty = tip_y + ct * (y - tip_y) - st * (z - tip_z)
+        tz = tip_z + st * (y - tip_y) + ct * (z - tip_z)
+        ty, tz = (
+            ball_y + cb * (ty - ball_y) - sb * (tz - ball_z),
+            ball_z + sb * (ty - ball_y) + cb * (tz - ball_z),
+        )
+        blended_y = ankle_weight * y + ball_weight * by + tip_weight * ty
+        blended_z = ankle_weight * z + ball_weight * bz + tip_weight * tz
+        bottom = min(bottom, cp * blended_y - sp * blended_z)
+    return -bottom + 0.002
+
+
+def gait_foot(
+    p, i, stride, stance, reach, lift_height, hip_bob, hip_x=0, running=False
+):
+    """Heel contact, flat support, toe push-off, then a curled recovery."""
+    heel_angle, push_angle = (0.20, 0.85) if running else (0.24, 0.62)
+    if stride < stance:
+        progress = stride / stance
+        push = smooth(0.55, 1, progress)
+        pitch = -heel_angle * (1 - smooth(0, 0.27, progress)) + push_angle * push
+        ball, tip = -0.90 * push_angle * push, -0.12 * push
+        foot_z = 0.02 + reach * (1 - 2 * progress)
+        lift = 0
+    else:
+        progress = (stride - stance) / (1 - stance)
+        release = 1 - smooth(0, 0.43, progress)
+        curl = sin(PI * progress) ** 2
+        pitch = push_angle + (-heel_angle - push_angle) * smooth(0, 0.70, progress)
+        ball = -0.90 * push_angle * release - 0.16 * curl
+        tip = -0.12 * release - 0.17 * curl
+        foot_z = 0.02 - reach + 2 * reach * smooth(0, 1, progress)
+        lift = lift_height * sin(PI * progress) ** 1.65
+    p[(forefeet[i], "rotation")] = quat((1, 0, 0), ball)
+    p[(toes[i], "rotation")] = quat((1, 0, 0), tip)
+    foot_y = foot_clearance(i, pitch, ball, tip) + lift
+    plant_leg(p, i, foot_y, foot_z, hip_bob, pitch, hip_x)
 
 
 def blink_eyes(p, close):
@@ -910,16 +1004,10 @@ def walk(t):
     )
     for i in range(2):
         step = phase + i * PI
-        forward = 0.15 * sin(step) * envelope
-        lift = 0.12 * max(0, cos(step)) ** 2 * envelope
-        plant_leg(
-            p,
-            i,
-            0.17 + lift,
-            0.02 + forward,
-            bob,
-            pitch=-0.13 * max(0, cos(step)) * envelope,
-        )
+        # Preserve the established 1.4-second cadence and alternating limbs,
+        # adding a heel-to-toe contact sequence inside each existing half-cycle.
+        stride = (t + 0.75 + i * 0.5) % 1
+        gait_foot(p, i, stride, 0.5, 0.15, 0.12, bob)
         p[(wing_nodes[i], "rotation")] = quat((1, 0, 0), -0.11 * sin(step) * envelope)
         p[(wing_bends[i], "rotation")] = quat(
             (1, 0, 0), -0.065 * sin(step - 0.5) * envelope
@@ -992,26 +1080,27 @@ def run(t):
     stride = t % 0.5
     flight = 0.07 * sin(PI * (stride - 0.34) / 0.16) ** 2 if stride > 0.34 else 0
     p[(0, "translation")] = (0, flight, 0)
+    weight_shift = cos(phase - 0.34 * PI)
+    hip_x = -0.115 * weight_shift
     bend_body(
         p,
         bob=bob,
-        lean=0.065 * sin(phase),
+        lean=0.145 * weight_shift,
         nod=0.15 + 0.035 * sin(step_phase),
         breathe=0.10 * cos(step_phase),
     )
+    p[(hips, "translation")] = (hip_x, 0.68 + bob, 0)
     p[(torso, "rotation")] = qmul(p[(torso, "rotation")], quat((1, 0, 0), 0.09))
+    # The head catches up a little later, keeping the face readable as the
+    # body rocks over each supporting leg in a small, determined trot.
+    p[(head, "rotation")] = qmul(
+        quat((0, 0, 1), -0.095 * cos(phase - 0.43 * PI)),
+        p[(head, "rotation")],
+    )
     p[(head, "scale")] = (1 + 0.025 * cos(step_phase), 1 - 0.035 * cos(step_phase), 1)
     for i, sign in enumerate([-1, 1]):
         stride = (t + i * 0.5) % 1
-        if stride < 0.34:
-            foot_z = 0.02 + 0.23 * (1 - 2 * stride / 0.34)
-            lift, pitch = 0, 0
-        else:
-            swing = (stride - 0.34) / 0.66
-            foot_z = 0.02 - 0.23 + 0.46 * smooth(0, 1, swing)
-            lift = 0.22 * sin(PI * swing) ** 2
-            pitch = -0.18 * sin(PI * swing)
-        plant_leg(p, i, 0.17 + lift, foot_z, bob, pitch)
+        gait_foot(p, i, stride, 0.34, 0.23, 0.22, bob, hip_x, running=True)
         p[(wing_nodes[i], "rotation")] = qmul(
             quat((0, 0, 1), sign * (0.75 + 0.57 * sin(step_phase))),
             quat((1, 0, 0), -0.18),

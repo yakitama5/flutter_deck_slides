@@ -3,38 +3,38 @@
   "front": "+Z",
   "up": "+Y",
   "meshes": 52,
-  "joints": 24,
-  "rig": "Soft body and crest, distributed wing flex, two-bone IK legs",
+  "joints": 28,
+  "rig": "Soft body and crest, distributed wing flex, two-bone IK legs and articulated forefeet",
   "triangles": 149748,
   "animations": [
     {
       "name": "Walk",
-      "tracks": 77
+      "tracks": 89
     },
     {
       "name": "Jump",
-      "tracks": 77
+      "tracks": 89
     },
     {
       "name": "Wave",
-      "tracks": 77
+      "tracks": 89
     },
     {
       "name": "Blink",
-      "tracks": 77
+      "tracks": 89
     },
     {
       "name": "Idle",
-      "tracks": 77
+      "tracks": 89
     },
     {
       "name": "Run",
-      "tracks": 77
+      "tracks": 89
     },
     {
       "name": "Shake",
-      "tracks": 77
+      "tracks": 89
     }
   ],
-  "bytes": 6475748
+  "bytes": 7013260
 }
