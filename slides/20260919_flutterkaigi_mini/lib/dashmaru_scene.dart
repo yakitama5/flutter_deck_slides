@@ -4,6 +4,7 @@ import 'package:flutter_scene/scene.dart' as scene;
 import 'package:vector_math/vector_math.dart' as vm;
 
 import 'dashmaru_background.dart';
+import 'sitting_playback.dart';
 
 /// The eight animations authored into the glTF model.
 enum DashmaruMotion {
@@ -115,7 +116,7 @@ class DashmaruScene {
       }
       _clips[motion] = model.createAnimationClip(animation)
         ..weight = 0
-        ..loop = true;
+        ..loop = motion != DashmaruMotion.sit;
       durations[motion] = animation.endTime;
     }
 
@@ -202,7 +203,11 @@ class DashmaruScene {
     }
     selectMotion(initialMotion, animateTransition: false);
     if (initialTime != null) {
-      _clips[motion]!.seek(initialTime);
+      _clips[motion]!.seek(
+        motion == DashmaruMotion.sit
+            ? SittingPlayback.position(initialTime, durations[motion]!)
+            : initialTime,
+      );
       setPlaying(false);
       sceneGraph.update(0);
       _updateExpressionVisibility();
@@ -319,8 +324,16 @@ class DashmaruScene {
       }
       if (progress == 1) _transitionWeights.clear();
     }
-    // One explicit scene step avoids the renderer's implicit wall-clock tick.
-    sceneGraph.update(delta);
+    // Advance each bound clip once, then ask Scene to apply the blended poses.
+    // Sit repeats only its seated section; every other clip keeps its own clock.
+    for (final entry in _clips.entries) {
+      if (entry.key == DashmaruMotion.sit) {
+        SittingPlayback.advance(entry.value, delta, durations[entry.key]!);
+      } else {
+        entry.value.advance(delta);
+      }
+    }
+    sceneGraph.update(0);
     _updateExpressionVisibility();
   }
 
