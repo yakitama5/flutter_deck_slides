@@ -1,0 +1,13 @@
+{
+  "schema": 3,
+  "package": "flutterkaigi_mini_20260919",
+  "entries": [
+    {
+      "family": "scene",
+      "id": "assets/models/dashmaru",
+      "file": "scene.dashmaru.327b51e8.fsceneb",
+      "stamp": "2bb22093a0ac5974",
+      "source": "assets/models/dashmaru.glb"
+    }
+  ]
+}
