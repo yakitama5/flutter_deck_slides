@@ -12,7 +12,7 @@ import math
 import struct
 from pathlib import Path
 
-from dashmaru_expressions import build_expressions
+from dashmaru_expressions import build_expressions, eye_ink_contour
 from dashmaru_materials import polish_materials
 
 PI = math.pi
@@ -447,7 +447,9 @@ def patch(
         for i in range(n):
             a = 1 + k * n + i
             b = 1 + k * n + (i + 1) % n
-            faces.extend([(a, b, a + n), (b, b + n, a + n)])
+            # Match the center fan before correcting the artist path's winding.
+            # Opposite fan/ring winding cancels normals into a false dark spot.
+            faces.extend([(a, a + n, b), (b, a + n, b + n)])
     # Ensure front-facing normals, independent of clockwise artist path.
     if (
         sum(
@@ -574,7 +576,7 @@ for side, x in [("Left", -0.167), ("Right", 0.167)]:
     eyes.append(pivot)
     patch(
         side + " eye ink",
-        circle(x, eyey, 0.170, 0.158),
+        eye_ink_contour(x, eyey, circle),
         INK,
         0.029,
         pivot,
@@ -633,29 +635,29 @@ expression_groups = build_expressions(
     WHITE,
 )
 
-# Keep the long conical silhouette, with a closed shoulder buried in the face
-# and a tiny rounded nose. The broad middle follows the original cone exactly.
+# Keep the tapered brown silhouette, but ease the shoulder into a softly curved
+# cone and a rounded nose. The tip has a finite cap instead of a pin-sharp point.
 beak_profile = bezier(
     (0.910, 0.0),
     [
         ((0.910, 0.118), (0.935, 0.144), (0.955, 0.144)),
-        ((0.969, 0.144), (0.980, 0.141067), (0.990, 0.1384)),
-        ((1.157, 0.093867), (1.324, 0.049333), (1.491, 0.0048)),
-        ((1.4974, 0.003093), (1.509, 0.0028), (1.509, 0.0)),
+        ((1.050, 0.144), (1.300, 0.076), (1.440, 0.035)),
+        ((1.481, 0.023), (1.492, 0.016), (1.492, 0.0)),
     ],
-    12,
-) + [(1.509, 0.0)]
+    36,
+) + [(1.492, 0.0)]
+beak_sides = 128
 verts = []
 faces = []
 for z, r in beak_profile:
-    for i in range(64):
-        a = 2 * PI * i / 64
+    for i in range(beak_sides):
+        a = 2 * PI * i / beak_sides
         verts.append((r * cos(a), 1.568 + r * sin(a), z))
 for j in range(len(beak_profile) - 1):
-    for i in range(64):
-        a = j * 64 + i
-        b = j * 64 + (i + 1) % 64
-        faces.extend([(a, b, a + 64), (b, b + 64, a + 64)])
+    for i in range(beak_sides):
+        a = j * beak_sides + i
+        b = j * beak_sides + (i + 1) % beak_sides
+        faces.extend([(a, b, a + beak_sides), (b, b + beak_sides, a + beak_sides)])
 g.mesh("Pointed brown beak", verts, faces, BROWN)
 
 # Fuji is a truncated mountain, not a party hat: wide base, flat summit,

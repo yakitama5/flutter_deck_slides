@@ -15,6 +15,8 @@ from pathlib import Path
 import struct
 import sys
 
+from check_dashmaru_surfaces import check_surface_quality
+
 
 class InvalidModel(Exception):
     """An exported asset violates a required model or animation invariant."""
@@ -1104,6 +1106,7 @@ def main():
     try:
         model = Model(args.model)
         mesh_count, triangle_count = model.check_meshes()
+        surface_summary = check_surface_quality(model, require)
         bib_summary = model.check_bib_clearance()
         skin_summary = model.check_skins()
         summaries = model.check_animations(args.subframes)
@@ -1131,6 +1134,7 @@ def main():
     print(f"  {skin_summary}")
     print(f"  {expression_summary}")
     print(f"  {bib_summary}")
+    print(f"  {surface_summary}")
     if walk_summary:
         print(f"  {walk_summary}")
     print("  Every loop joins matching poses and keys all shared properties.")

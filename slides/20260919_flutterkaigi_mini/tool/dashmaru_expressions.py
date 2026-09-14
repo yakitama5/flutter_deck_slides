@@ -10,6 +10,29 @@ selects the visible group independently of the animation channels.
 import math
 
 
+def eye_ink_contour(x, y, circle):
+    """Keep the original eye silhouette without overlapping black disks.
+
+    The two outlines meet at the bridge of the nose. Their original ellipses
+    overlap by 0.006, which creates competing coplanar triangles. Clip only that
+    hidden overlap to the shared centerline; the visible outer contour stays put.
+    """
+    contour = circle(x, y, 0.170, 0.158)
+    sign = -1 if x < 0 else 1
+    clipped = []
+    previous = contour[-1]
+    for current in contour:
+        previous_inside = sign * previous[0] >= 0
+        current_inside = sign * current[0] >= 0
+        if previous_inside != current_inside:
+            fraction = -previous[0] / (current[0] - previous[0])
+            clipped.append((0.0, previous[1] + fraction * (current[1] - previous[1])))
+        if current_inside:
+            clipped.append(current)
+        previous = current
+    return clipped
+
+
 def build_expressions(g, head, head_position, patch, tube, surface, circle, ink, white):
     """Add hidden smile, spiral and strain groups; return their IDs.
 
@@ -31,7 +54,9 @@ def build_expressions(g, head, head_position, patch, tube, surface, circle, ink,
             ):
                 patch(
                     prefix + " " + name,
-                    circle(x, y, *radii),
+                    eye_ink_contour(x, y, circle)
+                    if name == "eye ink"
+                    else circle(x, y, *radii),
                     material,
                     offset,
                     group,
@@ -57,7 +82,9 @@ def build_expressions(g, head, head_position, patch, tube, surface, circle, ink,
                 for i in range(105):
                     t = i / 104
                     angle = -0.60 * math.pi + 2.35 * math.pi * t
-                    r = 0.014 + 0.077 * t
+                    # The inner curvature must remain wider than the tube, or
+                    # the swept surface folds through itself at the first turn.
+                    r = 0.019 + 0.072 * t
                     points.append((x + r * math.cos(angle), y + r * math.sin(angle)))
                 radius = 0.0145
 
@@ -91,12 +118,14 @@ def _build_strain(g, head, head_position, tube, surface, ink):
     """Squeeze both eyes inward into rounded > < shapes on the blue mask."""
     group = g.node("FaceStrain", head, (0, 0, 0))
     g.doc["nodes"][group]["scale"] = [0.001, 0.001, 0.001]
-    # Short quadratic arcs soften the inward point instead of making a sharp
-    # chevron joint. No eye whites remain visible when the lids squeeze shut.
+    # C1-continuous arcs retain the > < silhouette, with the same endpoints and
+    # inward tip. Their minimum curvature radius is 0.032, safely above the
+    # 0.020 stroke radius: a tighter bend turns the inner tube inside out.
+    # No eye whites remain visible when the lids squeeze shut.
     curves = (
-        ((-0.100, 0.085), (-0.010, 0.067), (0.080, 0.012)),
-        ((0.080, 0.012), (0.100, 0.000), (0.080, -0.012)),
-        ((0.080, -0.012), (-0.010, -0.067), (-0.100, -0.085)),
+        ((-0.100, 0.085), (0.015, 0.080), (0.065, 0.040)),
+        ((0.065, 0.040), (0.115, 0.000), (0.065, -0.040)),
+        ((0.065, -0.040), (0.015, -0.080), (-0.100, -0.085)),
     )
     for side, x, direction in (("Left", -0.167, 1), ("Right", 0.167, -1)):
         points = []
