@@ -69,6 +69,7 @@ class _DashmaruViewerState extends State<DashmaruViewer> {
         initialExpression: DashmaruExpression.parse(query['expression']),
         initialTime: double.tryParse(query['time'] ?? ''),
         initialCamera: query['camera'],
+        initialZoom: double.tryParse(query['zoom'] ?? ''),
       );
       if (mounted) setState(() => _ready = true);
     } catch (error, stack) {
@@ -270,7 +271,7 @@ class _DashmaruViewerState extends State<DashmaruViewer> {
               : Semantics(
                   label:
                       'だしゅまるの3Dモデル。${_world.motion.label}のアニメーション。'
-                      '表情は${_world.displayedExpressionLabel}。',
+                      '${_world.expressionDescription}',
                   child: MouseRegion(
                     cursor: SystemMouseCursors.grab,
                     child: Listener(
@@ -511,9 +512,7 @@ class _DashmaruViewerState extends State<DashmaruViewer> {
         ChoiceChip(
           label: Text(expression.label),
           selected: _world.expression == expression,
-          onSelected: _ready && _world.motion != DashmaruMotion.jump
-              ? (_) => _selectExpression(expression)
-              : null,
+          onSelected: _ready ? (_) => _selectExpression(expression) : null,
           showCheckmark: false,
           selectedColor: const Color(0xFFDCEDE0),
           backgroundColor: Colors.white,
@@ -531,7 +530,7 @@ class _DashmaruViewerState extends State<DashmaruViewer> {
         ),
       if (_world.motion == DashmaruMotion.jump)
         const Text(
-          'ジャンプ中は踏ん張る表情',
+          'ジャンプは空中で羽ばたく間だけ踏ん張る表情',
           style: TextStyle(color: _muted, fontSize: 12),
         ),
     ],

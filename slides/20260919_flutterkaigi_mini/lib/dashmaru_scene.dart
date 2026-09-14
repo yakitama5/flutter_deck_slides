@@ -10,7 +10,7 @@ enum DashmaruMotion {
   wave('Wave', '手を振る', 'またね、バイバイ！'),
   blink('Blink', 'まばたき', 'ぱちっ。ひとやすみ。'),
   idle('Idle', '待機', 'ゆらゆら、のんびり。'),
-  run('Run', '走る', 'ぱたぱた、どたばた！'),
+  run('Run', '走る', 'ぱたぱた、とてとて。'),
   shake('Shake', 'ぶんぶん', 'ぶんぶん、ぷるぷる。');
 
   const DashmaruMotion(this.clipName, this.label, this.caption);
@@ -27,9 +27,9 @@ enum DashmaruMotion {
 /// The user's preferred expression, restored after the jump's exertion face.
 enum DashmaruExpression {
   normal('FaceNormal', '通常'),
-  deadpan('FaceDeadpan', '真顔'),
   smile('FaceSmile', '笑顔'),
-  spiral('FaceSpiral', 'ぐるぐる');
+  spiral('FaceSpiral', 'ぐるぐる'),
+  strain('FaceStrain', '踏ん張る');
 
   const DashmaruExpression(this.nodeName, this.label);
   final String nodeName;
@@ -39,6 +39,22 @@ enum DashmaruExpression {
     (expression) => expression.name == value?.toLowerCase(),
     orElse: () => normal,
   );
+
+  /// Jump overrides the preference only for its authored airborne phase.
+  /// Use the clip's time, so seeking, pausing and playback speed stay in sync
+  /// with the wings instead of running a separate expression timer.
+  static DashmaruExpression forPlayback({
+    required DashmaruMotion motion,
+    required DashmaruExpression preferred,
+    required double playbackTime,
+    required double duration,
+  }) {
+    if (motion != DashmaruMotion.jump) return preferred;
+    if (duration <= 0) return normal;
+    return playbackTime >= duration * 0.23 && playbackTime < duration * 0.81
+        ? strain
+        : normal;
+  }
 }
 
 /// Owns the retained Flutter Scene graph and its glTF animation clips.
@@ -51,14 +67,21 @@ class DashmaruScene {
   final Map<DashmaruMotion, double> durations = {};
   final Map<DashmaruMotion, double> _transitionWeights = {};
   final Map<DashmaruExpression, scene.Node> _expressionNodes = {};
-  scene.Node? _jumpExpressionNode;
   static const _transitionDuration = 0.3;
   double _transitionElapsed = 0;
 
   DashmaruMotion motion = DashmaruMotion.idle;
   DashmaruExpression expression = DashmaruExpression.normal;
-  String get displayedExpressionLabel =>
-      motion == DashmaruMotion.jump ? '踏ん張る' : expression.label;
+  DashmaruExpression get displayedExpression => DashmaruExpression.forPlayback(
+    motion: motion,
+    preferred: expression,
+    playbackTime: _clips[motion]?.playbackTime ?? 0,
+    duration: durations[motion] ?? 0,
+  );
+
+  String get expressionDescription => motion == DashmaruMotion.jump
+      ? '空中で羽ばたく間は踏ん張る表情、それ以外は通常の表情。'
+      : '表情は${expression.label}。';
   bool playing = true;
   bool orbiting = false;
   double speed = 1;
@@ -71,6 +94,7 @@ class DashmaruScene {
     DashmaruExpression initialExpression = DashmaruExpression.normal,
     double? initialTime,
     String? initialCamera,
+    double? initialZoom,
   }) async {
     await scene.Scene.initializeStaticResources();
     final model = await scene.loadScene('assets/models/dashmaru.glb');
@@ -98,23 +122,22 @@ class DashmaruScene {
       // None of these group transforms belongs to an animation track.
       _expressionNodes[expression] = node..scale = vm.Vector3.all(1);
     }
-    final jumpExpression = model.getChildByName('FaceStrain');
-    if (jumpExpression == null) {
-      throw StateError('3D モデルにジャンプ用の踏ん張る表情がありません。');
-    }
-    _jumpExpressionNode = jumpExpression..scale = vm.Vector3.all(1);
     selectExpression(initialExpression);
 
-    // Directional studio fill reveals the padded wings and rounded feet from
-    // every angle, while retaining the authored pale blue and pink palette.
+    // A broad studio reflection and asymmetric key reveal the rounded forms.
+    // The palette stays in the model; light only describes its volume.
+    sceneGraph.antiAliasingMode =
+        scene.Scene.isAntiAliasingModeSupported(scene.AntiAliasingMode.msaa)
+        ? scene.AntiAliasingMode.msaa
+        : scene.AntiAliasingMode.smaa;
     sceneGraph.environmentSettings = scene.EnvironmentSettings(
       environment: scene.EnvironmentMap.studio(),
       toneMapping: scene.ToneMappingMode.pbrNeutral,
       exposure: 1.0,
-      environmentIntensity: 1.0,
+      environmentIntensity: 0.90,
       ambientOcclusionEnabled: true,
-      ambientOcclusionIntensity: 0.35,
-      ambientOcclusionHalfResolution: true,
+      ambientOcclusionIntensity: 0.22,
+      ambientOcclusionHalfResolution: false,
     );
     sceneGraph.directionalLight = scene.DirectionalLight(
       direction: vm.Vector3(0.4, -1, 0.5),
@@ -123,8 +146,9 @@ class DashmaruScene {
       castsShadow: true,
       shadowCascadeCount: 1,
       shadowMaxDistance: 16,
-      shadowMapResolution: 1024,
-      shadowSoftness: 0.11,
+      shadowMapResolution: 2048,
+      shadowFilter: scene.DirectionalShadowFilter.rotatedPoisson,
+      shadowSoftness: 0.14,
       shadowDepthBias: 0.003,
       shadowNormalBias: 0.008,
     );
@@ -134,6 +158,16 @@ class DashmaruScene {
         scene.DirectionalLightComponent.aimed(
           scene.DirectionalLight(intensity: 0.85),
           vm.Vector3(0, 0.4, 1),
+        ),
+      ),
+    );
+
+    // A soft rear bounce keeps the cyan readable when inspecting the tail.
+    sceneGraph.add(
+      scene.Node(name: 'Soft rear bounce')..addComponent(
+        scene.DirectionalLightComponent.aimed(
+          scene.DirectionalLight(intensity: 0.35),
+          vm.Vector3(0.25, 0.25, -1),
         ),
       ),
     );
@@ -152,14 +186,18 @@ class DashmaruScene {
           ..metallicFactor = 0
           ..roughnessFactor = 0.92,
       ),
-    )..position = vm.Vector3(0, -0.053, 0);
+    )..position = vm.Vector3(0, -0.085 / 2, 0);
     sceneGraph.add(plinth);
     setCamera(initialCamera ?? 'front');
+    if (initialZoom != null && initialZoom.isFinite && initialZoom > 0) {
+      distance = (12 / initialZoom).clamp(4.5, 16);
+    }
     selectMotion(initialMotion, animateTransition: false);
     if (initialTime != null) {
       _clips[motion]!.seek(initialTime);
       setPlaying(false);
       sceneGraph.update(0);
+      _updateExpressionVisibility();
     }
   }
 
@@ -179,10 +217,10 @@ class DashmaruScene {
     }
     _transitionElapsed = 0;
     motion = value;
-    _updateExpressionVisibility();
     playing = true;
     final selected = _clips[value]!;
     if (selected.weight == 0 || !animateTransition) selected.seek(0);
+    _updateExpressionVisibility();
     for (final entry in _clips.entries) {
       final clip = entry.value;
       if (!animateTransition) clip.weight = entry.key == value ? 1 : 0;
@@ -206,11 +244,10 @@ class DashmaruScene {
   }
 
   void _updateExpressionVisibility() {
-    final jumping = motion == DashmaruMotion.jump;
+    final displayed = displayedExpression;
     for (final entry in _expressionNodes.entries) {
-      entry.value.visible = !jumping && entry.key == expression;
+      entry.value.visible = entry.key == displayed;
     }
-    _jumpExpressionNode?.visible = jumping;
   }
 
   void setSpeed(double value) {
@@ -246,7 +283,7 @@ class DashmaruScene {
   }
 
   void zoom(double scrollDelta) {
-    distance = (distance + scrollDelta * 0.012).clamp(9, 16);
+    distance = (distance + scrollDelta * 0.012).clamp(4.5, 16);
   }
 
   void tick(Duration elapsed, double deltaSeconds) {
@@ -269,6 +306,7 @@ class DashmaruScene {
     }
     // One explicit scene step avoids the renderer's implicit wall-clock tick.
     sceneGraph.update(delta);
+    _updateExpressionVisibility();
   }
 
   scene.PerspectiveCamera camera(Duration elapsed) => scene.PerspectiveCamera(

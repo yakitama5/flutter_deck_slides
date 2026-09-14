@@ -12,6 +12,7 @@ class _LoadingScene extends DashmaruScene {
     DashmaruExpression initialExpression = DashmaruExpression.normal,
     double? initialTime,
     String? initialCamera,
+    double? initialZoom,
   }) => Completer<void>().future;
 }
 
@@ -50,8 +51,12 @@ void main() {
             expect(find.text(label), findsOneWidget);
           }
           expect(find.byType(ChoiceChip), findsNWidgets(4));
+          for (final label in ['通常', '笑顔', 'ぐるぐる', '踏ん張る']) {
+            expect(find.text(label), findsOneWidget);
+          }
+          expect(find.text('真顔'), findsNothing);
           expect(
-            find.text('ジャンプ中は踏ん張る表情'),
+            find.text('ジャンプは空中で羽ばたく間だけ踏ん張る表情'),
             motion == DashmaruMotion.jump ? findsOneWidget : findsNothing,
           );
           await tester.pumpWidget(const SizedBox());
