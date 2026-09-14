@@ -12,7 +12,7 @@ import math
 import struct
 from pathlib import Path
 
-from dashmaru_expressions import build_expressions
+from dashmaru_expressions import build_expressions, eye_ink_contour
 from dashmaru_materials import polish_materials
 
 PI = math.pi
@@ -447,7 +447,9 @@ def patch(
         for i in range(n):
             a = 1 + k * n + i
             b = 1 + k * n + (i + 1) % n
-            faces.extend([(a, b, a + n), (b, b + n, a + n)])
+            # Match the center fan before correcting the artist path's winding.
+            # Opposite fan/ring winding cancels normals into a false dark spot.
+            faces.extend([(a, a + n, b), (b, a + n, b + n)])
     # Ensure front-facing normals, independent of clockwise artist path.
     if (
         sum(
@@ -574,7 +576,7 @@ for side, x in [("Left", -0.167), ("Right", 0.167)]:
     eyes.append(pivot)
     patch(
         side + " eye ink",
-        circle(x, eyey, 0.170, 0.158),
+        eye_ink_contour(x, eyey, circle),
         INK,
         0.029,
         pivot,
@@ -633,29 +635,29 @@ expression_groups = build_expressions(
     WHITE,
 )
 
-# Keep the long conical silhouette, with a closed shoulder buried in the face
-# and a tiny rounded nose. The broad middle follows the original cone exactly.
+# Keep the tapered brown silhouette, but ease the shoulder into a softly curved
+# cone and a rounded nose. The tip has a finite cap instead of a pin-sharp point.
 beak_profile = bezier(
     (0.910, 0.0),
     [
         ((0.910, 0.118), (0.935, 0.144), (0.955, 0.144)),
-        ((0.969, 0.144), (0.980, 0.141067), (0.990, 0.1384)),
-        ((1.157, 0.093867), (1.324, 0.049333), (1.491, 0.0048)),
-        ((1.4974, 0.003093), (1.509, 0.0028), (1.509, 0.0)),
+        ((1.050, 0.144), (1.300, 0.076), (1.440, 0.035)),
+        ((1.481, 0.023), (1.492, 0.016), (1.492, 0.0)),
     ],
-    12,
-) + [(1.509, 0.0)]
+    36,
+) + [(1.492, 0.0)]
+beak_sides = 128
 verts = []
 faces = []
 for z, r in beak_profile:
-    for i in range(64):
-        a = 2 * PI * i / 64
+    for i in range(beak_sides):
+        a = 2 * PI * i / beak_sides
         verts.append((r * cos(a), 1.568 + r * sin(a), z))
 for j in range(len(beak_profile) - 1):
-    for i in range(64):
-        a = j * 64 + i
-        b = j * 64 + (i + 1) % 64
-        faces.extend([(a, b, a + 64), (b, b + 64, a + 64)])
+    for i in range(beak_sides):
+        a = j * beak_sides + i
+        b = j * beak_sides + (i + 1) % beak_sides
+        faces.extend([(a, b, a + beak_sides), (b, b + beak_sides, a + beak_sides)])
 g.mesh("Pointed brown beak", verts, faces, BROWN)
 
 # Fuji is a truncated mountain, not a party hat: wide base, flat summit,
@@ -1278,6 +1280,52 @@ def blink(t):
     return p
 
 
+def sit(t):
+    """Settle onto the belly, stretch both feet out, then rise without a snap."""
+    p = rest()
+    seated = smooth(0.07, 0.32, t) * (1 - smooth(0.77, 0.96, t))
+    feet_out = smooth(0.15, 0.36, t) * (1 - smooth(0.73, 0.91, t))
+    hold = smooth(0.31, 0.40, t) * (1 - smooth(0.68, 0.77, t))
+    phase = 2 * PI * (t - 0.34) / 0.35
+    breathe = seated * 0.075 + hold * 0.015 * sin(phase)
+    # The lowest belly vertex is 0.12 below Hips. Compensate its Y scale so
+    # seated breathing keeps it 0.006 above the stage instead of hovering.
+    bob = -0.554 * seated - 0.042 * breathe
+    anticipation = pulse(t, 0.14, 0.14) + pulse(t, 0.83, 0.14)
+    bend_body(
+        p,
+        bob=bob,
+        nod=-0.055 * anticipation + 0.025 * hold * sin(phase - 0.4),
+        breathe=breathe,
+    )
+    p[(torso, "rotation")] = quat((1, 0, 0), 0.16 * anticipation - 0.055 * seated)
+    for i, sign in enumerate([-1, 1]):
+        # A soft knee remains hidden inside the belly. The short leg extends
+        # elastically toward the lifted toes, with both heels still grounded.
+        pitch = -0.52 * feet_out
+        ball = 0.055 * feet_out + 0.02 * hold * sin(phase - i * 0.3)
+        tip = -0.025 * feet_out
+        p[(forefeet[i], "rotation")] = quat((1, 0, 0), ball)
+        p[(toes[i], "rotation")] = quat((1, 0, 0), tip)
+        plant_leg(
+            p,
+            i,
+            foot_y=foot_clearance(i, pitch, ball, tip),
+            foot_z=0.02 + 0.68 * feet_out,
+            hip_bob=0.78 * bob,
+            pitch=pitch,
+        )
+        p[(wing_nodes[i], "rotation")] = qmul(
+            quat((0, 0, 1), sign * (0.10 * seated + 0.18 * anticipation)),
+            quat((1, 0, 0), -0.09 * seated),
+        )
+        flex_wing(p, i, phase, 0.035 * hold)
+    p[(tail, "rotation")] = quat((1, 0, 0), -0.16 * seated)
+    jiggle_crest(p, phase, 0.065 * hold + 0.10 * anticipation)
+    blink_eyes(p, max(pulse(t, 0.42, 0.018), pulse(t, 0.68, 0.018)))
+    return p
+
+
 # Sampled smooth curves are portable to glTF players and Flutter Scene. Gestures
 # return to bind pose; walking stays in its continuous periodic gait.
 for name, duration, samples, pose in [
@@ -1288,6 +1336,7 @@ for name, duration, samples, pose in [
     ("Idle", 4.8, 288, idle),
     ("Run", 0.76, 92, run),
     ("Shake", 2.8, 196, shake),
+    ("Sit", 6.4, 256, sit),
 ]:
     animate(
         name,

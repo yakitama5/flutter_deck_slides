@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutterkaigi_mini_20260919/dashmaru_background.dart';
 import 'package:flutterkaigi_mini_20260919/dashmaru_scene.dart';
 import 'package:flutterkaigi_mini_20260919/main.dart';
 
@@ -10,6 +11,7 @@ class _LoadingScene extends DashmaruScene {
   Future<void> load({
     required DashmaruMotion initialMotion,
     DashmaruExpression initialExpression = DashmaruExpression.normal,
+    DashmaruBackground initialBackground = DashmaruBackground.mint,
     double? initialTime,
     String? initialCamera,
     double? initialZoom,
@@ -22,8 +24,14 @@ void main() {
     const Size(320, 640),
     const Size(390, 844),
     const Size(640, 360),
+    const Size(800, 600),
+    const Size(1280, 720),
   ]) {
-    for (final motion in [DashmaruMotion.idle, DashmaruMotion.jump]) {
+    for (final motion in [
+      DashmaruMotion.idle,
+      DashmaruMotion.jump,
+      DashmaruMotion.sit,
+    ]) {
       testWidgets(
         'viewer controls fit ${size.width} × ${size.height}: ${motion.name}',
         (tester) async {
@@ -35,9 +43,13 @@ void main() {
 
           // The loading shell has the same controls and stage constraints as the
           // ready viewer, without requiring a GPU in the widget-test process.
-          await tester.pumpWidget(
-            DashmaruApp(world: _LoadingScene()..motion = motion),
-          );
+          final world = _LoadingScene()
+            ..motion = motion
+            ..expression = DashmaruExpression.smile
+            ..speed = 0.5
+            ..playing = false
+            ..yaw = 0.8;
+          await tester.pumpWidget(DashmaruApp(world: world));
           expect(tester.takeException(), isNull);
           for (final label in [
             '歩く',
@@ -47,10 +59,11 @@ void main() {
             '待機',
             '走る',
             'ぶんぶん',
+            '座る',
           ]) {
             expect(find.text(label), findsOneWidget);
           }
-          expect(find.byType(ChoiceChip), findsNWidgets(4));
+          expect(find.byType(ChoiceChip), findsNWidgets(8));
           for (final label in ['通常', '笑顔', 'ぐるぐる', '踏ん張る']) {
             expect(find.text(label), findsOneWidget);
           }
@@ -59,6 +72,24 @@ void main() {
             find.text('ジャンプは空中で羽ばたく間だけ踏ん張る表情'),
             motion == DashmaruMotion.jump ? findsOneWidget : findsNothing,
           );
+          for (final label in ['ミント', 'スタジオ', 'ピーチ', '夜']) {
+            expect(find.text(label), findsOneWidget);
+          }
+          // The last control must remain reachable on short/narrow displays.
+          // Switching the backdrop also works during model loading and never
+          // changes the character's current playback or camera settings.
+          final night = find.widgetWithText(ChoiceChip, '夜');
+          await tester.ensureVisible(night);
+          await tester.tap(night);
+          await tester.pump();
+          expect(tester.takeException(), isNull);
+          expect(world.background, DashmaruBackground.night);
+          expect(tester.widget<ChoiceChip>(night).selected, isTrue);
+          expect(world.motion, motion);
+          expect(world.expression, DashmaruExpression.smile);
+          expect(world.speed, 0.5);
+          expect(world.playing, isFalse);
+          expect(world.yaw, 0.8);
           await tester.pumpWidget(const SizedBox());
         },
       );

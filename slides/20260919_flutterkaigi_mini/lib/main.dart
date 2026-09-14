@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_scene/scene.dart' as scene;
 
+import 'dashmaru_background.dart';
 import 'dashmaru_scene.dart';
 
 const _ink = Color(0xFF183E36);
@@ -67,6 +68,7 @@ class _DashmaruViewerState extends State<DashmaruViewer> {
       await _world.load(
         initialMotion: DashmaruMotion.parse(query['motion']),
         initialExpression: DashmaruExpression.parse(query['expression']),
+        initialBackground: DashmaruBackground.parse(query['background']),
         initialTime: double.tryParse(query['time'] ?? ''),
         initialCamera: query['camera'],
         initialZoom: double.tryParse(query['zoom'] ?? ''),
@@ -84,6 +86,10 @@ class _DashmaruViewerState extends State<DashmaruViewer> {
 
   void _selectExpression(DashmaruExpression expression) {
     if (_ready) setState(() => _world.selectExpression(expression));
+  }
+
+  void _selectBackground(DashmaruBackground background) {
+    setState(() => _world.selectBackground(background));
   }
 
   void _togglePlay() {
@@ -111,6 +117,8 @@ class _DashmaruViewerState extends State<DashmaruViewer> {
           _selectMotion(DashmaruMotion.run),
       const SingleActivator(LogicalKeyboardKey.digit7): () =>
           _selectMotion(DashmaruMotion.shake),
+      const SingleActivator(LogicalKeyboardKey.digit8): () =>
+          _selectMotion(DashmaruMotion.sit),
       const SingleActivator(LogicalKeyboardKey.space): _togglePlay,
       const SingleActivator(LogicalKeyboardKey.keyR): _reset,
     },
@@ -140,14 +148,22 @@ class _DashmaruViewerState extends State<DashmaruViewer> {
                     const SizedBox(height: 10),
                     _expressionControls(),
                     const SizedBox(height: 8),
+                    _backgroundControls(),
+                    const SizedBox(height: 8),
                     _footer(compact),
                   ],
                 ),
               );
-              // Keep the 3D stage usable on short windows / landscape phones.
-              return constraints.maxHeight < 600
+              // Reserve room for the model even when the controls wrap. Short
+              // windows can scroll to every control without shrinking the stage.
+              final minimumHeight = constraints.maxWidth < 360
+                  ? 820.0
+                  : compact
+                  ? 760.0
+                  : 680.0;
+              return constraints.maxHeight < minimumHeight
                   ? SingleChildScrollView(
-                      child: SizedBox(height: 700, child: content),
+                      child: SizedBox(height: minimumHeight, child: content),
                     )
                   : content;
             },
@@ -238,11 +254,7 @@ class _DashmaruViewerState extends State<DashmaruViewer> {
     decoration: BoxDecoration(
       borderRadius: BorderRadius.circular(28),
       border: Border.all(color: _line),
-      gradient: const RadialGradient(
-        center: Alignment(0, -0.4),
-        radius: 1.1,
-        colors: [Color(0xFFFFFFFF), Color(0xFFEAF1E5)],
-      ),
+      gradient: _world.background.gradient,
     ),
     child: Stack(
       children: [
@@ -254,17 +266,24 @@ class _DashmaruViewerState extends State<DashmaruViewer> {
                     child: SelectableText(
                       '3D モデルを読み込めませんでした。\n$_error',
                       textAlign: TextAlign.center,
+                      style: TextStyle(color: _world.background.inkColor),
                     ),
                   ),
                 )
               : !_ready
-              ? const Center(
+              ? Center(
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      CircularProgressIndicator(color: _green, strokeWidth: 2),
-                      SizedBox(height: 18),
-                      Text('だしゅまるを呼んでいます…'),
+                      CircularProgressIndicator(
+                        color: _world.background.inkColor,
+                        strokeWidth: 2,
+                      ),
+                      const SizedBox(height: 18),
+                      Text(
+                        'だしゅまるを呼んでいます…',
+                        style: TextStyle(color: _world.background.inkColor),
+                      ),
                     ],
                   ),
                 )
@@ -306,7 +325,9 @@ class _DashmaruViewerState extends State<DashmaruViewer> {
                   height: 7,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: _ready ? _green : _muted,
+                    color: _ready
+                        ? _world.background.inkColor
+                        : _world.background.mutedColor,
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -316,8 +337,8 @@ class _DashmaruViewerState extends State<DashmaruViewer> {
                             ? 'LIVE  /  ${_world.motion.label}'
                             : 'PAUSED')
                       : 'LOADING',
-                  style: const TextStyle(
-                    color: _green,
+                  style: TextStyle(
+                    color: _world.background.inkColor,
                     fontSize: 10,
                     fontWeight: FontWeight.w700,
                     letterSpacing: 1.2,
@@ -328,13 +349,16 @@ class _DashmaruViewerState extends State<DashmaruViewer> {
           ),
         ),
         if (!compact)
-          const Positioned(
+          Positioned(
             top: 20,
             right: 24,
             child: IgnorePointer(
               child: Text(
                 'ドラッグで回転 · スクロールでズーム',
-                style: TextStyle(fontSize: 11, color: _muted),
+                style: TextStyle(
+                  fontSize: 11,
+                  color: _world.background.mutedColor,
+                ),
               ),
             ),
           ),
@@ -350,7 +374,7 @@ class _DashmaruViewerState extends State<DashmaruViewer> {
                 IconButton(
                   tooltip: 'リセット',
                   icon: const Icon(Icons.restart_alt_rounded),
-                  color: _ink,
+                  color: _world.background.inkColor,
                   onPressed: _ready ? _reset : null,
                 )
               else
@@ -409,7 +433,7 @@ class _DashmaruViewerState extends State<DashmaruViewer> {
 
   Widget _motionControls(bool compact) => LayoutBuilder(
     builder: (context, constraints) {
-      final columns = constraints.maxWidth < 680 ? 4 : 7;
+      final columns = constraints.maxWidth < 720 ? 4 : 8;
       final spacing = compact ? 6.0 : 10.0;
       final width = (constraints.maxWidth - spacing * (columns - 1)) / columns;
       return Wrap(
@@ -422,7 +446,7 @@ class _DashmaruViewerState extends State<DashmaruViewer> {
               height: compact ? 64 : 82,
               child: Tooltip(
                 message: '${motion.caption}（キー ${motion.index + 1}）',
-                child: _motionCard(motion, compact),
+                child: _motionCard(motion, compact || width < 105),
               ),
             ),
         ],
@@ -440,6 +464,7 @@ class _DashmaruViewerState extends State<DashmaruViewer> {
       DashmaruMotion.idle => Icons.spa_rounded,
       DashmaruMotion.run => Icons.directions_run_rounded,
       DashmaruMotion.shake => Icons.sync_alt_rounded,
+      DashmaruMotion.sit => Icons.airline_seat_legroom_extra_rounded,
     };
     return Material(
       color: active ? _green : Colors.white,
@@ -532,6 +557,46 @@ class _DashmaruViewerState extends State<DashmaruViewer> {
         const Text(
           'ジャンプは空中で羽ばたく間だけ踏ん張る表情',
           style: TextStyle(color: _muted, fontSize: 12),
+        ),
+    ],
+  );
+
+  Widget _backgroundControls() => Wrap(
+    spacing: 6,
+    runSpacing: 4,
+    crossAxisAlignment: WrapCrossAlignment.center,
+    children: [
+      const Padding(
+        padding: EdgeInsets.only(right: 4),
+        child: Text('背景', style: TextStyle(color: _muted, fontSize: 12)),
+      ),
+      for (final background in DashmaruBackground.values)
+        ChoiceChip(
+          label: Text(background.label),
+          avatar: DecoratedBox(
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: background.edgeColor,
+              border: Border.all(color: background.mutedColor),
+            ),
+            child: const SizedBox.square(dimension: 15),
+          ),
+          selected: _world.background == background,
+          onSelected: (_) => _selectBackground(background),
+          showCheckmark: false,
+          selectedColor: const Color(0xFFDCEDE0),
+          backgroundColor: Colors.white,
+          side: BorderSide(
+            color: _world.background == background ? _green : _line,
+          ),
+          labelStyle: TextStyle(
+            color: _world.background == background ? _green : _muted,
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 4),
+          visualDensity: VisualDensity.compact,
+          materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
         ),
     ],
   );
