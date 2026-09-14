@@ -1,8 +1,8 @@
 """Reference-based, curved face markings for the Dashmaru glTF sculpture.
 
-The drawing references use the same round eye outlines for a tiny-pupil blank
-look, happy arches and dizzy spirals. A tightly squeezed pair of eyelids adds
-an exertion expression for jumping. Geometry stays a rigid child of Head,
+The drawing references use the same round eye outlines for happy arches and
+dizzy spirals. A tightly squeezed pair of eyelids adds an exertion expression.
+Geometry stays a rigid child of Head,
 matching the normal eyes while the soft body bends around it. The Flutter app
 selects the visible group independently of the animation channels.
 """
@@ -11,14 +11,14 @@ import math
 
 
 def build_expressions(g, head, head_position, patch, tube, surface, circle, ink, white):
-    """Add hidden deadpan, smile, spiral and strain groups; return their IDs.
+    """Add hidden smile, spiral and strain groups; return their IDs.
 
     All contour coordinates are authored in model space and converted to Head
     local space exactly once. Groups start scaled down for generic glTF viewers;
     the Flutter expression selector restores the selected group's unit scale.
     """
     groups = []
-    for expression in ("Deadpan", "Smile", "Spiral"):
+    for expression in ("Smile", "Spiral"):
         group = g.node("Face" + expression, head, (0, 0, 0))
         g.doc["nodes"][group]["scale"] = [0.001, 0.001, 0.001]
         groups.append(group)
@@ -39,20 +39,6 @@ def build_expressions(g, head, head_position, patch, tube, surface, circle, ink,
                     center=(x, y),
                     rings=8,
                 )
-
-            if expression == "Deadpan":
-                # magao.PNG: centred pin-dot pupils, without angry half lids.
-                patch(
-                    prefix + " tiny pupil",
-                    circle(x, y, 0.025),
-                    ink,
-                    0.042,
-                    group,
-                    head_position,
-                    center=(x, y),
-                    rings=5,
-                )
-                continue
 
             if expression == "Smile":
                 # clap.PNG: round, upward arches inside the white of each eye.

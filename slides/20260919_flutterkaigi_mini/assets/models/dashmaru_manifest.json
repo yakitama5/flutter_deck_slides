@@ -2,10 +2,10 @@
   "height": 3.04,
   "front": "+Z",
   "up": "+Y",
-  "meshes": 58,
+  "meshes": 52,
   "joints": 24,
   "rig": "Soft body and crest, distributed wing flex, two-bone IK legs",
-  "triangles": 157236,
+  "triangles": 149748,
   "animations": [
     {
       "name": "Walk",
@@ -36,5 +36,5 @@
       "tracks": 77
     }
   ],
-  "bytes": 6667744
+  "bytes": 6475748
 }
