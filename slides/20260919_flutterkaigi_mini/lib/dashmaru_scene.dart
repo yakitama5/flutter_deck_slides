@@ -4,6 +4,8 @@ import 'package:flutter_scene/scene.dart' as scene;
 import 'package:vector_math/vector_math.dart' as vm;
 
 import 'dashmaru_background.dart';
+import 'sitting_playback.dart';
+import 'motion_playback.dart';
 
 /// The eight animations authored into the glTF model.
 enum DashmaruMotion {
@@ -68,28 +70,26 @@ class DashmaruScene {
   late final scene.Scene sceneGraph = scene.Scene();
   final Map<DashmaruMotion, scene.AnimationClip> _clips = {};
   final Map<DashmaruMotion, double> durations = {};
-  final Map<DashmaruMotion, double> _transitionWeights = {};
   final Map<DashmaruExpression, scene.Node> _expressionNodes = {};
   scene.PhysicallyBasedMaterial? _plinthMaterial;
-  static const _transitionDuration = 0.3;
-  double _transitionElapsed = 0;
+  MotionPlayback<DashmaruMotion>? _playback;
 
-  DashmaruMotion motion = DashmaruMotion.idle;
+  DashmaruMotion get motion => _playback?.motion ?? DashmaruMotion.idle;
   DashmaruExpression expression = DashmaruExpression.normal;
   DashmaruBackground background = DashmaruBackground.mint;
   DashmaruExpression get displayedExpression => DashmaruExpression.forPlayback(
     motion: motion,
     preferred: expression,
-    playbackTime: _clips[motion]?.playbackTime ?? 0,
+    playbackTime: _playback?.playbackTime ?? 0,
     duration: durations[motion] ?? 0,
   );
 
   String get expressionDescription => motion == DashmaruMotion.jump
       ? '空中で羽ばたく間は踏ん張る表情、それ以外は通常の表情。'
       : '表情は${expression.label}。';
-  bool playing = true;
+  bool get playing => _playback?.playing ?? true;
   bool orbiting = false;
-  double speed = 1;
+  double get speed => _playback?.speed ?? 1;
   double yaw = 0;
   double elevation = 0.03;
   double distance = 12;
@@ -115,9 +115,22 @@ class DashmaruScene {
       }
       _clips[motion] = model.createAnimationClip(animation)
         ..weight = 0
-        ..loop = true;
+        ..loop = motion != DashmaruMotion.sit;
       durations[motion] = animation.endTime;
     }
+
+    _playback = MotionPlayback(
+      clips: _clips,
+      sitting: DashmaruMotion.sit,
+      sittingDuration: durations[DashmaruMotion.sit]!,
+      motion: DashmaruMotion.idle,
+      // Fixed gait phases minimize sole penetration while blending from bind.
+      // All exported sole vertices: Walk >= -0.00324, Run >= -0.00497.
+      gaitEntrances: const {
+        DashmaruMotion.walk: 0.5775,
+        DashmaruMotion.run: 0.057,
+      },
+    );
 
     for (final expression in DashmaruExpression.values) {
       final node = model.getChildByName(expression.nodeName);
@@ -202,7 +215,11 @@ class DashmaruScene {
     }
     selectMotion(initialMotion, animateTransition: false);
     if (initialTime != null) {
-      _clips[motion]!.seek(initialTime);
+      _clips[motion]!.seek(
+        motion == DashmaruMotion.sit
+            ? SittingPlayback.position(initialTime, durations[motion]!)
+            : initialTime,
+      );
       setPlaying(false);
       sceneGraph.update(0);
       _updateExpressionVisibility();
@@ -210,41 +227,11 @@ class DashmaruScene {
   }
 
   void selectMotion(DashmaruMotion value, {bool animateTransition = true}) {
-    if (animateTransition && value == motion) {
-      setPlaying(true);
-      return;
-    }
-
-    // Preserve the current mixture when a second choice interrupts a fade.
-    // Rewinding an outgoing clip here would visibly snap the wings and body.
-    _transitionWeights.clear();
-    if (animateTransition) {
-      for (final entry in _clips.entries) {
-        _transitionWeights[entry.key] = entry.value.weight;
-      }
-    }
-    _transitionElapsed = 0;
-    motion = value;
-    playing = true;
-    final selected = _clips[value]!;
-    if (selected.weight == 0 || !animateTransition) selected.seek(0);
+    _playback!.selectMotion(value, animateTransition: animateTransition);
     _updateExpressionVisibility();
-    for (final entry in _clips.entries) {
-      final clip = entry.value;
-      if (!animateTransition) clip.weight = entry.key == value ? 1 : 0;
-      clip
-        ..playbackTimeScale = speed
-        ..playing = clip.weight > 0 || entry.key == value;
-    }
   }
 
-  void setPlaying(bool value) {
-    playing = value;
-    for (final entry in _clips.entries) {
-      entry.value.playing =
-          value && (entry.value.weight > 0 || entry.key == motion);
-    }
-  }
+  void setPlaying(bool value) => _playback!.setPlaying(value);
 
   void selectExpression(DashmaruExpression value) {
     expression = value;
@@ -264,12 +251,7 @@ class DashmaruScene {
     }
   }
 
-  void setSpeed(double value) {
-    speed = value;
-    for (final clip in _clips.values) {
-      clip.playbackTimeScale = value;
-    }
-  }
+  void setSpeed(double value) => _playback!.setSpeed(value);
 
   void setCamera(String preset) {
     orbiting = false;
@@ -304,23 +286,9 @@ class DashmaruScene {
   void tick(Duration elapsed, double deltaSeconds) {
     final delta = math.min(deltaSeconds, 0.05);
     if (orbiting) yaw += delta * 0.35;
-    if (playing && _transitionWeights.isNotEmpty) {
-      _transitionElapsed += delta;
-      final progress = (_transitionElapsed / _transitionDuration).clamp(
-        0.0,
-        1.0,
-      );
-      final eased = progress * progress * (3 - 2 * progress);
-      for (final entry in _clips.entries) {
-        final start = _transitionWeights[entry.key]!;
-        final target = entry.key == motion ? 1.0 : 0.0;
-        entry.value.weight = start + (target - start) * eased;
-        if (progress == 1 && entry.key != motion) entry.value.pause();
-      }
-      if (progress == 1) _transitionWeights.clear();
-    }
-    // One explicit scene step avoids the renderer's implicit wall-clock tick.
-    sceneGraph.update(delta);
+    // Advance each real clip once, then apply its already sampled pose.
+    _playback!.advance(delta);
+    sceneGraph.update(0);
     _updateExpressionVisibility();
   }
 

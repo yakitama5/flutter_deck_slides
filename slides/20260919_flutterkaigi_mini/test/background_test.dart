@@ -6,6 +6,16 @@ import 'package:flutterkaigi_mini_20260919/dashmaru_scene.dart';
 
 class _SceneWithoutClips extends DashmaruScene {
   @override
+  DashmaruMotion motion = DashmaruMotion.idle;
+  @override
+  bool playing = true;
+  @override
+  double speed = 1;
+
+  @override
+  void setSpeed(double value) => speed = value;
+
+  @override
   void selectMotion(DashmaruMotion value, {bool animateTransition = true}) {
     motion = value;
     playing = true;
@@ -47,7 +57,8 @@ void main() {
       ..selectBackground(DashmaruBackground.night)
       ..motion = DashmaruMotion.sit
       ..expression = DashmaruExpression.smile
-      ..distance = 6;
+      ..distance = 6
+      ..setSpeed(1.5);
 
     world.reset();
 
@@ -55,5 +66,6 @@ void main() {
     expect(world.motion, DashmaruMotion.idle);
     expect(world.expression, DashmaruExpression.normal);
     expect(world.distance, 12);
+    expect(world.speed, 1);
   });
 }

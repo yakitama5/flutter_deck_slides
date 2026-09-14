@@ -1281,17 +1281,21 @@ def blink(t):
 
 
 def sit(t):
-    """Settle onto the belly, stretch both feet out, then rise without a snap."""
+    """Sit down once, then breathe in a seated loop from 2.4 through 6.4 seconds."""
     p = rest()
-    seated = smooth(0.07, 0.32, t) * (1 - smooth(0.77, 0.96, t))
-    feet_out = smooth(0.15, 0.36, t) * (1 - smooth(0.73, 0.91, t))
-    hold = smooth(0.31, 0.40, t) * (1 - smooth(0.68, 0.77, t))
-    phase = 2 * PI * (t - 0.34) / 0.35
+    if t <= 0:
+        return p
+    seated = smooth(0.07, 0.32, t)
+    feet_out = smooth(0.15, 0.36, t)
+    hold = smooth(0.31, 0.375, t)
+    # 0.375 * 6.4 = 2.4 seconds. The player repeats only this four-second
+    # section after entering, so every joint must meet at the same phase.
+    phase = 2 * PI * (((t - 0.375) / 0.625) % 1)
     breathe = seated * 0.075 + hold * 0.015 * sin(phase)
     # The lowest belly vertex is 0.12 below Hips. Compensate its Y scale so
     # seated breathing keeps it 0.006 above the stage instead of hovering.
     bob = -0.554 * seated - 0.042 * breathe
-    anticipation = pulse(t, 0.14, 0.14) + pulse(t, 0.83, 0.14)
+    anticipation = pulse(t, 0.14, 0.14)
     bend_body(
         p,
         bob=bob,
@@ -1322,12 +1326,13 @@ def sit(t):
         flex_wing(p, i, phase, 0.035 * hold)
     p[(tail, "rotation")] = quat((1, 0, 0), -0.16 * seated)
     jiggle_crest(p, phase, 0.065 * hold + 0.10 * anticipation)
-    blink_eyes(p, max(pulse(t, 0.42, 0.018), pulse(t, 0.68, 0.018)))
+    blink_eyes(p, max(pulse(t, 0.56, 0.018), pulse(t, 0.86, 0.018)))
     return p
 
 
 # Sampled smooth curves are portable to glTF players and Flutter Scene. Gestures
-# return to bind pose; walking stays in its continuous periodic gait.
+# return to bind pose; walking stays in its continuous periodic gait, and Sit
+# keeps its seated pose for the player to repeat its 2.4–6.4 second hold.
 for name, duration, samples, pose in [
     ("Walk", 1.4, 84, walk),
     ("Jump", 2.4, 192, jump),
@@ -1343,7 +1348,7 @@ for name, duration, samples, pose in [
         duration,
         samples,
         pose
-        if name in {"Walk", "Run"}
+        if name in {"Walk", "Run", "Sit"}
         else lambda t, fn=pose: rest() if t <= 0 or t >= 1 else fn(t),
     )
 polish_materials(g.doc)

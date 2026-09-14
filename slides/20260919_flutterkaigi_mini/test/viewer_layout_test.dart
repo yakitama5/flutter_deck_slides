@@ -8,6 +8,13 @@ import 'package:flutterkaigi_mini_20260919/main.dart';
 
 class _LoadingScene extends DashmaruScene {
   @override
+  DashmaruMotion motion = DashmaruMotion.idle;
+  @override
+  bool playing = true;
+  @override
+  double speed = 1;
+
+  @override
   Future<void> load({
     required DashmaruMotion initialMotion,
     DashmaruExpression initialExpression = DashmaruExpression.normal,

@@ -611,13 +611,30 @@ class Model:
                         f"{label}: quaternion is not normalized",
                     )
                 neutral = node.get(path, defaults[path])
-                require(
-                    same_pose(values[0], values[-1], path),
-                    f"{label}: first and last poses must match for a seamless loop",
-                )
+                if name == "Sit":
+                    loop_keys = [
+                        i for i, time in enumerate(times) if abs(time - 2.4) <= 1e-5
+                    ]
+                    require(
+                        len(loop_keys) == 1 and abs(times[-1] - 6.4) <= 1e-5,
+                        f"{label}: seated loop must run from 2.4 to 6.4 seconds",
+                    )
+                    require(
+                        same_pose(values[0], neutral, path),
+                        f"{label}: sitting must begin in the neutral pose",
+                    )
+                    require(
+                        same_pose(values[loop_keys[0]], values[-1], path),
+                        f"{label}: seated loop must join matching poses at 2.4 and 6.4 seconds",
+                    )
+                else:
+                    require(
+                        same_pose(values[0], values[-1], path),
+                        f"{label}: first and last poses must match for a seamless loop",
+                    )
                 # Locomotion starts inside its gait cycle, avoiding a stop at
                 # every repeat. The player blends its fully keyed pose on entry.
-                if name not in ("Walk", "Run"):
+                if name not in ("Walk", "Run", "Sit"):
                     require(
                         same_pose(values[0], neutral, path)
                         and same_pose(values[-1], neutral, path),
@@ -842,6 +859,10 @@ class Model:
             surfaces.append((name, skin, binds, vertices))
         require(len(surfaces) == 3, "Sit: expected a belly and two flexible legs")
         animation = next(a for a in self.doc["animations"] if a["name"] == "Sit")
+        timeline = [row[0] for row in self.read(animation["samplers"][0]["input"])]
+        loop_frame = next(
+            i for i, time in enumerate(timeline) if abs(time - 2.4) <= 1e-5
+        )
         modes = {
             (c["target"]["node"], c["target"]["path"]): animation["samplers"][
                 c["sampler"]
@@ -851,7 +872,7 @@ class Model:
         named_nodes = {node.get("name"): i for i, node in enumerate(self.nodes)}
         ankle_nodes = [named_nodes[side + "Ankle"] for side in ("Left", "Right")]
         rest_worlds = self.world_matrices()
-        planted, bottoms = 0, []
+        planted, held, bottoms = 0, 0, []
         for frame, pose in sampled_poses(tracks, subframes, modes):
             worlds = self.world_matrices(pose)
             heights = {}
@@ -878,6 +899,12 @@ class Model:
                     f"Sit: {name} penetrates the floor at frame {frame:g}",
                 )
             bottoms.append(heights["Body"])
+            if frame >= loop_frame:
+                held += 1
+                require(
+                    heights["Body"] < 0.012,
+                    f"Sit: belly must remain seated after 2.4 seconds at frame {frame:g}",
+                )
             if heights["Body"] < 0.012:
                 planted += 1
                 require(
@@ -893,7 +920,8 @@ class Model:
         )
         return (
             f"Sit seat: {len(bottoms):,} poses, belly min Y {min(bottoms):+.6f}, "
-            f"{planted} seated poses with both feet extended; belly and legs clear the floor"
+            f"{planted} seated poses with both feet extended; "
+            f"all {held} hold poses stay seated; belly and legs clear the floor"
         )
 
     def check_foot_contacts(self, clips, subframes=0):
@@ -1236,7 +1264,8 @@ def main():
     if walk_summary:
         print(f"  {walk_summary}")
     print("  Every loop joins matching poses and keys all shared properties.")
-    print("  Gesture clips return to neutral; all scales stay positive.")
+    print("  Gestures return to neutral except Sit, which stays seated from 2.4s.")
+    print("  All scales stay positive.")
     print(
         "  Feet stay above the floor; locomotion rolls from heel contact to toe push-off."
     )
