@@ -22,6 +22,11 @@ jobs:
 
       - uses: jdx/mise-action@v2
 
+      - name: Restore private Dashmaru assets
+        env:
+          DASHMARU_ASSET_PASSPHRASE: ${{ secrets.DASHMARU_ASSET_PASSPHRASE }}
+        run: python3 tool/private_assets.py restore
+
       - name: Install dependencies
         run: flutter pub get
 

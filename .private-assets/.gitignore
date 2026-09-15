@@ -1,0 +1,4 @@
+# Only the encrypted bundle and this policy belong in Git.
+*
+!.gitignore
+!dashmaru.tar.gz.gpg

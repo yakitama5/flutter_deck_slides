@@ -7,7 +7,8 @@ Pub Workspace + [melos](https://melos.invertase.dev/) で複数管理する mono
 
 FlutterKaigi mini 向けの [だしゅまる3Dデモ](slides/20260919_flutterkaigi_mini/README.md) を
 `slides/20260919_flutterkaigi_mini` に追加しています。FlutterSceneで描画し、
-歩行・ジャンプ・バイバイ・まばたきを再生できます。再生成可能なGLBモデルを同梱し、Web / macOSで起動できます。
+歩行・ジャンプ・バイバイ・まばたきを再生できます。GLBと生成ソースは暗号化して管理し、
+[モデルの復元手順](docs/private-assets.md)に沿って準備するとWeb / macOSで起動できます。
 
 技術選定の絵本LT「リスくんと ぴったりのかご」は、
 [スライド](https://yakitama5.github.io/flutter_deck_slides/202609_technologychoice/)と
@@ -37,6 +38,8 @@ dart pub get       # ワークスペース全パッケージの依存解決(ル�
 ```
 
 `mise install` 後、`flutter` / `dart` コマンドが使えることを確認してください。
+
+だしゅまるを含むテストやビルドの前には、[非公開アセットの復元](docs/private-assets.md)が必要です。
 
 ```sh
 mise x -- flutter doctor
