@@ -847,12 +847,13 @@ class Model:
         summaries.extend(self.check_extra_gestures(clips))
         summaries.extend(self.check_foot_contacts(clips, subframes))
         summaries.append(self.check_sitting_contacts(clips["Sit"], subframes))
+        summaries.append(self.check_bow_clearance(clips["Bow"], subframes))
         return summaries
 
     def check_extra_gestures(self, clips):
         """Assert recognizable directions and amplitudes in exported joint data.
 
-        Loose visual thresholds reject missing/near-static gestures while leaving
+        Loose visual thresholds reject the previous subtle gestures while leaving
         the animation's timing and curves to the artist. Quaternion rotation
         vectors make the checks independent of equivalent q/-q representations.
         """
@@ -883,21 +884,21 @@ class Model:
             return max(abs(value - values[0]) for value in values)
 
         nod = excursion("Nod", "Head", 0)
-        require(nod >= 0.18, "Nod: the head needs a visible forward/back nod")
+        require(nod >= 0.40, "Nod: the head needs an emphatic forward/back nod")
         tilt = excursion("Tilt", "Head", 2)
-        require(tilt >= 0.22, "Tilt: the head needs a visible sideways tilt")
+        require(tilt >= 0.42, "Tilt: the head needs a pronounced sideways tilt")
         bow = excursion("Bow", "Torso", 0)
-        require(bow >= 0.30, "Bow: the torso must visibly bow forward")
+        require(bow >= 0.52, "Bow: the torso must make a deep forward bow")
         require(
-            excursion("Bow", "Head", 0) >= 0.10,
+            excursion("Bow", "Head", 0) >= 0.22,
             "Bow: the head should follow the torso into the greeting",
         )
         yaw = axis("LookAround", "Head", 1)
         require(
-            min(yaw) <= -0.28 and max(yaw) >= 0.28,
-            "LookAround: the head must look visibly to both the left and right",
+            min(yaw) <= -0.70 and max(yaw) >= 0.70,
+            "LookAround: the head must make a broad turn to both left and right",
         )
-        for clip, minimum in (("Celebrate", 0.80), ("Stretch", 0.50)):
+        for clip, minimum in (("Celebrate", 1.80), ("Stretch", 1.90)):
             left = axis(clip, "LeftWing", 2)
             right = axis(clip, "RightWing", 2)
             require(
@@ -906,18 +907,158 @@ class Model:
             )
         torso_scales = track("Stretch", "Torso", "scale")
         hips = track("Stretch", "Hips", "translation")
+        lengthening = max(row[1] for row in torso_scales) / torso_scales[0][1]
+        rise = max(row[1] for row in hips) - hips[0][1]
         require(
-            max(row[1] for row in torso_scales) >= torso_scales[0][1] * 1.03
-            or max(row[1] for row in hips) >= hips[0][1] + 0.06,
-            "Stretch: the torso must visibly lengthen or rise while stretching",
+            lengthening >= 1.065 and rise >= 0.08,
+            "Stretch: the torso must lengthen and the hips rise in a full-body stretch",
         )
         return [
             "Extra gestures: visible nod "
             f"({math.degrees(nod):.1f}°), tilt ({math.degrees(tilt):.1f}°), "
             f"bow ({math.degrees(bow):.1f}°), two-wing celebration/stretch, "
             f"and left/right look ({math.degrees(min(yaw)):+.1f}° to "
-            f"{math.degrees(max(yaw)):+.1f}°)"
+            f"{math.degrees(max(yaw)):+.1f}°); stretch torso "
+            f"{lengthening:.3f}× and hips +{rise:.3f}"
         ]
+
+    def check_bow_clearance(self, tracks, subframes=0):
+        """Check the deformed belly itself while the deeper bow leans forward."""
+        bodies = [
+            node
+            for node in self.nodes
+            if "mesh" in node
+            and self.doc["meshes"][node["mesh"]].get("name") == "Body"
+        ]
+        require(len(bodies) == 1, "Bow: expected one skinned body surface")
+        body = bodies[0]
+        require("skin" in body, "Bow: body must retain its deformable skin")
+        skin = self.doc["skins"][body["skin"]]
+        binds = self.read(skin["inverseBindMatrices"])
+        vertices = []
+        for primitive in self.doc["meshes"][body["mesh"]]["primitives"]:
+            attrs = primitive["attributes"]
+            vertices.extend(
+                (
+                    position,
+                    tuple(
+                        (slot, weight)
+                        for slot, weight in zip(slots, weights)
+                        if weight > 0
+                    ),
+                )
+                for position, slots, weights in zip(
+                    self.read(attrs["POSITION"]),
+                    self.read(attrs["JOINTS_0"]),
+                    self.read(attrs["WEIGHTS_0"]),
+                )
+            )
+        animation = next(a for a in self.doc["animations"] if a["name"] == "Bow")
+        modes = {
+            (c["target"]["node"], c["target"]["path"]): animation["samplers"][
+                c["sampler"]
+            ].get("interpolation", "LINEAR")
+            for c in animation["channels"]
+        }
+        bottoms = []
+        for frame, pose in sampled_poses(tracks, subframes, modes):
+            worlds = self.world_matrices(pose)
+            matrices = [
+                multiply(worlds[joint], bind)
+                for joint, bind in zip(skin["joints"], binds)
+            ]
+            bottom = min(
+                sum(
+                    weight
+                    * (
+                        matrices[slot][1] * x
+                        + matrices[slot][5] * y
+                        + matrices[slot][9] * z
+                        + matrices[slot][13]
+                    )
+                    for slot, weight in influences
+                )
+                for (x, y, z), influences in vertices
+            )
+            require(
+                bottom >= -0.0001,
+                f"Bow: deformed body penetrates the floor at frame {frame:g} "
+                f"({bottom:+.6f})",
+            )
+            bottoms.append(bottom)
+        return (
+            f"Bow body: {len(bottoms):,} poses, all {len(vertices):,} body vertices "
+            f"sampled; minimum Y {min(bottoms):+.6f}"
+        )
+
+    def check_celebrate_hops(self, bottoms, times):
+        """A genuine celebration takes off twice and lands between the flights.
+
+        Use actual skinned soles, not the root's Y track: bending or stretching
+        legs while lifting the body must not count as leaving the floor.
+        """
+        require(
+            len(bottoms) == len(times) and len(times) >= 2,
+            "Celebrate: foot samples need a matching timeline",
+        )
+        require(
+            max(bottoms[0]) <= 0.025 and max(bottoms[-1]) <= 0.025,
+            "Celebrate: both feet must be grounded at the start and finish",
+        )
+        require(
+            min(min(row) for row in bottoms) >= -0.0001,
+            "Celebrate: a sampled sole penetrates the floor",
+        )
+        intervals, start = [], None
+        for index, row in enumerate(bottoms):
+            if min(row) > 0.055:
+                if start is None:
+                    start = index
+            elif start is not None:
+                intervals.append((start, index - 1))
+                start = None
+        if start is not None:
+            intervals.append((start, len(bottoms) - 1))
+        hops = []
+        for start, end in intervals:
+            high = [
+                index
+                for index in range(start, end + 1)
+                if min(bottoms[index]) >= 0.30
+            ]
+            if high and times[high[-1]] - times[high[0]] >= 0.08:
+                hops.append((start, end))
+        require(
+            len(hops) >= 2,
+            "Celebrate: needs at least two separate hops with both soles "
+            "at least 0.30 above the floor for 0.08 seconds",
+        )
+        landings = []
+        for (_, previous_end), (next_start, _) in zip(hops, hops[1:]):
+            ground_start, longest = None, 0
+            for index in range(previous_end + 1, next_start):
+                if max(bottoms[index]) <= 0.025:
+                    if ground_start is None:
+                        ground_start = index
+                    longest = max(longest, times[index] - times[ground_start])
+                else:
+                    ground_start = None
+            require(
+                longest >= 0.04,
+                "Celebrate: separate hops need a landing with both feet "
+                "grounded for at least 0.04 seconds",
+            )
+            landings.append(longest)
+        peaks = [
+            max(min(row) for row in bottoms[start : end + 1])
+            for start, end in hops
+        ]
+        return (
+            f"Celebrate hops: {len(hops)} distinct flights, both-sole peaks "
+            + ", ".join(f"{peak:.3f}" for peak in peaks)
+            + "; intervening grounded landings "
+            + ", ".join(f"{duration:.3f}s" for duration in landings)
+        )
 
     def check_sitting_contacts(self, tracks, subframes=0):
         """A seated belly carries weight while intact legs reach forward."""
@@ -1078,7 +1219,11 @@ class Model:
         }
         summaries = []
         for name, tracks in clips.items():
-            bottoms, rolls = [], []
+            bottoms, rolls, sample_times = [], [], []
+            animation = next(a for a in self.doc["animations"] if a["name"] == name)
+            timeline = [
+                row[0] for row in self.read(animation["samplers"][0]["input"])
+            ]
             # Inspect every delivered sole vertex, including optional samples
             # between keys. This samples interpolation, rather than proving
             # all continuous times or arbitrary crossfades between clips.
@@ -1109,16 +1254,17 @@ class Model:
                             toe = min(toe, height)
                     heights.append(bottom)
                     regions.append((heel, toe))
+                floor_tolerance = 0.0001 if name in EXTRA_GESTURES else 0.015
                 require(
-                    min(heights) > -0.015,
+                    min(heights) >= -floor_tolerance,
                     f"{name}: a foot penetrates the floor at frame {frame:g} ({min(heights):.4f})",
                 )
-                if name not in ("Jump", "Run"):
+                if name not in ("Jump", "Run", "Celebrate"):
                     require(
                         min(heights) < 0.025,
                         f"{name}: neither foot supports the body at frame {frame:g}",
                     )
-                if name in EXTRA_GESTURES:
+                if name in EXTRA_GESTURES - {"Celebrate"}:
                     require(
                         max(heights) < 0.025,
                         f"{name}: the standing gesture lifts a supporting foot "
@@ -1126,6 +1272,13 @@ class Model:
                     )
                 bottoms.append(heights)
                 rolls.append(regions)
+                key = int(frame)
+                fraction = frame - key
+                sample_times.append(
+                    timeline[key]
+                    + fraction
+                    * (timeline[min(key + 1, len(timeline) - 1)] - timeline[key])
+                )
             if name in ("Walk", "Run"):
                 require(
                     all(max(row[foot] for row in bottoms) > 0.055 for foot in range(2)),
@@ -1159,6 +1312,8 @@ class Model:
                     any(min(row) > 0.15 for row in bottoms),
                     "Jump: both feet never leave the floor together",
                 )
+            if name == "Celebrate":
+                summaries.append(self.check_celebrate_hops(bottoms, sample_times))
             summaries.append(
                 f"{name} feet: {len(bottoms):,} poses, min Y {min(min(row) for row in bottoms):+.6f}, "
                 f"lowest-foot max {max(min(row) for row in bottoms):+.6f}, "
@@ -1434,7 +1589,8 @@ def main():
         "  Sampled soles respect the floor tolerance; locomotion rolls "
         "from heel contact to toe push-off."
     )
-    print("  All six added standing gestures keep both feet in ground contact.")
+    print("  Five added standing gestures keep both feet in ground contact.")
+    print("  Celebrate makes two or more clear hops and lands between them.")
     return 0
 
 

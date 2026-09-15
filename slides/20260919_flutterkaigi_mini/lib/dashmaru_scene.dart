@@ -20,7 +20,7 @@ enum DashmaruMotion {
   nod('Nod', 'うなずく', 'うんうん、なるほど。'),
   tilt('Tilt', '首かしげ', 'ん？ どういうことかな。'),
   bow('Bow', 'おじぎ', 'ぺこり、ありがとう。'),
-  celebrate('Celebrate', 'よろこぶ', 'やった！ ばんざい！'),
+  celebrate('Celebrate', 'よろこぶ', 'やった！ ぴょんぴょん！'),
   lookAround('LookAround', 'きょろきょろ', 'あっちかな、こっちかな。'),
   stretch('Stretch', 'のび', 'ぐーっと伸びて、ひと息。');
 
@@ -73,6 +73,9 @@ enum DashmaruExpression {
 /// glTF is Y-up / +Z-front. Flutter Scene converts the imported asset to its
 /// left-handed coordinates, making -Z the front in the runtime scene.
 class DashmaruScene {
+  DashmaruScene({this.cameraTargetY = 1.5});
+
+  final double cameraTargetY;
   late final scene.Scene sceneGraph = scene.Scene();
   final Map<DashmaruMotion, scene.AnimationClip> _clips = {};
   final Map<DashmaruMotion, double> durations = {};
@@ -301,10 +304,10 @@ class DashmaruScene {
   scene.PerspectiveCamera camera(Duration elapsed) => scene.PerspectiveCamera(
     position: vm.Vector3(
       math.sin(yaw) * distance,
-      1.5 + math.tan(elevation) * distance,
+      cameraTargetY + math.tan(elevation) * distance,
       -math.cos(yaw) * distance,
     ),
-    target: vm.Vector3(0, 1.5, 0),
+    target: vm.Vector3(0, cameraTargetY, 0),
     fovRadiansY: 22 * math.pi / 180,
     fovNear: 0.1,
     fovFar: 30,
