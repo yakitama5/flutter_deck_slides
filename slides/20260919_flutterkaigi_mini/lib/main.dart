@@ -75,7 +75,8 @@ class DashmaruViewer extends StatefulWidget {
 }
 
 class _DashmaruViewerState extends State<DashmaruViewer> {
-  late final _world = widget.world ?? DashmaruScene();
+  // Leave room above the full-height celebration hops at the standard zoom.
+  late final _world = widget.world ?? DashmaruScene(cameraTargetY: 1.8);
   bool _ready = false;
   Object? _error;
 

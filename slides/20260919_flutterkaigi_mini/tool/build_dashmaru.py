@@ -1341,108 +1341,144 @@ def planted_gesture(p, bob, phase, softness, wing_lift=0):
 
 
 def nod(t):
-    """An attentive agreement: one clear nod followed by a smaller confirmation."""
+    """Two enthusiastic full-body nods, each led by a small upward anticipation."""
     p = rest()
-    envelope = smooth(0.04, 0.20, t) * (1 - smooth(0.78, 0.99, t))
-    first, second = pulse(t, 0.32, 0.22), pulse(t, 0.66, 0.18)
-    dip = 0.24 * first + 0.16 * second
-    bob = -0.022 * first - 0.014 * second
-    bend_body(p, bob=bob, nod=dip, breathe=0.035 * (first + second))
-    p[(torso, "rotation")] = quat((1, 0, 0), 0.045 * (first + second))
-    planted_gesture(p, bob, 2 * PI * 2 * t, 0.085 * envelope, 0.025 * envelope)
+    envelope = smooth(0.02, 0.15, t) * (1 - smooth(0.82, 0.99, t))
+    first, second = pulse(t, 0.31, 0.20), pulse(t, 0.66, 0.21)
+    anticipation = pulse(t, 0.10, 0.09) + pulse(t, 0.49, 0.10)
+    dip = 0.50 * first + 0.44 * second - 0.12 * anticipation
+    bob = -0.080 * first - 0.070 * second + 0.018 * anticipation
+    bend_body(p, bob=bob, nod=dip, breathe=0.12 * (first + second))
+    p[(torso, "rotation")] = quat(
+        (1, 0, 0), 0.19 * first + 0.16 * second - 0.04 * anticipation
+    )
+    planted_gesture(p, bob, 2 * PI * 2 * t, 0.24 * envelope, 0.14 * envelope)
     return p
 
 
 def tilt(t):
-    """Pause with a curious head tilt, then let the feather tip settle softly."""
+    """Lean conspicuously to one side, counterbalance with a wing, and ponder."""
     p = rest()
-    envelope = smooth(0.06, 0.32, t) * (1 - smooth(0.66, 0.96, t))
-    bob = -0.018 * envelope
-    bend_body(p, bob=bob, lean=0.035 * envelope, breathe=0.025 * envelope)
-    p[(head, "rotation")] = qmul(
-        quat((0, 0, 1), -0.28 * envelope),
-        quat((0, 1, 0), 0.085 * envelope),
+    envelope = smooth(0.11, 0.35, t) * (1 - smooth(0.69, 0.97, t))
+    anticipation = pulse(t, 0.10, 0.10)
+    bob = -0.060 * envelope
+    hip_x = 0.07 * envelope
+    bend_body(
+        p,
+        bob=bob,
+        lean=-0.20 * envelope + 0.04 * anticipation,
+        breathe=0.065 * envelope,
     )
-    planted_gesture(p, bob, 2 * PI * 1.5 * t, 0.085 * envelope, 0.055 * envelope)
+    p[(hips, "translation")] = (hip_x, 0.68 + bob, 0)
+    p[(head, "rotation")] = qmul(
+        quat((0, 0, 1), -0.50 * envelope + 0.12 * anticipation),
+        quat((0, 1, 0), 0.12 * envelope),
+    )
+    planted_gesture(p, bob, 2 * PI * 1.5 * t, 0.24 * envelope, 0.17 * envelope)
+    for i in range(2):
+        plant_leg(p, i, hip_bob=bob, hip_x=hip_x)
+    p[(wing_nodes[0], "rotation")] = quat((0, 0, 1), -0.60 * envelope)
     return p
 
 
 def bow(t):
-    """A small anticipation, a held polite bow, and a slower return to standing."""
+    """Stand tall, make a deep deliberate bow, hold it, then slowly recover."""
     p = rest()
     down = smooth(0.12, 0.39, t) * (1 - smooth(0.60, 0.96, t))
     anticipation = pulse(t, 0.095, 0.095)
-    bob = -0.060 * down + 0.008 * anticipation
-    bend_body(p, bob=bob, nod=0.24 * down, breathe=0.045 * down)
-    p[(torso, "rotation")] = quat((1, 0, 0), 0.31 * down - 0.035 * anticipation)
-    planted_gesture(p, bob, 2 * PI * 1.5 * t, 0.11 * down, 0.06 * down)
+    bob = -0.105 * down + 0.035 * anticipation
+    bend_body(p, bob=bob, nod=0.34 * down, breathe=0.085 * down)
+    p[(torso, "rotation")] = quat((1, 0, 0), 0.67 * down - 0.10 * anticipation)
+    planted_gesture(p, bob, 2 * PI * 1.5 * t, 0.20 * down, 0.23 * down)
     # The wings trail the bow slightly, close to the body instead of sweeping
     # across the face; the weighted belly remains supported by the bent legs.
     for i in range(2):
         p[(wing_nodes[i], "rotation")] = qmul(
-            p[(wing_nodes[i], "rotation")], quat((1, 0, 0), -0.14 * down)
+            p[(wing_nodes[i], "rotation")], quat((1, 0, 0), -0.35 * down)
         )
     return p
 
 
 def celebrate(t):
-    """Raise both wings in delight, with two grounded bounces rather than a jump."""
+    """Two distinct joyful jumps, with tucked feet and soft, fully planted landings."""
     p = rest()
-    envelope = smooth(0.03, 0.24, t) * (1 - smooth(0.72, 0.98, t))
-    beat = pulse(t, 0.34, 0.13) + pulse(t, 0.57, 0.13)
-    bob = -0.048 * beat
+    envelope = smooth(0.025, 0.18, t) * (1 - smooth(0.82, 0.99, t))
+    # Root-space parabolas leave a clearly grounded interval between the hops.
+    # The second leap is slightly higher, building to the final "hooray" pose.
+    height, air = 0, 0
+    for start, end, peak in ((0.17, 0.43, 0.62), (0.51, 0.75, 0.72)):
+        if start < t < end:
+            progress = (t - start) / (end - start)
+            height += peak * 4 * progress * (1 - progress)
+        air += smooth(start, start + 0.055, t) * (1 - smooth(end - 0.055, end, t))
+    crouch = pulse(t, 0.105, 0.105)
+    land = pulse(t, 0.455, 0.065) + pulse(t, 0.79, 0.085)
+    bob = -0.115 * crouch - 0.120 * land
     bend_body(
         p,
         bob=bob,
-        lean=0.025 * sin(2 * PI * 2 * t) * envelope,
-        nod=-0.055 * envelope,
-        breathe=0.11 * beat,
+        lean=0.075 * sin(2 * PI * 2 * t) * envelope,
+        nod=-0.12 * air + 0.10 * crouch,
+        breathe=0.24 * crouch + 0.26 * land - 0.10 * air,
     )
-    planted_gesture(
-        p, bob, 2 * PI * 3 * t, 0.23 * envelope, envelope * (2.12 + 0.08 * beat)
+    p[(0, "translation")] = (0, height, 0)
+    p[(head, "scale")] = (
+        1 + 0.045 * land,
+        1 - 0.065 * land + 0.025 * air,
+        1 + 0.025 * land,
     )
+    phase = 2 * PI * 4 * t
     for i, sign in enumerate([-1, 1]):
         p[(wing_nodes[i], "rotation")] = qmul(
-            p[(wing_nodes[i], "rotation")],
-            quat((0, 1, 0), -sign * 0.26 * envelope),
+            quat((0, 0, 1), sign * envelope * (2.42 + 0.16 * sin(phase))),
+            quat((0, 1, 0), -sign * 0.20 * envelope),
         )
+        flex_wing(p, i, phase, 0.35 * envelope)
+        plant_leg(p, i, 0.17 + 0.13 * air, 0.02 - 0.075 * air, bob, -0.18 * air)
+    p[(tail, "rotation")] = quat((1, 0, 0), -0.20 * air + 0.15 * land)
+    jiggle_crest(p, phase, 0.35 * envelope + 0.50 * land)
     return p
 
 
 def look_around(t):
-    """Check one side and then the other, with the torso gently following."""
+    """Peek broadly over each shoulder, with the torso following a curious head."""
     p = rest()
     left = smooth(0.05, 0.21, t) * (1 - smooth(0.34, 0.49, t))
     right = smooth(0.43, 0.60, t) * (1 - smooth(0.77, 0.96, t))
     glance = left - right
     envelope = smooth(0.02, 0.19, t) * (1 - smooth(0.79, 0.99, t))
-    bob = -0.012 * envelope
-    bend_body(p, bob=bob, breathe=0.02 * envelope)
-    p[(torso, "rotation")] = quat((0, 1, 0), 0.07 * glance)
-    p[(head, "rotation")] = qmul(
-        quat((0, 1, 0), 0.49 * glance),
-        quat((0, 0, 1), -0.035 * glance),
+    anticipation = pulse(t, 0.055, 0.055)
+    bob = -0.045 * envelope + 0.025 * anticipation
+    bend_body(p, bob=bob, breathe=0.065 * envelope)
+    p[(torso, "rotation")] = qmul(
+        quat((0, 1, 0), 0.24 * glance),
+        quat((0, 0, 1), -0.075 * glance),
     )
-    planted_gesture(p, bob, 2 * PI * 2 * t, 0.07 * envelope, 0.04 * envelope)
+    p[(head, "rotation")] = qmul(
+        quat((0, 1, 0), 0.86 * glance - 0.18 * anticipation),
+        quat((1, 0, 0), -0.08 * envelope),
+    )
+    planted_gesture(p, bob, 2 * PI * 2 * t, 0.20 * envelope, 0.30 * envelope)
     return p
 
 
 def stretch(t):
-    """Open the wings and lengthen the body, keeping the relaxed feet planted."""
+    """Reach both wings overhead, lengthen and arch the body, then flop softly down."""
     p = rest()
     reach = smooth(0.07, 0.38, t) * (1 - smooth(0.64, 0.96, t))
     prepare = pulse(t, 0.12, 0.12)
     release = pulse(t, 0.84, 0.14)
-    bob = 0.045 * reach - 0.026 * prepare - 0.022 * release
+    bob = 0.10 * reach - 0.085 * prepare - 0.075 * release
     bend_body(
         p,
         bob=bob,
-        nod=-0.12 * reach + 0.025 * release,
-        breathe=-0.15 * reach + 0.055 * (prepare + release),
+        nod=-0.14 * reach + 0.12 * release,
+        breathe=-0.30 * reach + 0.18 * (prepare + release),
     )
-    p[(head, "scale")] = (1 - 0.012 * reach, 1 + 0.022 * reach, 1 - 0.012 * reach)
-    softness = 0.085 * reach + 0.15 * release
-    planted_gesture(p, bob, 2 * PI * 1.75 * t, softness, 1.43 * reach)
+    p[(torso, "rotation")] = quat((1, 0, 0), -0.13 * reach + 0.08 * release)
+    p[(head, "scale")] = (1 - 0.035 * reach, 1 + 0.055 * reach, 1 - 0.035 * reach)
+    softness = 0.12 * reach + 0.36 * release
+    planted_gesture(p, bob, 2 * PI * 1.75 * t, softness, 2.65 * reach)
     for i in range(2):
         p[(wing_nodes[i], "rotation")] = qmul(
             p[(wing_nodes[i], "rotation")], quat((1, 0, 0), -0.10 * reach)
