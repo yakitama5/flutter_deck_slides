@@ -3,8 +3,9 @@
 
 Run from any directory: python3 path/to/tool/check_dashmaru.py [path/to/model.glb]
 This checks the delivered binary, independently of the model-building code. It is
-not a replacement for watching the eight gestures in Flutter Scene. An optional
+not a replacement for watching all fourteen gestures in Flutter Scene. An optional
 --baseline model.glb checks gait timing and the established upper-body Walk pose.
+Use --preserve-existing model.glb to verify every key of the original eight clips.
 Use --subframes 3 to also check three interpolated poses between every baked key.
 """
 
@@ -16,6 +17,14 @@ import struct
 import sys
 
 from check_dashmaru_surfaces import check_surface_quality
+
+
+ESTABLISHED_CLIPS = frozenset(
+    {"Idle", "Walk", "Run", "Jump", "Wave", "Blink", "Shake", "Sit"}
+)
+EXTRA_GESTURES = frozenset(
+    {"Nod", "Tilt", "Bow", "Celebrate", "LookAround", "Stretch"}
+)
 
 
 class InvalidModel(Exception):
@@ -526,7 +535,7 @@ class Model:
     def check_animations(self, subframes=0):
         animations = self.doc.get("animations", [])
         names = [animation.get("name") for animation in animations]
-        required = {"Idle", "Walk", "Run", "Jump", "Wave", "Blink", "Shake", "Sit"}
+        required = ESTABLISHED_CLIPS | EXTRA_GESTURES
         require(len(names) == len(set(names)), "Animation names are not unique")
         require(
             required <= set(names),
@@ -665,6 +674,19 @@ class Model:
         # Every clip keys every animated property. Omitting another clip's
         # channels leaves stale limbs when the player blends between gestures.
         union = set().union(*(set(tracks) for tracks in clips.values()))
+        rig_nodes = {
+            joint for skin in self.doc["skins"] for joint in skin["joints"]
+        }
+        required_rig_tracks = {
+            (joint, path)
+            for joint in rig_nodes
+            for path in ("translation", "rotation", "scale")
+        }
+        require(
+            required_rig_tracks <= union,
+            "Every skinned joint needs translation, rotation and scale tracks "
+            "so all gestures can restore the complete rig",
+        )
         for name, tracks in clips.items():
             require(
                 set(tracks) == union,
@@ -822,9 +844,80 @@ class Model:
                 min(row[1] for row in rows) < rows[0][1] * 0.5,
                 f"Blink: {eye} does not visibly close",
             )
+        summaries.extend(self.check_extra_gestures(clips))
         summaries.extend(self.check_foot_contacts(clips, subframes))
         summaries.append(self.check_sitting_contacts(clips["Sit"], subframes))
         return summaries
+
+    def check_extra_gestures(self, clips):
+        """Assert recognizable directions and amplitudes in exported joint data.
+
+        Loose visual thresholds reject missing/near-static gestures while leaving
+        the animation's timing and curves to the artist. Quaternion rotation
+        vectors make the checks independent of equivalent q/-q representations.
+        """
+        named = {node.get("name"): index for index, node in enumerate(self.nodes)}
+
+        def track(clip, part, path):
+            require(part in named, f"{clip}: missing gesture node {part}")
+            key = (named[part], path)
+            require(key in clips[clip], f"{clip}: missing {part}/{path} channel")
+            return clips[clip][key]
+
+        def rotation_vectors(clip, part):
+            vectors = []
+            for row in track(clip, part, "rotation"):
+                if row[3] < 0:
+                    row = tuple(-value for value in row)
+                length = math.sqrt(sum(value * value for value in row[:3]))
+                angle = 2 * math.atan2(length, row[3])
+                scale = angle / length if length > 1e-8 else 2
+                vectors.append(tuple(value * scale for value in row[:3]))
+            return vectors
+
+        def axis(clip, part, component):
+            return [row[component] for row in rotation_vectors(clip, part)]
+
+        def excursion(clip, part, component):
+            values = axis(clip, part, component)
+            return max(abs(value - values[0]) for value in values)
+
+        nod = excursion("Nod", "Head", 0)
+        require(nod >= 0.18, "Nod: the head needs a visible forward/back nod")
+        tilt = excursion("Tilt", "Head", 2)
+        require(tilt >= 0.22, "Tilt: the head needs a visible sideways tilt")
+        bow = excursion("Bow", "Torso", 0)
+        require(bow >= 0.30, "Bow: the torso must visibly bow forward")
+        require(
+            excursion("Bow", "Head", 0) >= 0.10,
+            "Bow: the head should follow the torso into the greeting",
+        )
+        yaw = axis("LookAround", "Head", 1)
+        require(
+            min(yaw) <= -0.28 and max(yaw) >= 0.28,
+            "LookAround: the head must look visibly to both the left and right",
+        )
+        for clip, minimum in (("Celebrate", 0.80), ("Stretch", 0.50)):
+            left = axis(clip, "LeftWing", 2)
+            right = axis(clip, "RightWing", 2)
+            require(
+                any(a <= -minimum and b >= minimum for a, b in zip(left, right)),
+                f"{clip}: both wings must rise together, distinct from a one-wing wave",
+            )
+        torso_scales = track("Stretch", "Torso", "scale")
+        hips = track("Stretch", "Hips", "translation")
+        require(
+            max(row[1] for row in torso_scales) >= torso_scales[0][1] * 1.03
+            or max(row[1] for row in hips) >= hips[0][1] + 0.06,
+            "Stretch: the torso must visibly lengthen or rise while stretching",
+        )
+        return [
+            "Extra gestures: visible nod "
+            f"({math.degrees(nod):.1f}°), tilt ({math.degrees(tilt):.1f}°), "
+            f"bow ({math.degrees(bow):.1f}°), two-wing celebration/stretch, "
+            f"and left/right look ({math.degrees(min(yaw)):+.1f}° to "
+            f"{math.degrees(max(yaw)):+.1f}°)"
+        ]
 
     def check_sitting_contacts(self, tracks, subframes=0):
         """A seated belly carries weight while intact legs reach forward."""
@@ -1025,6 +1118,12 @@ class Model:
                         min(heights) < 0.025,
                         f"{name}: neither foot supports the body at frame {frame:g}",
                     )
+                if name in EXTRA_GESTURES:
+                    require(
+                        max(heights) < 0.025,
+                        f"{name}: the standing gesture lifts a supporting foot "
+                        f"at frame {frame:g} ({max(heights):.4f})",
+                    )
                 bottoms.append(heights)
                 rolls.append(regions)
             if name in ("Walk", "Run"):
@@ -1205,6 +1304,59 @@ class Model:
             )
         return "Walk retains its timing and established upper-body poses; leg and toe articulation may change"
 
+    def check_established_clips(self, baseline):
+        """Adding gestures must not change any key of the original eight clips."""
+
+        def tracks(model, clip_name):
+            animation = next(
+                (
+                    clip
+                    for clip in model.doc.get("animations", [])
+                    if clip.get("name") == clip_name
+                ),
+                None,
+            )
+            require(animation is not None, f"Regression: missing {clip_name} clip")
+            result = {}
+            for channel in animation["channels"]:
+                target = channel["target"]
+                name = model.nodes[target["node"]].get("name")
+                key = (name, target["path"])
+                require(key not in result, f"{clip_name}: ambiguous track {key}")
+                sampler = animation["samplers"][channel["sampler"]]
+                result[key] = (
+                    sampler.get("interpolation", "LINEAR"),
+                    model.read(sampler["input"]),
+                    model.read(sampler["output"]),
+                )
+            return result
+
+        count = 0
+        for name in sorted(ESTABLISHED_CLIPS):
+            previous, current = tracks(baseline, name), tracks(self, name)
+            require(
+                previous.keys() == current.keys(),
+                f"{name} regression: established animated properties changed",
+            )
+            for key, (interpolation, times, rows) in previous.items():
+                actual_interpolation, actual_times, actual_rows = current[key]
+                require(
+                    interpolation == actual_interpolation
+                    and len(times) == len(actual_times)
+                    and all(close(a, b) for a, b in zip(times, actual_times)),
+                    f"{name} regression: timing/interpolation changed for {key}",
+                )
+                require(
+                    len(rows) == len(actual_rows)
+                    and all(same_pose(a, b, key[1]) for a, b in zip(rows, actual_rows)),
+                    f"{name} regression: an established pose changed for {key}",
+                )
+                count += len(rows)
+        return (
+            f"Regression: all {len(ESTABLISHED_CLIPS)} established clips retain "
+            f"their complete timing, interpolation and {count:,} property keys"
+        )
+
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
@@ -1218,6 +1370,11 @@ def main():
         "--baseline",
         type=Path,
         help="Previous GLB whose Walk timing and upper-body poses must remain unchanged",
+    )
+    parser.add_argument(
+        "--preserve-existing",
+        type=Path,
+        help="Previous GLB whose original eight clips must remain fully unchanged",
     )
     parser.add_argument(
         "--subframes",
@@ -1239,6 +1396,11 @@ def main():
         expression_summary = model.check_expressions()
         walk_summary = (
             model.check_walk_baseline(Model(args.baseline)) if args.baseline else None
+        )
+        established_summary = (
+            model.check_established_clips(Model(args.preserve_existing))
+            if args.preserve_existing
+            else None
         )
     except (
         InvalidModel,
@@ -1263,12 +1425,16 @@ def main():
     print(f"  {surface_summary}")
     if walk_summary:
         print(f"  {walk_summary}")
+    if established_summary:
+        print(f"  {established_summary}")
     print("  Every loop joins matching poses and keys all shared properties.")
     print("  Gestures return to neutral except Sit, which stays seated from 2.4s.")
     print("  All scales stay positive.")
     print(
-        "  Feet stay above the floor; locomotion rolls from heel contact to toe push-off."
+        "  Sampled soles respect the floor tolerance; locomotion rolls "
+        "from heel contact to toe push-off."
     )
+    print("  All six added standing gestures keep both feet in ground contact.")
     return 0
 
 

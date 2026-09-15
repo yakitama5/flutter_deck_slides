@@ -32,12 +32,14 @@ void main() {
     const Size(390, 844),
     const Size(640, 360),
     const Size(800, 600),
+    const Size(880, 720),
     const Size(1280, 720),
   ]) {
     for (final motion in [
       DashmaruMotion.idle,
       DashmaruMotion.jump,
       DashmaruMotion.sit,
+      DashmaruMotion.bow,
     ]) {
       testWidgets(
         'viewer controls fit ${size.width} × ${size.height}: ${motion.name}',
@@ -67,9 +69,21 @@ void main() {
             '走る',
             'ぶんぶん',
             '座る',
+            'うなずく',
+            '首かしげ',
+            'おじぎ',
+            'よろこぶ',
+            'きょろきょろ',
+            'のび',
           ]) {
             expect(find.text(label), findsOneWidget);
           }
+          final shortcuts = tester.widget<CallbackShortcuts>(
+            find.byType(CallbackShortcuts),
+          );
+          expect(shortcuts.bindings, hasLength(16));
+          expect(find.text('010'), findsNothing);
+          expect(find.text('キー 14'), findsNothing);
           expect(find.byType(ChoiceChip), findsNWidgets(8));
           for (final label in ['通常', '笑顔', 'ぐるぐる', '踏ん張る']) {
             expect(find.text(label), findsOneWidget);

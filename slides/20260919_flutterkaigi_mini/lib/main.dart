@@ -11,6 +11,29 @@ const _green = Color(0xFF287757);
 const _muted = Color(0xFF698179);
 const _line = Color(0xFFE0E9E1);
 
+const _motionShortcuts = [
+  (LogicalKeyboardKey.digit1, '1'),
+  (LogicalKeyboardKey.digit2, '2'),
+  (LogicalKeyboardKey.digit3, '3'),
+  (LogicalKeyboardKey.digit4, '4'),
+  (LogicalKeyboardKey.digit5, '5'),
+  (LogicalKeyboardKey.digit6, '6'),
+  (LogicalKeyboardKey.digit7, '7'),
+  (LogicalKeyboardKey.digit8, '8'),
+  (LogicalKeyboardKey.digit9, '9'),
+  (LogicalKeyboardKey.digit0, '0'),
+  (LogicalKeyboardKey.keyQ, 'Q'),
+  (LogicalKeyboardKey.keyW, 'W'),
+  (LogicalKeyboardKey.keyE, 'E'),
+  (LogicalKeyboardKey.keyT, 'T'),
+];
+
+int _motionColumns(double width) => width < 480
+    ? 3
+    : width < 720
+    ? 4
+    : 7;
+
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
   runApp(const DashmaruApp());
@@ -103,22 +126,9 @@ class _DashmaruViewerState extends State<DashmaruViewer> {
   @override
   Widget build(BuildContext context) => CallbackShortcuts(
     bindings: {
-      const SingleActivator(LogicalKeyboardKey.digit1): () =>
-          _selectMotion(DashmaruMotion.walk),
-      const SingleActivator(LogicalKeyboardKey.digit2): () =>
-          _selectMotion(DashmaruMotion.jump),
-      const SingleActivator(LogicalKeyboardKey.digit3): () =>
-          _selectMotion(DashmaruMotion.wave),
-      const SingleActivator(LogicalKeyboardKey.digit4): () =>
-          _selectMotion(DashmaruMotion.blink),
-      const SingleActivator(LogicalKeyboardKey.digit5): () =>
-          _selectMotion(DashmaruMotion.idle),
-      const SingleActivator(LogicalKeyboardKey.digit6): () =>
-          _selectMotion(DashmaruMotion.run),
-      const SingleActivator(LogicalKeyboardKey.digit7): () =>
-          _selectMotion(DashmaruMotion.shake),
-      const SingleActivator(LogicalKeyboardKey.digit8): () =>
-          _selectMotion(DashmaruMotion.sit),
+      for (final motion in DashmaruMotion.values)
+        SingleActivator(_motionShortcuts[motion.index].$1): () =>
+            _selectMotion(motion),
       const SingleActivator(LogicalKeyboardKey.space): _togglePlay,
       const SingleActivator(LogicalKeyboardKey.keyR): _reset,
     },
@@ -156,11 +166,18 @@ class _DashmaruViewerState extends State<DashmaruViewer> {
               );
               // Reserve room for the model even when the controls wrap. Short
               // windows can scroll to every control without shrinking the stage.
-              final minimumHeight = constraints.maxWidth < 360
+              final baseHeight = constraints.maxWidth < 360
                   ? 820.0
                   : compact
                   ? 760.0
                   : 680.0;
+              final columns = _motionColumns(
+                constraints.maxWidth - (compact ? 40 : 80),
+              );
+              final rows = (DashmaruMotion.values.length / columns).ceil();
+              final extraRows = (rows - (compact ? 2 : 1)).clamp(0, rows);
+              final minimumHeight =
+                  baseHeight + extraRows * (compact ? 70 : 84);
               return constraints.maxHeight < minimumHeight
                   ? SingleChildScrollView(
                       child: SizedBox(height: minimumHeight, child: content),
@@ -433,7 +450,7 @@ class _DashmaruViewerState extends State<DashmaruViewer> {
 
   Widget _motionControls(bool compact) => LayoutBuilder(
     builder: (context, constraints) {
-      final columns = constraints.maxWidth < 720 ? 4 : 8;
+      final columns = _motionColumns(constraints.maxWidth);
       final spacing = compact ? 6.0 : 10.0;
       final width = (constraints.maxWidth - spacing * (columns - 1)) / columns;
       return Wrap(
@@ -443,10 +460,11 @@ class _DashmaruViewerState extends State<DashmaruViewer> {
           for (final motion in DashmaruMotion.values)
             SizedBox(
               width: width,
-              height: compact ? 64 : 82,
+              height: compact ? 64 : 74,
               child: Tooltip(
-                message: '${motion.caption}（キー ${motion.index + 1}）',
-                child: _motionCard(motion, compact || width < 105),
+                message:
+                    '${motion.caption}（キー ${_motionShortcuts[motion.index].$2}）',
+                child: _motionCard(motion, compact || width < 120),
               ),
             ),
         ],
@@ -465,6 +483,12 @@ class _DashmaruViewerState extends State<DashmaruViewer> {
       DashmaruMotion.run => Icons.directions_run_rounded,
       DashmaruMotion.shake => Icons.sync_alt_rounded,
       DashmaruMotion.sit => Icons.airline_seat_legroom_extra_rounded,
+      DashmaruMotion.nod => Icons.check_circle_outline_rounded,
+      DashmaruMotion.tilt => Icons.help_outline_rounded,
+      DashmaruMotion.bow => Icons.volunteer_activism_rounded,
+      DashmaruMotion.celebrate => Icons.celebration_rounded,
+      DashmaruMotion.lookAround => Icons.travel_explore_rounded,
+      DashmaruMotion.stretch => Icons.self_improvement_rounded,
     };
     return Material(
       color: active ? _green : Colors.white,
@@ -478,7 +502,7 @@ class _DashmaruViewerState extends State<DashmaruViewer> {
         child: Padding(
           padding: EdgeInsets.symmetric(
             horizontal: compact ? 6 : 12,
-            vertical: compact ? 10 : 13,
+            vertical: 10,
           ),
           child: Column(
             crossAxisAlignment: compact
@@ -498,7 +522,7 @@ class _DashmaruViewerState extends State<DashmaruViewer> {
                   if (!compact) ...[
                     const Spacer(),
                     Text(
-                      '0${motion.index + 1}',
+                      (motion.index + 1).toString().padLeft(2, '0'),
                       style: TextStyle(
                         color: active ? Colors.white60 : _muted,
                         fontSize: 10,
@@ -508,7 +532,7 @@ class _DashmaruViewerState extends State<DashmaruViewer> {
                   ],
                 ],
               ),
-              SizedBox(height: compact ? 5 : 9),
+              SizedBox(height: compact ? 5 : 6),
               Text(
                 motion.label,
                 style: TextStyle(

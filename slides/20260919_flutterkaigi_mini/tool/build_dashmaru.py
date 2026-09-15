@@ -1330,6 +1330,126 @@ def sit(t):
     return p
 
 
+def planted_gesture(p, bob, phase, softness, wing_lift=0):
+    """Keep both soles grounded while the soft upper body settles behind a cue."""
+    for i, sign in enumerate([-1, 1]):
+        plant_leg(p, i, hip_bob=bob)
+        p[(wing_nodes[i], "rotation")] = quat((0, 0, 1), sign * wing_lift)
+        flex_wing(p, i, phase - i * 0.12, softness)
+    jiggle_crest(p, phase, softness * 1.25)
+    p[(tail, "rotation")] = quat((1, 0, 0), 0.09 * softness * sin(phase - 0.4))
+
+
+def nod(t):
+    """An attentive agreement: one clear nod followed by a smaller confirmation."""
+    p = rest()
+    envelope = smooth(0.04, 0.20, t) * (1 - smooth(0.78, 0.99, t))
+    first, second = pulse(t, 0.32, 0.22), pulse(t, 0.66, 0.18)
+    dip = 0.24 * first + 0.16 * second
+    bob = -0.022 * first - 0.014 * second
+    bend_body(p, bob=bob, nod=dip, breathe=0.035 * (first + second))
+    p[(torso, "rotation")] = quat((1, 0, 0), 0.045 * (first + second))
+    planted_gesture(p, bob, 2 * PI * 2 * t, 0.085 * envelope, 0.025 * envelope)
+    return p
+
+
+def tilt(t):
+    """Pause with a curious head tilt, then let the feather tip settle softly."""
+    p = rest()
+    envelope = smooth(0.06, 0.32, t) * (1 - smooth(0.66, 0.96, t))
+    bob = -0.018 * envelope
+    bend_body(p, bob=bob, lean=0.035 * envelope, breathe=0.025 * envelope)
+    p[(head, "rotation")] = qmul(
+        quat((0, 0, 1), -0.28 * envelope),
+        quat((0, 1, 0), 0.085 * envelope),
+    )
+    planted_gesture(p, bob, 2 * PI * 1.5 * t, 0.085 * envelope, 0.055 * envelope)
+    return p
+
+
+def bow(t):
+    """A small anticipation, a held polite bow, and a slower return to standing."""
+    p = rest()
+    down = smooth(0.12, 0.39, t) * (1 - smooth(0.60, 0.96, t))
+    anticipation = pulse(t, 0.095, 0.095)
+    bob = -0.060 * down + 0.008 * anticipation
+    bend_body(p, bob=bob, nod=0.24 * down, breathe=0.045 * down)
+    p[(torso, "rotation")] = quat((1, 0, 0), 0.31 * down - 0.035 * anticipation)
+    planted_gesture(p, bob, 2 * PI * 1.5 * t, 0.11 * down, 0.06 * down)
+    # The wings trail the bow slightly, close to the body instead of sweeping
+    # across the face; the weighted belly remains supported by the bent legs.
+    for i in range(2):
+        p[(wing_nodes[i], "rotation")] = qmul(
+            p[(wing_nodes[i], "rotation")], quat((1, 0, 0), -0.14 * down)
+        )
+    return p
+
+
+def celebrate(t):
+    """Raise both wings in delight, with two grounded bounces rather than a jump."""
+    p = rest()
+    envelope = smooth(0.03, 0.24, t) * (1 - smooth(0.72, 0.98, t))
+    beat = pulse(t, 0.34, 0.13) + pulse(t, 0.57, 0.13)
+    bob = -0.048 * beat
+    bend_body(
+        p,
+        bob=bob,
+        lean=0.025 * sin(2 * PI * 2 * t) * envelope,
+        nod=-0.055 * envelope,
+        breathe=0.11 * beat,
+    )
+    planted_gesture(
+        p, bob, 2 * PI * 3 * t, 0.23 * envelope, envelope * (2.12 + 0.08 * beat)
+    )
+    for i, sign in enumerate([-1, 1]):
+        p[(wing_nodes[i], "rotation")] = qmul(
+            p[(wing_nodes[i], "rotation")],
+            quat((0, 1, 0), -sign * 0.26 * envelope),
+        )
+    return p
+
+
+def look_around(t):
+    """Check one side and then the other, with the torso gently following."""
+    p = rest()
+    left = smooth(0.05, 0.21, t) * (1 - smooth(0.34, 0.49, t))
+    right = smooth(0.43, 0.60, t) * (1 - smooth(0.77, 0.96, t))
+    glance = left - right
+    envelope = smooth(0.02, 0.19, t) * (1 - smooth(0.79, 0.99, t))
+    bob = -0.012 * envelope
+    bend_body(p, bob=bob, breathe=0.02 * envelope)
+    p[(torso, "rotation")] = quat((0, 1, 0), 0.07 * glance)
+    p[(head, "rotation")] = qmul(
+        quat((0, 1, 0), 0.49 * glance),
+        quat((0, 0, 1), -0.035 * glance),
+    )
+    planted_gesture(p, bob, 2 * PI * 2 * t, 0.07 * envelope, 0.04 * envelope)
+    return p
+
+
+def stretch(t):
+    """Open the wings and lengthen the body, keeping the relaxed feet planted."""
+    p = rest()
+    reach = smooth(0.07, 0.38, t) * (1 - smooth(0.64, 0.96, t))
+    prepare = pulse(t, 0.12, 0.12)
+    release = pulse(t, 0.84, 0.14)
+    bob = 0.045 * reach - 0.026 * prepare - 0.022 * release
+    bend_body(
+        p,
+        bob=bob,
+        nod=-0.12 * reach + 0.025 * release,
+        breathe=-0.15 * reach + 0.055 * (prepare + release),
+    )
+    p[(head, "scale")] = (1 - 0.012 * reach, 1 + 0.022 * reach, 1 - 0.012 * reach)
+    softness = 0.085 * reach + 0.15 * release
+    planted_gesture(p, bob, 2 * PI * 1.75 * t, softness, 1.43 * reach)
+    for i in range(2):
+        p[(wing_nodes[i], "rotation")] = qmul(
+            p[(wing_nodes[i], "rotation")], quat((1, 0, 0), -0.10 * reach)
+        )
+    return p
+
+
 # Sampled smooth curves are portable to glTF players and Flutter Scene. Gestures
 # return to bind pose; walking stays in its continuous periodic gait, and Sit
 # keeps its seated pose for the player to repeat its 2.4–6.4 second hold.
@@ -1342,6 +1462,12 @@ for name, duration, samples, pose in [
     ("Run", 0.76, 92, run),
     ("Shake", 2.8, 196, shake),
     ("Sit", 6.4, 256, sit),
+    ("Nod", 2.6, 156, nod),
+    ("Tilt", 3.4, 204, tilt),
+    ("Bow", 3.2, 192, bow),
+    ("Celebrate", 3.0, 180, celebrate),
+    ("LookAround", 4.2, 252, look_around),
+    ("Stretch", 4.0, 240, stretch),
 ]:
     animate(
         name,

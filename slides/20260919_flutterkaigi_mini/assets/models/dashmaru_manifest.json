@@ -38,7 +38,31 @@
     {
       "name": "Sit",
       "tracks": 89
+    },
+    {
+      "name": "Nod",
+      "tracks": 89
+    },
+    {
+      "name": "Tilt",
+      "tracks": 89
+    },
+    {
+      "name": "Bow",
+      "tracks": 89
+    },
+    {
+      "name": "Celebrate",
+      "tracks": 89
+    },
+    {
+      "name": "LookAround",
+      "tracks": 89
+    },
+    {
+      "name": "Stretch",
+      "tracks": 89
     }
   ],
-  "bytes": 9497488
+  "bytes": 11619908
 }
