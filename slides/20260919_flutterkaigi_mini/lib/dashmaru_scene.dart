@@ -7,7 +7,7 @@ import 'dashmaru_background.dart';
 import 'sitting_playback.dart';
 import 'motion_playback.dart';
 
-/// The eight animations authored into the glTF model.
+/// The animations authored into the master glTF model.
 enum DashmaruMotion {
   walk('Walk', '歩く', 'てくてく、いっしょに。'),
   jump('Jump', 'ジャンプ', '羽ばたいて、ふわっ。'),
@@ -16,7 +16,13 @@ enum DashmaruMotion {
   idle('Idle', '待機', 'ゆらゆら、のんびり。'),
   run('Run', '走る', 'ぱたぱた、とてとて。'),
   shake('Shake', 'ぶんぶん', 'ぶんぶん、ぷるぷる。'),
-  sit('Sit', '座る', 'ちょこんと、ひとやすみ。');
+  sit('Sit', '座る', 'ちょこんと、ひとやすみ。'),
+  nod('Nod', 'うなずく', 'うんうん、なるほど。'),
+  tilt('Tilt', '首かしげ', 'ん？ どういうことかな。'),
+  bow('Bow', 'おじぎ', 'ぺこり、ありがとう。'),
+  celebrate('Celebrate', 'よろこぶ', 'やった！ ばんざい！'),
+  lookAround('LookAround', 'きょろきょろ', 'あっちかな、こっちかな。'),
+  stretch('Stretch', 'のび', 'ぐーっと伸びて、ひと息。');
 
   const DashmaruMotion(this.clipName, this.label, this.caption);
   final String clipName;
