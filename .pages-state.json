@@ -1,13 +1,10 @@
 {
-  "previews": {
-    "64": {
-      "sha": "c6804c4cd38a728cb465f42255008a7e3d27ac5b",
-      "run_id": 34923243502
-    }
-  },
+  "previews": {},
   "production": {
     "sha": "9028555daeaed9068a4c13af505e45b9e602d210",
     "run_id": 34802089717
   },
-  "pending_cleanup": []
+  "pending_cleanup": [
+    64
+  ]
 }
