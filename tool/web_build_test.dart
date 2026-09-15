@@ -97,8 +97,9 @@ void main() {
     if (!Platform.isWindows) {
       _checkBuildArguments(toolDir, fixture, previewEnvironment);
     }
+    _checkSdkAssetPruning(toolDir, Directory('${fixture.path}/sdk-assets'));
     stdout.writeln(
-      'PASS: Web publication paths, selected slides, preview index, assets, and failure handling.',
+      'PASS: Web publication paths, selected slides, preview index, SDK asset pruning, assets, and failure handling.',
     );
   } finally {
     fixture.deleteSync(recursive: true);
@@ -169,6 +170,104 @@ void _checkBuildArguments(
         ),
     'Flutter build arguments do not match the selected slides and preview prefix: $calls',
   );
+}
+
+void _checkSdkAssetPruning(Directory toolDir, Directory fixture) {
+  const jsBuild =
+      '{"compileTarget":"dart2js","renderer":"canvaskit","mainJsPath":"main.dart.js"}';
+  const wasmBuild =
+      '{"compileTarget":"dart2wasm","renderer":"skwasm","mainWasmPath":"main.dart.wasm"}';
+  const cases = <String, String?>{
+    'js': '{"builds":[$jsBuild,{}]}',
+    'js_only': '{"builds":[$jsBuild]}',
+    'wasm': '{"builds":[$wasmBuild,$jsBuild,{}]}',
+    'unknown': '{"builds":[{"compileTarget":"future","renderer":"unknown"}]}',
+    'mixed_unknown': '{"builds":[$jsBuild,{"renderer":"unknown"}]}',
+    'malformed': '{"builds":[invalid]}',
+    'missing': null,
+    'empty': '{"builds":[]}',
+    'placeholder': '{"builds":[{}]}',
+    'no_builds': '{}',
+    'legacy_worker': '{"builds":[$jsBuild,{}]}',
+  };
+  const prunableAssets = [
+    'canvaskit/canvaskit.js.symbols',
+    'canvaskit/chromium/canvaskit.js.symbols',
+    'canvaskit/webparagraph/canvaskit.js.symbols',
+    'canvaskit/skwasm.js.symbols',
+    'canvaskit/skwasm.js',
+    'canvaskit/skwasm.wasm',
+    'canvaskit/skwasm_heavy.js',
+    'canvaskit/skwasm_heavy.wasm',
+    'canvaskit/wimp.js',
+    'canvaskit/wimp.wasm',
+  ];
+  const retainedAssets = [
+    'canvaskit/canvaskit.js',
+    'canvaskit/canvaskit.wasm',
+    'canvaskit/chromium/canvaskit.js',
+    'canvaskit/chromium/canvaskit.wasm',
+    'canvaskit/webparagraph/canvaskit.js',
+    'canvaskit/webparagraph/canvaskit.wasm',
+    'canvaskit/unknown.wasm',
+    'canvaskit/skwasm_future.wasm',
+    'canvaskit/nested/skwasm.wasm',
+    'assets/skwasm.wasm',
+    'assets/application.symbols',
+    'assets/model.glb',
+  ];
+  for (final entry in cases.entries) {
+    final name = entry.key;
+    final buildDir = 'slides/$name/build/web';
+    _write(fixture, 'slides/$name/pubspec.yaml', 'name: $name\n');
+    _write(fixture, '$buildDir/index.html', '<h1>$name</h1>');
+    if (entry.value != null) {
+      _write(
+        fixture,
+        '$buildDir/flutter_bootstrap.js',
+        '// Loader code mentions skwasm even for a JS-only build.\n'
+            '_flutter.buildConfig = ${entry.value};\n'
+            '_flutter.loader.load();\n',
+      );
+    }
+    _write(
+      fixture,
+      '$buildDir/flutter_service_worker.js',
+      name == 'legacy_worker'
+          ? 'const RESOURCES = {"canvaskit/skwasm.wasm": "hash"};\n'
+          : 'self.addEventListener("install", () => self.skipWaiting());\n',
+    );
+    for (final asset in [...prunableAssets, ...retainedAssets]) {
+      _write(fixture, '$buildDir/$asset', '$name/$asset');
+    }
+  }
+
+  final result = _run(toolDir, fixture, 'prepare_pages.dart', {});
+  _expect(
+    result.exitCode == 0,
+    'SDK asset preparation failed: ${result.stderr}',
+  );
+  for (final name in cases.keys) {
+    final shouldPrune = name == 'js' || name == 'js_only';
+    for (final asset in prunableAssets) {
+      final output = File('${fixture.path}/dist/$name/$asset');
+      _expect(
+        output.existsSync() != shouldPrune,
+        '$name: $asset must ${shouldPrune ? 'be omitted' : 'be retained'}.',
+      );
+      _expect(
+        File('${fixture.path}/slides/$name/build/web/$asset').existsSync(),
+        'Preparing Pages must not remove the original build asset: $name/$asset',
+      );
+    }
+    for (final asset in retainedAssets) {
+      final output = File('${fixture.path}/dist/$name/$asset');
+      _expect(
+        output.existsSync() && output.readAsStringSync() == '$name/$asset',
+        '$name: required or unrelated asset was changed or omitted: $asset',
+      );
+    }
+  }
 }
 
 ProcessResult _run(

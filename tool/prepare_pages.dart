@@ -43,7 +43,11 @@ void _prepare(WebBuildOptions options) {
     final buildWebDir = Directory('${dir.path}/build/web');
 
     final destDir = Directory('${distDir.path}/$slideName');
-    _copyDirectory(buildWebDir, destDir);
+    _copyDirectory(
+      buildWebDir,
+      destDir,
+      trimUnusedRenderers: _isCanvasKitOnly(buildWebDir),
+    );
     publishedSlides.add(slideName);
     stdout.writeln('▸ [$slideName] dist/$slideName/ へコピーしました。');
   }
@@ -54,14 +58,70 @@ void _prepare(WebBuildOptions options) {
   stdout.writeln('✔ dist/index.html を生成しました (${publishedSlides.length} スライド)。');
 }
 
-void _copyDirectory(Directory source, Directory destination) {
+// Flutter copies every renderer into build/web, even for CanvasKit-only JS.
+// Keep all resources for unknown/Wasm builds and older offline service workers.
+bool _isCanvasKitOnly(Directory buildWebDir) {
+  final bootstrap = File('${buildWebDir.path}/flutter_bootstrap.js');
+  if (!bootstrap.existsSync()) return false;
+  final worker = File('${buildWebDir.path}/flutter_service_worker.js');
+  if (worker.existsSync() && worker.readAsStringSync().contains('RESOURCES')) {
+    return false;
+  }
+  final match = RegExp(r'_flutter\.buildConfig\s*=\s*(\{[^\n]*\});')
+      .firstMatch(bootstrap.readAsStringSync());
+  if (match == null) return false;
+  try {
+    final config = jsonDecode(match.group(1)!);
+    if (config is! Map || config['builds'] is! List) return false;
+    var hasCanvasKit = false;
+    for (final build in config['builds'] as List) {
+      if (build is! Map) return false;
+      if (build.isEmpty) continue; // Flutter's trailing placeholder.
+      if (build['compileTarget'] != 'dart2js' ||
+          build['renderer'] != 'canvaskit') {
+        return false;
+      }
+      hasCanvasKit = true;
+    }
+    return hasCanvasKit;
+  } on FormatException {
+    return false;
+  }
+}
+
+bool _isUnusedRendererFile(String path) {
+  if (!path.startsWith('canvaskit/')) return false;
+  if (path.endsWith('.symbols')) return true;
+  return const {
+    'canvaskit/skwasm.js',
+    'canvaskit/skwasm.wasm',
+    'canvaskit/skwasm_heavy.js',
+    'canvaskit/skwasm_heavy.wasm',
+    'canvaskit/wimp.js',
+    'canvaskit/wimp.wasm',
+  }.contains(path);
+}
+
+void _copyDirectory(
+  Directory source,
+  Directory destination, {
+  bool trimUnusedRenderers = false,
+  String relativePath = '',
+}) {
   destination.createSync(recursive: true);
   for (final entity in source.listSync(followLinks: false)) {
-    final newPath =
-        '${destination.path}/${entity.uri.pathSegments.where((s) => s.isNotEmpty).last}';
+    final name = entity.uri.pathSegments.where((s) => s.isNotEmpty).last;
+    final newPath = '${destination.path}/$name';
+    final relative = '$relativePath$name';
     if (entity is Directory) {
-      _copyDirectory(entity, Directory(newPath));
+      _copyDirectory(
+        entity,
+        Directory(newPath),
+        trimUnusedRenderers: trimUnusedRenderers,
+        relativePath: '$relative/',
+      );
     } else if (entity is File) {
+      if (trimUnusedRenderers && _isUnusedRendererFile(relative)) continue;
       entity.copySync(newPath);
     }
   }
