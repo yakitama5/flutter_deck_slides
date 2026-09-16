@@ -9,7 +9,7 @@ from pathlib import Path
 
 def select_slides(paths, available):
     selected = set()
-    shared = ("packages/", "tool/", ".github/workflows/")
+    shared = ("packages/", "tool/", ".github/workflows/", ".private-assets/")
     root_build_files = {
         "pubspec.yaml",
         "pubspec.lock",

@@ -12,10 +12,13 @@ Flutter / Dart と `flutter_scene 0.23.0` でモデルを描画し、GLB内の
 ## 起動
 
 リポジトリで指定している Flutter 3.47.1 / Dart 3.13.1 を使います。
+GLBと生成ソースはGit管理対象外です。事前に[非公開アセットの復元](../../docs/private-assets.md)で
+GPGとパスフレーズを準備してください。
 
 ```sh
 # リポジトリルート
 mise install
+python3 tool/private_assets.py restore --passphrase-file .private-assets/dashmaru.passphrase
 flutter pub get
 cd slides/20260919_flutterkaigi_mini
 flutter run -d chrome
@@ -57,6 +60,9 @@ WebはFlutterSceneに内蔵されたWebGL2バックエンド、macOSはFlutter G
 
 ## モデルと参考資料
 
+以下のGLB・マニフェスト・生成用Python 3ファイルは暗号化バンドルから復元します。
+Git管理するのは暗号化ファイルで、平文のアセット・生成ソースはgitignore対象です。
+
 - `assets/models/dashmaru.glb`: 立体形状・9種類の材質・14種類の動き・4種類の表情を内包するglTF 2.0モデル。
 - `tool/build_dashmaru.py`: モデルの編集可能なソース。Python標準ライブラリだけで再生成できます。
 - `tool/dashmaru_expressions.py`: 参考画像をもとにした表情の曲面メッシュ生成。
@@ -76,7 +82,7 @@ WebはFlutterSceneに内蔵されたWebGL2バックエンド、macOSはFlutter G
 GLBの材質には線形色へ変換して格納するため、実描画では照明による陰影が加わります。
 顔、胸、雪の黒い境界線と色面も、胴体・帽子の曲面に沿うメッシュです。
 
-モデルは52メッシュ・207,534三角形・28ボーン、GLBは約11.62 MB（11,619,908バイト）です。
+モデルは52メッシュ・207,534三角形・28ボーン、GLBは約11.62 MB（11,620,368バイト）です。
 曲面の頂点を共有して法線を滑らかにつなぎ、羽根は厚みを持たせて身体に沿う向きにしています。
 身体と羽根にはボーンの影響を重み付けしたスキニングを使い、胴体のしなりと呼吸、
 付け根から羽先までの連続した曲がりを表現します。羽根の上端は胴体に追従し、
@@ -98,6 +104,8 @@ GLBの材質には線形色へ変換して格納するため、実描画では�
 FlutterSceneの読み込み時の座標変換に合わせ、アプリではZ軸の負方向から正面を見ます。
 
 ## 再生成と検証
+
+復元したローカルの生成ソースを編集し、検証後に[暗号化バンドルを更新](../../docs/private-assets.md#モデルを更新するとき)します。
 
 ```sh
 # このディレクトリで実行

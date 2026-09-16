@@ -464,6 +464,7 @@ class SlideSelectionTests(unittest.TestCase):
             "packages/flutter_deck/lib/main.dart",
             "tool/build_web.dart",
             ".github/workflows/ci.yaml",
+            ".private-assets/dashmaru.tar.gz.gpg",
             "pubspec.yaml",
             "pubspec.lock",
             "mise.toml",

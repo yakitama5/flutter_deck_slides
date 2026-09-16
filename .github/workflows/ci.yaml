@@ -23,6 +23,24 @@ jobs:
 
       - uses: jdx/mise-action@v2
 
+      # Repository secrets are unavailable to forks and Dependabot. Never run
+      # their code in pull_request_target or publish a model-free preview.
+      - name: Restore private Dashmaru assets
+        id: private_assets
+        if: >-
+          github.actor != 'dependabot[bot]' &&
+          (github.event_name != 'pull_request' ||
+           (github.event.pull_request.head.repo.full_name == github.repository &&
+            github.event.pull_request.user.login != 'dependabot[bot]'))
+        env:
+          DASHMARU_ASSET_PASSPHRASE: ${{ secrets.DASHMARU_ASSET_PASSPHRASE }}
+        run: python3 tool/private_assets.py restore
+
+      - name: Explain checks without private assets
+        if: steps.private_assets.outcome == 'skipped'
+        run: |
+          echo 'Fork / Dependabot PR: analyze and format run for all packages; tests run for packages without Flutter Scene. Model-dependent tests, model validation, and web preview are skipped.' >> "$GITHUB_STEP_SUMMARY"
+
       - name: Install dependencies
         run: flutter pub get
 
@@ -38,30 +56,37 @@ jobs:
         run: dart run melos run format --no-select
 
       - name: Test
+        if: steps.private_assets.outcome == 'success'
         run: dart run melos run test --no-select
 
+      - name: Test packages without private model dependencies
+        if: steps.private_assets.outcome == 'skipped'
+        run: dart run melos exec --dir-exists=test --no-depends-on=flutter_scene -- flutter test
+
       - name: Validate Dashmaru model and animations
+        if: steps.private_assets.outcome == 'success'
         run: python3 slides/20260919_flutterkaigi_mini/tool/check_dashmaru.py
 
       - name: Test Pages tooling
         run: |
           dart run tool/web_build_test.dart
           python3 -m unittest discover -s tool/pages -p 'test_*.py'
+          python3 -m unittest discover -s tool -p 'test_private_assets.py'
 
       - name: Select PR preview slides
-        if: github.event_name == 'pull_request'
+        if: github.event_name == 'pull_request' && steps.private_assets.outcome == 'success'
         id: preview
         run: python3 tool/pages/select_preview_slides.py
 
       - name: Build web
-        if: github.event_name != 'pull_request' || steps.preview.outputs.has_slides == 'true'
+        if: steps.private_assets.outcome == 'success' && (github.event_name != 'pull_request' || steps.preview.outputs.has_slides == 'true')
         env:
           WEB_BASE_PATH: ${{ github.event_name == 'pull_request' && format('/flutter_deck_slides/previews/pr-{0}', github.event.pull_request.number) || '/flutter_deck_slides' }}
           WEB_SLIDES: ${{ steps.preview.outputs.slides }}
         run: dart run tool/build_web.dart
 
       - name: Prepare PR preview
-        if: github.event_name == 'pull_request' && steps.preview.outputs.has_slides == 'true'
+        if: github.event_name == 'pull_request' && steps.private_assets.outcome == 'success' && steps.preview.outputs.has_slides == 'true'
         env:
           WEB_BASE_PATH: /flutter_deck_slides/previews/pr-${{ github.event.pull_request.number }}
           WEB_SLIDES: ${{ steps.preview.outputs.slides }}
@@ -69,7 +94,7 @@ jobs:
         run: dart run tool/prepare_pages.dart
 
       - name: Upload PR preview (no deployment credentials)
-        if: github.event_name == 'pull_request' && steps.preview.outputs.has_slides == 'true'
+        if: github.event_name == 'pull_request' && steps.private_assets.outcome == 'success' && steps.preview.outputs.has_slides == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: web-preview

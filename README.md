@@ -7,7 +7,8 @@ Pub Workspace + [melos](https://melos.invertase.dev/) で複数管理する mono
 
 FlutterKaigi mini 向けの [だしゅまる3Dデモ](slides/20260919_flutterkaigi_mini/README.md) を
 `slides/20260919_flutterkaigi_mini` に追加しています。FlutterSceneで描画し、
-歩行・ジャンプ・バイバイ・まばたきを再生できます。再生成可能なGLBモデルを同梱し、Web / macOSで起動できます。
+歩行・ジャンプ・バイバイ・まばたきを再生できます。GLBと生成ソースは暗号化して管理し、
+[モデルの復元手順](docs/private-assets.md)に沿って準備するとWeb / macOSで起動できます。
 
 技術選定の絵本LT「リスくんと ぴったりのかご」は、
 [スライド](https://yakitama5.github.io/flutter_deck_slides/202609_technologychoice/)と
@@ -37,6 +38,8 @@ dart pub get       # ワークスペース全パッケージの依存解決(ル�
 ```
 
 `mise install` 後、`flutter` / `dart` コマンドが使えることを確認してください。
+
+だしゅまるを含むテストやビルドの前には、[非公開アセットの復元](docs/private-assets.md)が必要です。
 
 ```sh
 mise x -- flutter doctor
@@ -193,6 +196,8 @@ https://yakitama5.github.io/flutter_deck_slides/previews/pr-<PR番号>/<slide_na
 PRコードを実行するビルドと、`main` のコードだけを実行する公開処理を分離しています。
 
 Pagesはサイト全体で1 GBまでのため、公開前に950 MBの上限を検証します。
+CanvasKit専用のJSビルドでは、未使用のSkwasm・Wimpと描画エンジンのシンボルファイルを配信対象から外します。
+Wasmを含むビルド、構成を判定できないビルド、旧オフラインキャッシュを使うビルドでは保持します。
 容量超過時は不要なPRを閉じてから公開ジョブを再実行してください。
 ビルド成果物のActions保存期間は7日ですが、一度公開したプレビューはPRを閉じるまで保持します。
 
