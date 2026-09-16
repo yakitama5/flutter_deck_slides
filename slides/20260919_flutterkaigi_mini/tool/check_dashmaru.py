@@ -25,7 +25,7 @@ ESTABLISHED_CLIPS = frozenset(
 EXTRA_GESTURES = frozenset(
     {"Nod", "Tilt", "Bow", "Celebrate", "LookAround", "Stretch"}
 )
-ONE_LEG_GESTURES = frozenset({"Tilt", "LookAround"})
+FRONT_FACING_GESTURES = frozenset({"Tilt", "LookAround"})
 
 
 class InvalidModel(Exception):
@@ -854,9 +854,10 @@ class Model:
     def check_extra_gestures(self, clips):
         """Assert recognizable directions and amplitudes in exported joint data.
 
-        Loose visual thresholds reject the previous subtle gestures while leaving
-        the animation's timing and curves to the artist. Quaternion rotation
-        vectors make the checks independent of equivalent q/-q representations.
+        Loose visual thresholds leave timing and curves to the artist. The
+        front-facing reactions prioritize keeping the central belly pattern
+        visible and rigid over large rotations. Quaternion rotation vectors make
+        checks independent of equivalent q/-q representations.
         """
         named = {node.get("name"): index for index, node in enumerate(self.nodes)}
 
@@ -884,42 +885,59 @@ class Model:
             values = axis(clip, part, component)
             return max(abs(value - values[0]) for value in values)
 
+        def rotation_excursion(clip, part):
+            vectors = rotation_vectors(clip, part)
+            return max(
+                math.sqrt(sum((a - b) ** 2 for a, b in zip(row, vectors[0])))
+                for row in vectors
+            )
+
         nod = excursion("Nod", "Head", 0)
         require(nod >= 0.40, "Nod: the head needs an emphatic forward/back nod")
         tilt = excursion("Tilt", "Hips", 2)
-        require(tilt >= 0.25, "Tilt: the whole body needs a curious sideways lean")
+        require(
+            0.10 <= tilt <= 0.22,
+            "Tilt: the curious lean should stay small enough to show the belly",
+        )
+        require(
+            max(
+                rotation_excursion("Tilt", wing)
+                for wing in ("LeftWing", "RightWing")
+            ) >= 0.45,
+            "Tilt: a wing must rise visibly alongside the face",
+        )
         bow = excursion("Bow", "Torso", 0)
         require(bow >= 0.52, "Bow: the torso must make a deep forward bow")
         require(
             excursion("Bow", "Head", 0) >= 0.22,
             "Bow: the head should follow the torso into the greeting",
         )
-        yaw = axis("LookAround", "Hips", 1)
+        sideways = track("LookAround", "Hips", "translation")
+        shifts = [row[0] - sideways[0][0] for row in sideways]
         require(
-            min(yaw) <= -0.70 and max(yaw) >= 0.70,
-            "LookAround: the whole body must turn broadly to both left and right",
+            min(shifts) <= -0.05 and max(shifts) >= 0.05,
+            "LookAround: the body must move a little to both left and right",
         )
-        relative_turns = []
-        for clip in sorted(ONE_LEG_GESTURES):
+        for clip in sorted(FRONT_FACING_GESTURES):
+            hips = rotation_vectors(clip, "Hips")
+            require(
+                max(abs(row[axis]) for row in hips for axis in (0, 1)) <= 0.03,
+                f"{clip}: the body must face forward so the belly stays visible",
+            )
+            scales = track(clip, "Hips", "scale")
+            require(
+                all(same_pose(scales[0], row, "scale") for row in scales),
+                f"{clip}: Hips/scale changes the belly pattern's proportions",
+            )
             for part in ("Torso", "Head"):
-                rotations = track(clip, part, "rotation")
-                neutral = rotations[0]
-                # Relative local rotations deform the striped belly. A broad
-                # Hips turn carries the body and face together without twisting
-                # their skin, so only small secondary joint motion is allowed.
-                relative = max(
-                    2
-                    * math.acos(
-                        min(1, abs(sum(a * b for a, b in zip(neutral, row))))
+                # The face and central pattern span several joints. Preserve
+                # every local transform so Hips moves their skin as one body.
+                for path in ("translation", "rotation", "scale"):
+                    rows = track(clip, part, path)
+                    require(
+                        all(same_pose(rows[0], row, path) for row in rows),
+                        f"{clip}: {part}/{path} deforms the shared body pose",
                     )
-                    for row in rotations
-                )
-                require(
-                    relative <= 0.08,
-                    f"{clip}: {part} twists away from the shared body pose "
-                    f"({math.degrees(relative):.1f}°)",
-                )
-                relative_turns.append(relative)
         for clip, minimum in (("Celebrate", 1.80), ("Stretch", 1.90)):
             left = axis(clip, "LeftWing", 2)
             right = axis(clip, "RightWing", 2)
@@ -939,15 +957,15 @@ class Model:
             "Extra gestures: visible nod "
             f"({math.degrees(nod):.1f}°), body tilt ({math.degrees(tilt):.1f}°), "
             f"bow ({math.degrees(bow):.1f}°), two-wing celebration/stretch, "
-            f"and left/right look ({math.degrees(min(yaw)):+.1f}° to "
-            f"{math.degrees(max(yaw)):+.1f}°); stretch torso "
-            f"{lengthening:.3f}× and hips +{rise:.3f}; one-leg gestures keep "
-            f"relative torso/head rotation within "
-            f"{math.degrees(max(relative_turns)):.1f}°"
+            f"and front-facing left/right steps ({min(shifts):+.3f} to "
+            f"{max(shifts):+.3f}); stretch torso "
+            f"{lengthening:.3f}× and hips +{rise:.3f}; "
+            "Tilt/LookAround keep hip scale and all local torso/head transforms rigid"
         ]
 
-    def check_one_leg_balance(self, name, bottoms, times, sides):
-        """Use the delivered skin to verify a held pose on one supporting foot."""
+    def check_side_steps(self, bottoms, times, sides):
+        """Check small alternating swings and landings in the delivered skin."""
+        name = "LookAround"
         require(
             len(bottoms) == len(times) and len(times) >= 2,
             f"{name}: foot samples need a matching timeline",
@@ -958,22 +976,21 @@ class Model:
         )
         require(
             set(sides) == {"Left", "Right"},
-            f"{name}: one-leg balance needs distinct left and right feet",
+            f"{name}: side steps need distinct left and right feet",
         )
-        if name == "Tilt":
-            support = sides.index("Left")
-            require(
-                max(row[support] for row in bottoms) <= 0.025,
-                "Tilt: the left supporting sole must stay on the floor",
-            )
-        lifted_sides = ("Right",) if name == "Tilt" else ("Left", "Right")
-        held_intervals, summaries = [], []
-        for side in lifted_sides:
+        swings, summaries = [], []
+        for side in ("Left", "Right"):
             lifted = sides.index(side)
             supporting = 1 - lifted
+            peak = max(row[lifted] for row in bottoms)
+            require(
+                0.05 <= peak <= 0.15,
+                f"{name}: the {side.lower()} sole needs a small lift "
+                f"between 0.05 and 0.15 (got {peak:.3f})",
+            )
             intervals, start = [], None
             for index, row in enumerate(bottoms):
-                if row[lifted] >= 0.18 and row[supporting] <= 0.025:
+                if row[lifted] > 0.025:
                     if start is None:
                         start = index
                 elif start is not None:
@@ -981,35 +998,41 @@ class Model:
                     start = None
             if start is not None:
                 intervals.append((start, len(bottoms) - 1))
-            held = [
-                (start, end)
-                for start, end in intervals
-                if times[end] - times[start] >= 0.20
-            ]
-            require(
-                held,
-                f"{name}: the {side.lower()} sole needs to stay at least 0.18 "
-                "above the floor for 0.20 seconds while the other foot supports it",
-            )
-            longest = max(held, key=lambda span: times[span[1]] - times[span[0]])
-            held_intervals.append(longest)
-            summaries.append(
-                f"{side.lower()} sole peak "
-                f"{max(row[lifted] for row in bottoms):.3f}, "
-                f"held {times[longest[1]] - times[longest[0]]:.3f}s"
-            )
-        if name == "LookAround":
-            first, second = sorted(held_intervals)
+            for start, end in intervals:
+                require(
+                    start > 0
+                    and end + 1 < len(bottoms)
+                    and max(bottoms[start - 1]) <= 0.025
+                    and max(bottoms[end + 1]) <= 0.025,
+                    f"{name}: each {side.lower()} swing must leave and return "
+                    "to a landing with both soles on the floor",
+                )
+                require(
+                    all(
+                        row[supporting] <= 0.025
+                        for row in bottoms[start : end + 1]
+                    ),
+                    f"{name}: the other sole must support the "
+                    f"{side.lower()} side step",
+                )
+                require(
+                    times[end] - times[start] <= 0.90,
+                    f"{name}: the {side.lower()} foot should take a short step "
+                    "instead of holding a one-legged pose",
+                )
+                swings.append((start, end))
+            summaries.append(f"{side.lower()} sole peak {peak:.3f}")
+        for first, second in zip(sorted(swings), sorted(swings)[1:]):
             require(
                 first[1] < second[0]
                 and any(
                     max(row) <= 0.025
                     for row in bottoms[first[1] + 1 : second[0]]
                 ),
-                "LookAround: changing the supporting foot needs an intervening "
-                "landing with both soles on the floor",
+                f"{name}: successive steps need a landing with both soles "
+                "on the floor",
             )
-        return f"{name} one-leg balance: " + "; ".join(summaries)
+        return f"{name} side steps: " + "; ".join(summaries)
 
     def check_bow_clearance(self, tracks, subframes=0):
         """Check the deformed belly itself while the deeper bow leans forward."""
@@ -1353,7 +1376,7 @@ class Model:
                         min(heights) < 0.025,
                         f"{name}: neither foot supports the body at frame {frame:g}",
                     )
-                if name in EXTRA_GESTURES - ONE_LEG_GESTURES - {"Celebrate"}:
+                if name in EXTRA_GESTURES - {"LookAround", "Celebrate"}:
                     require(
                         max(heights) < 0.025,
                         f"{name}: the standing gesture lifts a supporting foot "
@@ -1403,10 +1426,10 @@ class Model:
                 )
             if name == "Celebrate":
                 summaries.append(self.check_celebrate_hops(bottoms, sample_times))
-            if name in ONE_LEG_GESTURES:
+            if name == "LookAround":
                 summaries.append(
-                    self.check_one_leg_balance(
-                        name, bottoms, sample_times, [side for side, *_ in feet]
+                    self.check_side_steps(
+                        bottoms, sample_times, [side for side, *_ in feet]
                     )
                 )
             summaries.append(
@@ -1684,8 +1707,9 @@ def main():
         "  Sampled soles respect the floor tolerance; locomotion rolls "
         "from heel contact to toe push-off."
     )
-    print("  Nod, Bow and Stretch keep both feet in ground contact.")
-    print("  Tilt and LookAround lift one foot while the other supports the body.")
+    print("  Nod, Tilt, Bow and Stretch keep both feet in ground contact.")
+    print("  LookAround takes small side steps and lands between each swing.")
+    print("  Tilt and LookAround face forward and preserve the central pattern.")
     print("  Celebrate makes two or more clear hops and lands between them.")
     return 0
 
