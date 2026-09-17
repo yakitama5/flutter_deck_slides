@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutterkaigi_mini_20260919/dashmaru_scene.dart';
 import 'package:flutterkaigi_mini_lt_20260919/mascot.dart';
@@ -51,6 +52,52 @@ void _advance(DashmaruCueController cues, double seconds) {
 }
 
 void main() {
+  testWidgets('the demo offers waving, running, shaking and jumping', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: SizedBox(
+          width: 800,
+          height: 600,
+          child: DashmaruActor(
+            slideIndex: 5,
+            large: true,
+            enableRendering: false,
+          ),
+        ),
+      ),
+    );
+
+    for (final label in ['手を振る', '走る', 'ぶんぶん', 'ジャンプ']) {
+      expect(find.text(label), findsOneWidget);
+    }
+    expect(find.text('歩く'), findsNothing);
+    expect(find.text('待機'), findsNothing);
+  });
+
+  for (final (slide, motion, expression) in [
+    (6, DashmaruMotion.celebrate, DashmaruExpression.smile),
+    (7, DashmaruMotion.shake, DashmaruExpression.strain),
+    (8, DashmaruMotion.sit, DashmaruExpression.spiral),
+  ]) {
+    test('slide $slide keeps its motion and face across repeated loops', () {
+      final world = _FakeWorld();
+      final cues = DashmaruCueController()
+        ..selectSlide(slide)
+        ..attach(world);
+
+      // Let many complete clip durations pass. The cue must not fall back to
+      // idle, clear the face, or keep restarting the seated entrance.
+      _advance(cues, 40);
+      expect(world.motion, motion);
+      expect(world.displayedExpression, expression);
+      expect(world.playing, isTrue);
+      expect(world.advancedSeconds, closeTo(40, 1e-9));
+      expect(world.selections, [motion]);
+    });
+  }
+
   test('a late model load applies only the latest slide cue', () {
     final world = _FakeWorld();
     final cues = DashmaruCueController()
@@ -66,46 +113,55 @@ void main() {
     expect(world.expression, DashmaruExpression.smile);
   });
 
-  test('navigation cancels the previous question and gesture sequence', () {
+  test('navigation replaces persistent reactions and resets each face', () {
     final world = _FakeWorld();
     final cues = DashmaruCueController()
       ..selectSlide(7)
       ..attach(world);
-    expect(world.expression, DashmaruExpression.spiral);
+    expect(world.motion, DashmaruMotion.shake);
+    expect(world.expression, DashmaruExpression.strain);
     _advance(cues, 1);
+    cues.selectSlide(8);
+    expect(world.motion, DashmaruMotion.sit);
+    expect(world.expression, DashmaruExpression.spiral);
+    _advance(cues, 5);
+    cues.selectSlide(9);
+    expect(world.motion, DashmaruMotion.sit);
+    expect(world.expression, DashmaruExpression.normal);
     cues.selectSlide(16);
     _advance(cues, 10);
     expect(world.motion, DashmaruMotion.wave);
     expect(world.expression, DashmaruExpression.smile);
-    expect(world.selections, isNot(contains(DashmaruMotion.blink)));
-
-    // Backwards navigation starts the question's sequence from the beginning.
+    // Backwards navigation restores the persistent question reaction.
     cues.selectSlide(7);
-    expect(world.expression, DashmaruExpression.spiral);
-    _advance(cues, 1.8);
-    expect(world.motion, DashmaruMotion.blink);
-    expect(world.expression, DashmaruExpression.normal);
-    _advance(cues, 2.5);
-    expect(world.motion, DashmaruMotion.idle);
+    _advance(cues, 10);
+    expect(world.motion, DashmaruMotion.shake);
+    expect(world.expression, DashmaruExpression.strain);
+    cues.selectSlide(6);
+    _advance(cues, 10);
+    expect(world.motion, DashmaruMotion.celebrate);
+    expect(world.expression, DashmaruExpression.smile);
   });
 
-  test('the three design slides retain one seated animation entrance', () {
+  test('the discussion retains one seated entrance and clears dizzy eyes', () {
     final world = _FakeWorld();
     final cues = DashmaruCueController()
-      ..selectSlide(10)
+      ..selectSlide(8)
       ..attach(world);
+    expect(world.expression, DashmaruExpression.spiral);
     _advance(cues, 5);
-    cues.selectSlide(11);
-    _advance(cues, 5);
-    cues.selectSlide(12);
-    _advance(cues, 5);
+    for (final slide in [9, 10, 11, 12]) {
+      cues.selectSlide(slide);
+      _advance(cues, 5);
+      expect(world.expression, DashmaruExpression.normal);
+    }
     cues.selectSlide(11);
 
     expect(world.motion, DashmaruMotion.sit);
     expect(world.selections, [DashmaruMotion.sit]);
   });
 
-  test('the learning slide stands, jumps once, then smiles at idle', () {
+  test('after the architecture discussion the companion stands calmly', () {
     final world = _FakeWorld();
     final cues = DashmaruCueController()
       ..selectSlide(12)
@@ -113,29 +169,26 @@ void main() {
     _advance(cues, 4);
     cues.selectSlide(13);
     expect(world.motion, DashmaruMotion.idle);
-    _advance(cues, 1.24);
+    _advance(cues, 12);
     expect(world.motion, DashmaruMotion.idle);
-    _advance(cues, 0.01);
-    expect(world.motion, DashmaruMotion.jump);
-    _advance(cues, 2.5);
-    expect(world.motion, DashmaruMotion.idle);
-    expect(world.expression, DashmaruExpression.smile);
-    _advance(cues, 10);
-    expect(world.selections.where((motion) => motion == DashmaruMotion.jump), [
-      DashmaruMotion.jump,
-    ]);
+    expect(world.expression, DashmaruExpression.normal);
+    expect(world.selections, [DashmaruMotion.sit, DashmaruMotion.idle]);
   });
 
-  test('a skipped standing sequence cannot jump on a later slide', () {
+  test('leaving a one-shot cue cannot replace the next slide reaction', () {
     final world = _FakeWorld();
     final cues = DashmaruCueController()
-      ..selectSlide(12)
-      ..attach(world)
-      ..selectSlide(13);
+      ..selectSlide(14)
+      ..attach(world);
     _advance(cues, 0.5);
+    cues.selectSlide(6);
+    _advance(cues, 10);
+    expect(world.motion, DashmaruMotion.celebrate);
+    expect(world.expression, DashmaruExpression.smile);
+    expect(world.selections, [DashmaruMotion.wave, DashmaruMotion.celebrate]);
+
     cues.selectSlide(15);
     _advance(cues, 10);
-    expect(world.selections, isNot(contains(DashmaruMotion.jump)));
     expect(world.motion, DashmaruMotion.idle);
     expect(world.expression, DashmaruExpression.normal);
   });
@@ -169,12 +222,21 @@ void main() {
   test('reduced motion freezes cues but allows an explicit demo gesture', () {
     final world = _FakeWorld();
     final cues = DashmaruCueController()
-      ..selectSlide(13, reducedMotion: true)
+      ..selectSlide(6, reducedMotion: true)
       ..attach(world);
-    _advance(cues, 10);
-    expect(world.playing, isFalse);
-    expect(world.motion, DashmaruMotion.idle);
-    expect(world.advancedFrames, 0);
+
+    for (final (slide, expression) in [
+      (6, DashmaruExpression.smile),
+      (7, DashmaruExpression.strain),
+      (8, DashmaruExpression.spiral),
+    ]) {
+      cues.selectSlide(slide, reducedMotion: true);
+      _advance(cues, 10);
+      expect(world.playing, isFalse);
+      expect(world.motion, DashmaruMotion.idle);
+      expect(world.expression, expression);
+      expect(world.advancedFrames, 0);
+    }
 
     cues.selectSlide(5, reducedMotion: true);
     expect(world.playing, isFalse);
@@ -195,7 +257,7 @@ void main() {
     final cues = DashmaruCueController()
       ..selectSlide(5)
       ..attach(world)
-      ..selectDemoMotion(DashmaruMotion.walk);
+      ..selectDemoMotion(DashmaruMotion.run);
     _advance(cues, 1);
     cues.toggleDemoPlayback();
     _advance(cues, 3);
@@ -230,6 +292,6 @@ void main() {
     cues.tick(const Duration(seconds: 12), 12);
     expect(world.advancedFrames, 1);
     expect(world.advancedSeconds, 0.05);
-    expect(world.expression, DashmaruExpression.spiral);
+    expect(world.expression, DashmaruExpression.strain);
   });
 }

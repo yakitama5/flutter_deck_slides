@@ -40,8 +40,14 @@ class FlutterKaigiMiniLtApp extends StatelessWidget {
             title: ltPages[i].title,
             speakerNotes: '${ltPages[i].seconds}秒\n\n${ltPages[i].notes}',
           ),
-          builder: (_) =>
-              LtSlide(key: ValueKey(ltPages[i].route), slideIndex: i),
+          builder: (context) => ListenableBuilder(
+            listenable: context.flutterDeck.router,
+            builder: (context, _) => LtSlide(
+              key: ValueKey(ltPages[i].route),
+              slideIndex: i,
+              isActive: context.flutterDeck.router.currentSlideIndex == i,
+            ),
+          ),
         ),
     ],
   );
@@ -127,22 +133,22 @@ class _PresentationStage extends StatelessWidget {
                               left: isDemo
                                   ? 900
                                   : isThanks
-                                  ? 1320
+                                  ? 1110
                                   : 1460,
                               top: isDemo
                                   ? 140
                                   : isThanks
-                                  ? 490
+                                  ? 220
                                   : 660,
                               width: isDemo
                                   ? 920
                                   : isThanks
-                                  ? 510
+                                  ? 790
                                   : 390,
                               height: isDemo
                                   ? 850
                                   : isThanks
-                                  ? 540
+                                  ? 790
                                   : 370,
                               child: Offstage(
                                 offstage: index < 5,

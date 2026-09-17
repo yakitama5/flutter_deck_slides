@@ -239,9 +239,9 @@ class _DashmaruActorState extends State<DashmaruActor> {
     children: [
       for (final (motion, icon) in const [
         (DashmaruMotion.wave, Icons.waving_hand_rounded),
-        (DashmaruMotion.walk, Icons.directions_walk_rounded),
+        (DashmaruMotion.run, Icons.directions_run_rounded),
+        (DashmaruMotion.shake, Icons.vibration_rounded),
         (DashmaruMotion.jump, Icons.arrow_upward_rounded),
-        (DashmaruMotion.idle, Icons.spa_rounded),
       ])
         TextButton.icon(
           onPressed: !_ready
@@ -313,13 +313,16 @@ class DashmaruCueController {
     world.setCamera('front');
     world.distance = 10.4;
     world.setSpeed(1);
-    final smile = _slideIndex == 6 || _slideIndex == 13 || _slideIndex == 16;
+    final expression = switch (_slideIndex) {
+      6 || 16 => DashmaruExpression.smile,
+      7 => DashmaruExpression.strain,
+      8 => DashmaruExpression.spiral,
+      _ => DashmaruExpression.normal,
+    };
     if (_slideIndex < 5 || _reducedMotion) {
       _riseRemaining = 0;
       world.selectMotion(DashmaruMotion.idle, animateTransition: false);
-      world.selectExpression(
-        smile ? DashmaruExpression.smile : DashmaruExpression.normal,
-      );
+      world.selectExpression(expression);
       world.setPlaying(false);
       world.tick(Duration.zero, 0);
       return;
@@ -329,31 +332,18 @@ class DashmaruCueController {
     _stages = switch (_slideIndex) {
       5 => const [_CueStage(DashmaruMotion.wave)],
       6 => const [
-        _CueStage(DashmaruMotion.idle, expression: DashmaruExpression.smile),
-      ],
-      7 => [
-        const _CueStage(
-          DashmaruMotion.idle,
-          expression: DashmaruExpression.spiral,
-          seconds: 1.8,
-        ),
         _CueStage(
-          DashmaruMotion.blink,
-          seconds: duration(DashmaruMotion.blink),
-        ),
-        idle,
-      ],
-      10 || 11 || 12 => const [_CueStage(DashmaruMotion.sit)],
-      13 => [
-        // The source model reverses its Sit entrance in at most 1.18 seconds.
-        // Let the grounded standing motion finish before the single jump.
-        const _CueStage(DashmaruMotion.idle, seconds: 1.25),
-        _CueStage(DashmaruMotion.jump, seconds: duration(DashmaruMotion.jump)),
-        const _CueStage(
-          DashmaruMotion.idle,
+          DashmaruMotion.celebrate,
           expression: DashmaruExpression.smile,
         ),
       ],
+      7 => const [
+        _CueStage(DashmaruMotion.shake, expression: DashmaruExpression.strain),
+      ],
+      8 => const [
+        _CueStage(DashmaruMotion.sit, expression: DashmaruExpression.spiral),
+      ],
+      9 || 10 || 11 || 12 => const [_CueStage(DashmaruMotion.sit)],
       14 => [
         _CueStage(DashmaruMotion.wave, seconds: duration(DashmaruMotion.wave)),
         idle,
@@ -379,7 +369,7 @@ class DashmaruCueController {
     final retainingPose =
         stage.motion == DashmaruMotion.sit ||
         stage.motion == DashmaruMotion.idle;
-    // Keep the seated playback phase across all three architecture slides.
+    // Keep the seated playback phase through the architecture discussion.
     // Re-entering a one-shot gesture starts a fresh full clip.
     if (!unchanged || !retainingPose) {
       world.selectMotion(stage.motion, animateTransition: !unchanged);
