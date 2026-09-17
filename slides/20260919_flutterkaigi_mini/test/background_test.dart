@@ -39,6 +39,14 @@ void main() {
     expect(DashmaruMotion.parse('sit'), DashmaruMotion.sit);
   });
 
+  test('removed motion URLs fall back to idle', () {
+    for (final value in ['lookaround', 'LookAround', 'LOOKAROUND']) {
+      final query = Uri.parse('https://example.test/?motion=$value')
+          .queryParameters;
+      expect(DashmaruMotion.parse(query['motion']), DashmaruMotion.idle);
+    }
+  });
+
   test('stage labels remain legible against every background', () {
     for (final background in DashmaruBackground.values) {
       for (final foreground in [background.inkColor, background.mutedColor]) {

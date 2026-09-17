@@ -21,7 +21,6 @@ enum DashmaruMotion {
   tilt('Tilt', '首かしげ', 'ん？ どういうことかな。'),
   bow('Bow', 'おじぎ', 'ぺこり、ありがとう。'),
   celebrate('Celebrate', 'よろこぶ', 'やった！ ぴょんぴょん！'),
-  lookAround('LookAround', 'きょろきょろ', 'あっちかな、こっちかな。'),
   stretch('Stretch', 'のび', 'ぐーっと伸びて、ひと息。');
 
   const DashmaruMotion(this.clipName, this.label, this.caption);
