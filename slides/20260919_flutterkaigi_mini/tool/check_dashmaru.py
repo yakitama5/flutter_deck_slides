@@ -3,7 +3,7 @@
 
 Run from any directory: python3 path/to/tool/check_dashmaru.py [path/to/model.glb]
 This checks the delivered binary, independently of the model-building code. It is
-not a replacement for watching all fourteen gestures in Flutter Scene. An optional
+not a replacement for watching all thirteen gestures in Flutter Scene. An optional
 --baseline model.glb checks gait timing and the established upper-body Walk pose.
 Use --preserve-existing model.glb to verify every key of the original eight clips.
 Use --subframes 3 to also check three interpolated poses between every baked key.
@@ -22,9 +22,7 @@ from check_dashmaru_surfaces import check_surface_quality
 ESTABLISHED_CLIPS = frozenset(
     {"Idle", "Walk", "Run", "Jump", "Wave", "Blink", "Shake", "Sit"}
 )
-EXTRA_GESTURES = frozenset(
-    {"Nod", "Tilt", "Bow", "Celebrate", "LookAround", "Stretch"}
-)
+EXTRA_GESTURES = frozenset({"Nod", "Tilt", "Bow", "Celebrate", "Stretch"})
 
 
 class InvalidModel(Exception):
@@ -541,6 +539,10 @@ class Model:
             required <= set(names),
             f"Missing required clips: {sorted(required - set(names))}",
         )
+        require(
+            set(names) <= required,
+            f"Unexpected clips: {sorted(set(names) - required)}",
+        )
         defaults = {
             "translation": (0, 0, 0),
             "rotation": (0, 0, 0, 1),
@@ -853,9 +855,10 @@ class Model:
     def check_extra_gestures(self, clips):
         """Assert recognizable directions and amplitudes in exported joint data.
 
-        Loose visual thresholds reject the previous subtle gestures while leaving
-        the animation's timing and curves to the artist. Quaternion rotation
-        vectors make the checks independent of equivalent q/-q representations.
+        Loose visual thresholds leave timing and curves to the artist. The
+        front-facing Tilt prioritizes keeping the central belly pattern visible
+        and rigid over large rotations. Quaternion rotation vectors make
+        checks independent of equivalent q/-q representations.
         """
         named = {node.get("name"): index for index, node in enumerate(self.nodes)}
 
@@ -883,21 +886,53 @@ class Model:
             values = axis(clip, part, component)
             return max(abs(value - values[0]) for value in values)
 
+        def rotation_excursion(clip, part):
+            vectors = rotation_vectors(clip, part)
+            return max(
+                math.sqrt(sum((a - b) ** 2 for a, b in zip(row, vectors[0])))
+                for row in vectors
+            )
+
         nod = excursion("Nod", "Head", 0)
         require(nod >= 0.40, "Nod: the head needs an emphatic forward/back nod")
-        tilt = excursion("Tilt", "Head", 2)
-        require(tilt >= 0.42, "Tilt: the head needs a pronounced sideways tilt")
+        tilt = excursion("Tilt", "Hips", 2)
+        require(
+            0.10 <= tilt <= 0.22,
+            "Tilt: the curious lean should stay small enough to show the belly",
+        )
+        require(
+            max(
+                rotation_excursion("Tilt", wing)
+                for wing in ("LeftWing", "RightWing")
+            ) >= 0.45,
+            "Tilt: a wing must rise visibly alongside the face",
+        )
         bow = excursion("Bow", "Torso", 0)
         require(bow >= 0.52, "Bow: the torso must make a deep forward bow")
         require(
             excursion("Bow", "Head", 0) >= 0.22,
             "Bow: the head should follow the torso into the greeting",
         )
-        yaw = axis("LookAround", "Head", 1)
+        clip = "Tilt"
+        hips = rotation_vectors(clip, "Hips")
         require(
-            min(yaw) <= -0.70 and max(yaw) >= 0.70,
-            "LookAround: the head must make a broad turn to both left and right",
+            max(abs(row[axis]) for row in hips for axis in (0, 1)) <= 0.03,
+            f"{clip}: the body must face forward so the belly stays visible",
         )
+        scales = track(clip, "Hips", "scale")
+        require(
+            all(same_pose(scales[0], row, "scale") for row in scales),
+            f"{clip}: Hips/scale changes the belly pattern's proportions",
+        )
+        for part in ("Torso", "Head"):
+            # The face and central pattern span several joints. Preserve
+            # every local transform so Hips moves their skin as one body.
+            for path in ("translation", "rotation", "scale"):
+                rows = track(clip, part, path)
+                require(
+                    all(same_pose(rows[0], row, path) for row in rows),
+                    f"{clip}: {part}/{path} deforms the shared body pose",
+                )
         for clip, minimum in (("Celebrate", 1.80), ("Stretch", 1.90)):
             left = axis(clip, "LeftWing", 2)
             right = axis(clip, "RightWing", 2)
@@ -915,11 +950,10 @@ class Model:
         )
         return [
             "Extra gestures: visible nod "
-            f"({math.degrees(nod):.1f}°), tilt ({math.degrees(tilt):.1f}°), "
-            f"bow ({math.degrees(bow):.1f}°), two-wing celebration/stretch, "
-            f"and left/right look ({math.degrees(min(yaw)):+.1f}° to "
-            f"{math.degrees(max(yaw)):+.1f}°); stretch torso "
-            f"{lengthening:.3f}× and hips +{rise:.3f}"
+            f"({math.degrees(nod):.1f}°), body tilt ({math.degrees(tilt):.1f}°), "
+            f"bow ({math.degrees(bow):.1f}°), two-wing celebration/stretch; "
+            f"stretch torso {lengthening:.3f}× and hips +{rise:.3f}; "
+            "Tilt keeps hip scale and all local torso/head transforms rigid"
         ]
 
     def check_bow_clearance(self, tracks, subframes=0):
@@ -1206,7 +1240,7 @@ class Model:
                     {side + "Ankle", side + "Forefoot", side + "Toe"} <= names,
                     f"{side} foot must have ankle, ball and toe influences",
                 )
-                feet.append((skin, binds, vertices))
+                feet.append((side, skin, binds, vertices))
         require(len(feet) == 2, "Expected two rounded feet for ground-contact checks")
         modes = {
             animation["name"]: {
@@ -1230,7 +1264,7 @@ class Model:
             for frame, pose in sampled_poses(tracks, subframes, modes[name]):
                 worlds = self.world_matrices(pose)
                 heights, regions = [], []
-                for skin, binds, vertices in feet:
+                for _, skin, binds, vertices in feet:
                     matrices = [
                         multiply(worlds[joint], bind)
                         for joint, bind in zip(skin["joints"], binds)
@@ -1589,7 +1623,8 @@ def main():
         "  Sampled soles respect the floor tolerance; locomotion rolls "
         "from heel contact to toe push-off."
     )
-    print("  Five added standing gestures keep both feet in ground contact.")
+    print("  Nod, Tilt, Bow and Stretch keep both feet in ground contact.")
+    print("  Tilt faces forward and preserves the central pattern.")
     print("  Celebrate makes two or more clear hops and lands between them.")
     return 0
 

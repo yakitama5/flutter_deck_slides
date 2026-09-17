@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutterkaigi_mini_20260919/dashmaru_background.dart';
 import 'package:flutterkaigi_mini_20260919/dashmaru_scene.dart';
@@ -73,7 +74,6 @@ void main() {
             '首かしげ',
             'おじぎ',
             'よろこぶ',
-            'きょろきょろ',
             'のび',
           ]) {
             expect(find.text(label), findsOneWidget);
@@ -81,7 +81,13 @@ void main() {
           final shortcuts = tester.widget<CallbackShortcuts>(
             find.byType(CallbackShortcuts),
           );
-          expect(shortcuts.bindings, hasLength(16));
+          expect(shortcuts.bindings, hasLength(15));
+          final shortcutKeys = shortcuts.bindings.keys
+              .whereType<SingleActivator>()
+              .map((shortcut) => shortcut.trigger);
+          expect(shortcutKeys, contains(LogicalKeyboardKey.keyT));
+          expect(shortcutKeys, isNot(contains(LogicalKeyboardKey.keyE)));
+          expect(find.text('きょろきょろ'), findsNothing);
           expect(find.text('010'), findsNothing);
           expect(find.text('キー 14'), findsNothing);
           expect(find.byType(ChoiceChip), findsNWidgets(8));

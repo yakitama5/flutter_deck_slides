@@ -24,7 +24,6 @@ const _motionShortcuts = [
   (LogicalKeyboardKey.digit0, '0'),
   (LogicalKeyboardKey.keyQ, 'Q'),
   (LogicalKeyboardKey.keyW, 'W'),
-  (LogicalKeyboardKey.keyE, 'E'),
   (LogicalKeyboardKey.keyT, 'T'),
 ];
 
@@ -488,7 +487,6 @@ class _DashmaruViewerState extends State<DashmaruViewer> {
       DashmaruMotion.tilt => Icons.help_outline_rounded,
       DashmaruMotion.bow => Icons.volunteer_activism_rounded,
       DashmaruMotion.celebrate => Icons.celebration_rounded,
-      DashmaruMotion.lookAround => Icons.travel_explore_rounded,
       DashmaruMotion.stretch => Icons.self_improvement_rounded,
     };
     return Material(
