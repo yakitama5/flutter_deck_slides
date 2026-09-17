@@ -16,6 +16,7 @@ workspace:
   - slides/202609_technologychoice_reasons
   - slides/20260919_flutterkaigi_mini
   - slides/20260919_flutterkaigi_mini_lt
+  - slides/20260919_flutterkaigi_mini_opening
 
 dev_dependencies:
   melos: ^7.3.0

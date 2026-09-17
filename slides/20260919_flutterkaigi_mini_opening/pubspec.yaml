@@ -1,0 +1,37 @@
+name: flutterkaigi_mini_opening_20260919
+description: "FlutterKaigi mini #6 @Okayama オープニング"
+publish_to: none
+resolution: workspace
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.13.1
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_deck: ^0.29.0
+  flutter_deck_web_client: ^0.4.0
+  qr_flutter: ^4.1.0
+  url_launcher: ^6.3.2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/images/
+  fonts:
+    - family: Noto Sans JP
+      fonts:
+        - asset: assets/fonts/NotoSansJP.ttf
+          weight: 400
+        - asset: assets/fonts/NotoSansJP.ttf
+          weight: 500
+        - asset: assets/fonts/NotoSansJP.ttf
+          weight: 700
+        - asset: assets/fonts/NotoSansJP.ttf
+          weight: 900

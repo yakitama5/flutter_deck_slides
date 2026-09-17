@@ -3,6 +3,10 @@
 [flutter_deck](https://pub.dev/packages/flutter_deck) で作成するスライド資料を、
 Pub Workspace + [melos](https://melos.invertase.dev/) で複数管理する monorepo です。
 
+FlutterKaigi mini #6 @Okayamaの[オープニング資料](slides/20260919_flutterkaigi_mini_opening/README.md)を
+`slides/20260919_flutterkaigi_mini_opening` に追加しています。
+miniイベントの紺色と暖色アクセント、MaterialのCardを使った全9枚・約5分の資料です。
+
 詳細な設計・意思決定の経緯は [docs/IMPLEMENTATION_PLAN.md](docs/IMPLEMENTATION_PLAN.md) を参照してください。
 
 FlutterKaigi mini 向けの [だしゅまる3Dデモ](slides/20260919_flutterkaigi_mini/README.md) を
