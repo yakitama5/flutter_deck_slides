@@ -54,20 +54,58 @@ void _advance(DashmaruCueController cues, double seconds) {
   }
 }
 
+List<Offset> _projectModelBounds(
+  DashmaruCueController cues,
+  Map<String, dynamic> bounds,
+  Size viewSize,
+) {
+  final minimum = List<num>.from(bounds['min'] as List);
+  final maximum = List<num>.from(bounds['max'] as List);
+  final camera = cues.camera(Duration.zero);
+  return [
+    for (final x in [minimum[0], maximum[0]])
+      for (final y in [minimum[1], maximum[1]])
+        for (final z in [minimum[2], maximum[2]])
+          camera.worldToScreen(
+            camera.target.clone()
+              ..setValues(x.toDouble(), y.toDouble(), z.toDouble()),
+            viewSize,
+          )!,
+  ];
+}
+
 void main() {
+  // Both projection regressions share one model read and pose sampling pass.
+  late final Future<Map<String, dynamic>> modelBounds = () async {
+    final result = await Process.run('python3', [
+      '-B',
+      'test/support/model_motion_bounds.py',
+    ]);
+    expect(result.exitCode, 0, reason: result.stderr.toString());
+    return jsonDecode(result.stdout as String) as Map<String, dynamic>;
+  }();
+
   testWidgets('the demo offers waving, running, shaking and jumping', (
     tester,
   ) async {
+    tester.view.physicalSize = const Size(1920, 1080);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    final actorBounds = dashmaruActorBounds(5);
     await tester.pumpWidget(
-      const MaterialApp(
-        home: SizedBox(
-          width: 800,
-          height: 600,
-          child: DashmaruActor(
-            slideIndex: 5,
-            large: true,
-            enableRendering: false,
-          ),
+      MaterialApp(
+        home: Stack(
+          children: [
+            Positioned.fromRect(
+              rect: actorBounds,
+              child: const DashmaruActor(
+                slideIndex: 5,
+                large: true,
+                enableRendering: false,
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -77,6 +115,14 @@ void main() {
     }
     expect(find.text('歩く'), findsNothing);
     expect(find.text('待機'), findsNothing);
+    final sceneBottom = actorBounds.bottom - dashmaruDemoControlsSpace;
+    for (final element in find.byType(TextButton).evaluate()) {
+      final button = tester.getRect(find.byWidget(element.widget));
+      expect(button.top, greaterThanOrEqualTo(sceneBottom));
+      expect(actorBounds.contains(button.topLeft), isTrue);
+      expect(actorBounds.contains(button.bottomRight), isTrue);
+    }
+    expect(tester.takeException(), isNull);
   });
 
   for (final (slide, motion, expression) in [
@@ -84,6 +130,7 @@ void main() {
     (7, DashmaruMotion.shake, DashmaruExpression.strain),
     (8, DashmaruMotion.sit, DashmaruExpression.spiral),
     (10, DashmaruMotion.tilt, DashmaruExpression.spiral),
+    (15, DashmaruMotion.nod, DashmaruExpression.smile),
   ]) {
     test('slide $slide keeps its motion and face across repeated loops', () {
       final world = _FakeWorld();
@@ -199,6 +246,10 @@ void main() {
 
     cues.selectSlide(15);
     _advance(cues, 10);
+    expect(world.motion, DashmaruMotion.nod);
+    expect(world.expression, DashmaruExpression.smile);
+    cues.selectSlide(13);
+    _advance(cues, 10);
     expect(world.motion, DashmaruMotion.idle);
     expect(world.expression, DashmaruExpression.normal);
   });
@@ -240,6 +291,7 @@ void main() {
       (7, DashmaruExpression.strain),
       (8, DashmaruExpression.spiral),
       (10, DashmaruExpression.spiral),
+      (15, DashmaruExpression.smile),
     ]) {
       cues.selectSlide(slide, reducedMotion: true);
       _advance(cues, 10);
@@ -289,33 +341,19 @@ void main() {
   test(
     'the complete Celebrate loop fits its frame without shrinking',
     () async {
-      final result = await Process.run('python3', [
-        '-B',
-        'test/support/model_motion_bounds.py',
-      ]);
-      expect(result.exitCode, 0, reason: result.stderr.toString());
-      final data = jsonDecode(result.stdout as String) as Map<String, dynamic>;
+      final data = await modelBounds;
       final bounds = data['Celebrate'] as Map<String, dynamic>;
-      final minimum = List<num>.from(bounds['min'] as List);
-      final maximum = List<num>.from(bounds['max'] as List);
       expect(bounds['samples'], greaterThan(300));
 
       final world = _FakeWorld();
       final cues = DashmaruCueController()..attach(world);
       List<Offset> project(int slide) {
         cues.selectSlide(slide);
-        final camera = cues.camera(Duration.zero);
-        final size = dashmaruActorBounds(slide).size;
-        return [
-          for (final x in [minimum[0], maximum[0]])
-            for (final y in [minimum[1], maximum[1]])
-              for (final z in [minimum[2], maximum[2]])
-                camera.worldToScreen(
-                  camera.target.clone()
-                    ..setValues(x.toDouble(), y.toDouble(), z.toDouble()),
-                  size,
-                )!,
-        ];
+        return _projectModelBounds(
+          cues,
+          bounds,
+          dashmaruActorBounds(slide).size,
+        );
       }
 
       // Check the measured, skinned animation envelope rather than only its
@@ -337,12 +375,63 @@ void main() {
       expect(ideasFrame.bottom, ordinaryFrame.bottom);
       expect(ideasFrame.center.dx, ordinaryFrame.center.dx);
 
-      // Returning to the deck/demo restores their original camera framing.
-      for (final slide in [5, 7, 9, 10, 16]) {
+      // Returning to the deck restores its original camera framing.
+      for (final slide in [7, 9, 10, 15, 16]) {
         cues.selectSlide(slide);
         final camera = cues.camera(Duration.zero);
         expect(world.distance, closeTo(10.4, 1e-9));
         expect(camera.target.y, closeTo(1.5, 1e-9));
+      }
+    },
+    timeout: const Timeout(Duration(seconds: 60)),
+  );
+
+  test(
+    'every demo motion stays inside the viewport above its controls',
+    () async {
+      final data = await modelBounds;
+      final world = _FakeWorld();
+      final cues = DashmaruCueController()
+        ..selectSlide(9)
+        ..attach(world);
+      const oldViewSize = Size(920, 746);
+      final jump = data['Jump'] as Map<String, dynamic>;
+      expect(jump['samples'], greaterThan(300));
+      // Reproduce the original apex clipping with the original camera/box.
+      expect(
+        _projectModelBounds(cues, jump, oldViewSize).any((p) => p.dy < 0),
+        isTrue,
+      );
+      final oldScale = oldViewSize.height / world.distance;
+      final frame = dashmaruActorBounds(5);
+      final viewSize = Size(
+        frame.width,
+        frame.height - dashmaruDemoControlsSpace,
+      );
+      final safeArea = (Offset.zero & viewSize).deflate(8);
+      cues.selectSlide(5);
+      // Retain at least 97% of the former size, rather than solving the bug
+      // by making the demo visibly smaller. The left text remains separate.
+      expect(viewSize.height / world.distance / oldScale, greaterThan(0.97));
+      expect(frame.left, greaterThan(845));
+      expect(frame.top, greaterThanOrEqualTo(24));
+      expect(frame.bottom, lessThan(1012));
+      expect(frame.right, lessThan(1920));
+      for (final motion in [
+        DashmaruMotion.wave,
+        DashmaruMotion.run,
+        DashmaruMotion.shake,
+        DashmaruMotion.jump,
+      ]) {
+        cues.selectDemoMotion(motion);
+        final bounds = data[motion.clipName] as Map<String, dynamic>;
+        for (final point in _projectModelBounds(cues, bounds, viewSize)) {
+          expect(
+            safeArea.contains(point),
+            isTrue,
+            reason: '${motion.clipName}: $point / $safeArea',
+          );
+        }
       }
     },
     timeout: const Timeout(Duration(seconds: 60)),

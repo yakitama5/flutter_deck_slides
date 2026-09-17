@@ -68,9 +68,9 @@ class LtSlide extends StatelessWidget {
       8 => _priorities(c),
       9 => _delegate(c),
       10 => _transition(c),
-      11 => _videoChoice(c),
-      12 => _qrChoice(c),
-      13 => _sceneChoice(c),
+      11 => _scopeChoice(c),
+      12 => _maintenanceChoice(c),
+      13 => _deliveryChoice(c),
       14 => _sharing(c),
       15 => _closing(c),
       16 => _thanks(c),
@@ -424,32 +424,32 @@ class LtSlide extends StatelessWidget {
       x: 118,
       y: 588,
       width: 1280,
-      child: _Copy('パッケージを入れる？\n標準機能で済ませる？', size: 49, color: c.onSurface),
+      child: _Copy('実装はAIと進める\n選択の理由は、自分でも考える', size: 49, color: c.onSurface),
     ),
     _At(
       x: 118,
       y: 821,
       width: 1280,
-      child: _Copy('小さな選択にも、自分の理由を', size: 43, color: c.secondary),
+      child: _Copy('条件に立ち返って、技術を選ぶ', size: 43, color: c.secondary),
     ),
   ];
 
   List<Widget> _transition(ColorScheme c) => [
-    _heading('このLTなら、どう選ぶ？', size: 84),
+    _heading('3つの条件から、技術を考える', size: 80),
     _At(
       x: 115,
       y: 259,
       width: 1290,
-      child: _Copy('パッケージを選ぶ理由', size: 35, color: c.primary),
+      child: _Copy('どんなアプリにしたいか、から考える', size: 35, color: c.primary),
     ),
     _At(
       x: 115,
       y: 366,
       width: 1290,
       child: _DesignQuestion(
-        topic: '動画',
-        question: 'どう見せる？',
-        color: c.secondary,
+        topic: '規模感',
+        question: '構成と状態管理',
+        color: c.primary,
       ),
     ),
     _At(
@@ -457,112 +457,113 @@ class LtSlide extends StatelessWidget {
       y: 550,
       width: 1290,
       child: _DesignQuestion(
-        topic: 'QRコード',
-        question: 'どう表示する？',
-        color: c.primary,
+        topic: '長く使う',
+        question: '保守のしやすさ',
+        color: c.secondary,
       ),
     ),
     _At(
       x: 115,
       y: 734,
       width: 1290,
-      child: _DesignQuestion(
-        topic: 'だしゅまる',
-        question: 'どう動かす？',
-        color: c.tertiary,
-      ),
+      child: _DesignQuestion(topic: '使う人', question: '届け方', color: c.tertiary),
     ),
   ];
 
-  List<Widget> _videoChoice(ColorScheme c) => [
-    _heading('動画を、話の流れの中で見せたい', size: 77),
-    _At(
-      x: 115,
-      y: 324,
-      width: 1280,
-      height: 246,
-      child: _PackageChoice(
-        purpose: 'スライドの中で\n再生・停止したい',
-        package: 'video_player',
-        icon: Icons.play_circle_outline_rounded,
-        accent: c.secondary,
-      ),
-    ),
-    _At(
-      x: 118,
-      y: 668,
-      width: 1280,
-      child: _Copy('画面を切り替えず、発表を続けられる', size: 47, color: c.primary),
-    ),
-    _At(
-      x: 118,
-      y: 815,
-      width: 1280,
-      child: _Copy(
-        '確かめること：配信元への接続と、ブラウザでの再生',
-        size: 30,
-        color: c.onSurfaceVariant,
-      ),
-    ),
-  ];
+  List<Widget> _scopeChoice(ColorScheme c) => _conditionExample(
+    c,
+    title: 'どこまで設計するか？',
+    condition: 'アプリの規模感は？',
+    firstTitle: '小さく試す',
+    firstBody: '画面の近くに\n状態と処理を置く',
+    firstIcon: Icons.science_outlined,
+    secondTitle: '機能が増えていく',
+    secondBody: '状態・処理を\n役割ごとに分ける',
+    secondIcon: Icons.account_tree_outlined,
+    reason: '将来への備えと、今の実装負担を考える',
+    accent: c.primary,
+  );
 
-  List<Widget> _qrChoice(ColorScheme c) => [
-    _heading('QRコードを、URLから表示したい', size: 77),
-    _At(
-      x: 115,
-      y: 324,
-      width: 1280,
-      height: 246,
-      child: _PackageChoice(
-        purpose: 'URLを渡して\nそのまま描きたい',
-        package: 'qr_flutter',
-        icon: Icons.qr_code_2_rounded,
-        accent: c.primary,
-      ),
-    ),
-    _At(
-      x: 118,
-      y: 668,
-      width: 1280,
-      child: _Copy('画像を作り直す作業を減らせる', size: 49, color: c.secondary),
-    ),
-    _At(
-      x: 118,
-      y: 815,
-      width: 1280,
-      child: _Copy(
-        '固定のQRコードなら、画像を貼るだけでも十分？',
-        size: 32,
-        color: c.onSurfaceVariant,
-      ),
-    ),
-  ];
+  List<Widget> _maintenanceChoice(ColorScheme c) => _conditionExample(
+    c,
+    title: '保守を続けられる技術か？',
+    condition: '今後も長く使い続ける？',
+    firstTitle: '短期間で試す',
+    firstBody: '導入しやすさ\n慣れた技術',
+    firstIcon: Icons.bolt_rounded,
+    secondTitle: '長く育てていく',
+    secondBody: '更新・不具合調査\n引き継ぎのしやすさ',
+    secondIcon: Icons.build_outlined,
+    reason: '作るときの便利さと、その後の手間',
+    accent: c.secondary,
+  );
 
-  List<Widget> _sceneChoice(ColorScheme c) => [
-    _heading('だしゅまるを、話に合わせて動かしたい', size: 73),
+  List<Widget> _deliveryChoice(ColorScheme c) => _conditionExample(
+    c,
+    title: '使う人へ、どう届けるか？',
+    condition: 'だれがつかう？',
+    firstTitle: 'すぐ触ってほしい',
+    firstBody: 'URLから使える\nWebを候補に',
+    firstIcon: Icons.link_rounded,
+    secondTitle: '端末と機能が大事',
+    secondBody: '対象端末に合わせて\nアプリの配布を考える',
+    secondIcon: Icons.devices_rounded,
+    reason: '使う場面に合うか。そこでFlutterを選ぶ理由は？',
+    accent: c.tertiary,
+  );
+
+  List<Widget> _conditionExample(
+    ColorScheme c, {
+    required String title,
+    required String condition,
+    required String firstTitle,
+    required String firstBody,
+    required IconData firstIcon,
+    required String secondTitle,
+    required String secondBody,
+    required IconData secondIcon,
+    required String reason,
+    required Color accent,
+  }) => [
+    _heading(title, size: 82),
     _At(
       x: 115,
-      y: 324,
+      y: 267,
       width: 1280,
-      height: 246,
-      child: _PackageChoice(
-        purpose: '動きをその場で\n変えたい',
-        package: 'Flutter Scene',
-        icon: Icons.view_in_ar_rounded,
-        accent: c.tertiary,
+      child: _Copy(condition, size: 39, color: accent),
+    ),
+    _At(
+      x: 115,
+      y: 383,
+      width: 1280,
+      height: 326,
+      child: Row(
+        children: [
+          Expanded(
+            child: _ConditionChoice(
+              title: firstTitle,
+              body: firstBody,
+              icon: firstIcon,
+              accent: accent,
+            ),
+          ),
+          const SizedBox(width: 28),
+          Expanded(
+            child: _ConditionChoice(
+              title: secondTitle,
+              body: secondBody,
+              icon: secondIcon,
+              accent: accent,
+            ),
+          ),
+        ],
       ),
     ),
     _At(
       x: 118,
-      y: 668,
+      y: 813,
       width: 1280,
-      child: _Copy('ボタンやスライド送りに合わせて反応する', size: 45, color: c.primary),
-    ),
-    _At(
-      x: 118,
-      y: 815,
-      width: 1280,
-      child: _Copy('読み込みと描画の負担も考える', size: 33, color: c.onSurfaceVariant),
+      child: _Copy(reason, size: 43, color: c.onSurface),
     ),
   ];
 
@@ -601,11 +602,7 @@ class LtSlide extends StatelessWidget {
       x: 117,
       y: 720,
       width: 1290,
-      child: _Copy(
-        '判断するために、技術を学ぶ。\n選んだ理由を、自分の中に。',
-        size: 55,
-        color: c.onSurface,
-      ),
+      child: _Copy('判断するために、技術を学ぶ。', size: 55, color: c.onSurface),
     ),
   ];
 
@@ -807,52 +804,43 @@ class _PromptQuestion extends StatelessWidget {
   );
 }
 
-class _PackageChoice extends StatelessWidget {
-  const _PackageChoice({
-    required this.purpose,
-    required this.package,
+class _ConditionChoice extends StatelessWidget {
+  const _ConditionChoice({
+    required this.title,
+    required this.body,
     required this.icon,
     required this.accent,
   });
-  final String purpose;
-  final String package;
+  final String title;
+  final String body;
   final IconData icon;
   final Color accent;
+
   @override
-  Widget build(BuildContext context) {
-    final c = Theme.of(context).colorScheme;
-    return Row(
+  Widget build(BuildContext context) => Container(
+    height: double.infinity,
+    padding: const EdgeInsets.all(34),
+    decoration: BoxDecoration(
+      color: accent.withValues(alpha: .07),
+      border: Border.all(color: accent.withValues(alpha: .32), width: 2),
+      borderRadius: BorderRadius.circular(26),
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Expanded(child: _Copy(purpose, size: 50)),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 40),
-          child: Icon(Icons.arrow_forward_rounded, color: c.outline, size: 56),
+        Row(
+          children: [
+            Icon(icon, color: accent, size: 43),
+            const SizedBox(width: 18),
+            Expanded(child: _Copy(title, size: 37, color: accent)),
+          ],
         ),
-        SizedBox(
-          width: 565,
-          height: 246,
-          child: DecoratedBox(
-            decoration: BoxDecoration(
-              color: accent.withValues(alpha: .09),
-              border: Border.all(
-                color: accent.withValues(alpha: .36),
-                width: 2,
-              ),
-              borderRadius: BorderRadius.circular(26),
-            ),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(icon, color: accent, size: 61),
-                const SizedBox(height: 14),
-                _Copy(package, size: 52, color: accent),
-              ],
-            ),
-          ),
-        ),
+        const Spacer(),
+        _Copy(body, size: 43),
+        const SizedBox(height: 8),
       ],
-    );
-  }
+    ),
+  );
 }
 
 class _SourceLink extends StatelessWidget {

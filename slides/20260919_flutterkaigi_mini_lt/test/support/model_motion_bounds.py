@@ -1,4 +1,4 @@
-"""Measure Celebrate's animated bounds from the restored master GLB.
+"""Measure demo motions and Celebrate from the restored master GLB.
 
 For each skin influence, bound its vertices in joint space. The union of the
 transformed boxes contains every weighted vertex (a convex combination of its
@@ -76,7 +76,7 @@ def motion_bounds():
     }
     result = {}
     for animation in model.doc["animations"]:
-        if animation["name"] != "Celebrate":
+        if animation["name"] not in {"Wave", "Run", "Shake", "Jump", "Celebrate"}:
             continue
         tracks, modes = {}, {}
         for channel in animation["channels"]:

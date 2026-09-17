@@ -8,13 +8,17 @@ import 'package:flutterkaigi_mini_20260919/dashmaru_scene.dart';
 
 /// Placement in the deck's 1920 × 1080 logical coordinate system.
 Rect dashmaruActorBounds(int slideIndex) => switch (slideIndex) {
-  5 => const Rect.fromLTWH(900, 140, 920, 850),
+  // Leave Jump's apex above the actor while preserving the control baseline.
+  5 => const Rect.fromLTWH(900, 28, 960, 962),
   // Celebrate's full-body hops need more space above and beside the actor.
   // Keep its center X and bottom aligned with the usual companion frame.
   6 => const Rect.fromLTWH(1420, 530, 470, 500),
   16 => const Rect.fromLTWH(1110, 220, 790, 790),
   _ => const Rect.fromLTWH(1460, 660, 390, 370),
 };
+
+/// Space below the 3D viewport reserved for the demo's controls.
+const dashmaruDemoControlsSpace = 104.0;
 
 /// One retained actor, placed above the deck's changing slide routes.
 ///
@@ -115,7 +119,7 @@ class _DashmaruActorState extends State<DashmaruActor> {
         fit: StackFit.expand,
         children: [
           Positioned.fill(
-            bottom: _demo ? 104 : 0,
+            bottom: _demo ? dashmaruDemoControlsSpace : 0,
             child: RepaintBoundary(child: _buildScene(context)),
           ),
           if (_demo)
@@ -289,6 +293,10 @@ class _DashmaruActorState extends State<DashmaruActor> {
 /// A scene attached after loading receives only the latest selected slide.
 class DashmaruCueController {
   static const _cameraDistance = 10.4;
+  // The taller demo viewport retains 98% of its former on-screen scale.
+  // This framing contains every Wave/Run/Shake/Jump pose, including the apex.
+  static const _demoCameraDistance = 12.2;
+  static const _demoCameraLift = 0.36;
   DashmaruScene? _world;
   int _slideIndex = 0;
   bool _reducedMotion = false;
@@ -300,7 +308,10 @@ class DashmaruCueController {
 
   scene.PerspectiveCamera camera(Duration elapsed) {
     final camera = _world!.camera(elapsed);
-    if (_slideIndex == 6) {
+    if (_slideIndex == 5) {
+      camera.position.y += _demoCameraLift;
+      camera.target.y += _demoCameraLift;
+    } else if (_slideIndex == 6) {
       // The larger viewport keeps the same pixels per model unit because
       // distance grows in proportion to its height. Move the view upward by
       // half the extra world-space height, leaving the feet at the same edge.
@@ -336,14 +347,17 @@ class DashmaruCueController {
     final world = _world;
     if (world == null) return;
     world.setCamera('front');
-    world.distance = _slideIndex == 6
-        ? _cameraDistance *
-              dashmaruActorBounds(6).height /
-              dashmaruActorBounds(9).height
-        : _cameraDistance;
+    world.distance = switch (_slideIndex) {
+      5 => _demoCameraDistance,
+      6 =>
+        _cameraDistance *
+            dashmaruActorBounds(6).height /
+            dashmaruActorBounds(9).height,
+      _ => _cameraDistance,
+    };
     world.setSpeed(1);
     final expression = switch (_slideIndex) {
-      6 || 16 => DashmaruExpression.smile,
+      6 || 15 || 16 => DashmaruExpression.smile,
       7 => DashmaruExpression.strain,
       8 || 10 => DashmaruExpression.spiral,
       _ => DashmaruExpression.normal,
@@ -379,6 +393,9 @@ class DashmaruCueController {
       14 => [
         _CueStage(DashmaruMotion.wave, seconds: duration(DashmaruMotion.wave)),
         idle,
+      ],
+      15 => const [
+        _CueStage(DashmaruMotion.nod, expression: DashmaruExpression.smile),
       ],
       16 => const [
         _CueStage(DashmaruMotion.wave, expression: DashmaruExpression.smile),
