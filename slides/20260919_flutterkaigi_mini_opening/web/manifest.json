@@ -1,0 +1,11 @@
+{
+  "name": "FlutterKaigi mini #6 @Okayama — Opening",
+  "short_name": "FlutterKaigi mini",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#082B55",
+  "theme_color": "#082B55",
+  "description": "FlutterKaigi運営による約5分のオープニング",
+  "orientation": "landscape",
+  "prefer_related_applications": false
+}
