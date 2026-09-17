@@ -65,7 +65,7 @@ class _DashmaruActorState extends State<DashmaruActor> {
     try {
       await world.load(
         initialMotion: DashmaruMotion.idle,
-        initialBackground: DashmaruBackground.peach,
+        initialBackground: DashmaruBackground.night,
       );
       if (!mounted || generation != _loadGeneration) return;
       world.distance = 10.4;

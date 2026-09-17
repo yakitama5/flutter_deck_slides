@@ -14,10 +14,9 @@ import 'package:flutterkaigi_mini_lt_20260919/theme.dart';
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   setUpAll(() async {
-    await (FontLoader('Kiwi Maru')
-          ..addFont(rootBundle.load('assets/fonts/KiwiMaru-Regular.ttf'))
-          ..addFont(rootBundle.load('assets/fonts/KiwiMaru-Medium.ttf')))
-        .load();
+    await (FontLoader(
+      'Noto Sans JP',
+    )..addFont(rootBundle.load('assets/fonts/NotoSansJP-Variable.ttf'))).load();
     await (FontLoader(
       'MaterialIcons',
     )..addFont(rootBundle.load('fonts/MaterialIcons-Regular.otf'))).load();
@@ -39,7 +38,7 @@ void main() {
         final boundaryKey = GlobalKey();
         await tester.pumpWidget(
           MaterialApp(
-            theme: const MaterialTheme().light(),
+            theme: const MaterialTheme().dark(),
             home: Scaffold(
               body: Center(
                 child: RepaintBoundary(
@@ -103,8 +102,8 @@ void main() {
     final actor = find.byType(DashmaruActor, skipOffstage: false);
     final retainedState = tester.state(actor);
     final theme = Theme.of(tester.element(actor));
-    expect(theme.textTheme.bodyLarge!.fontFamily, 'Kiwi Maru');
-    expect(theme.colorScheme, MaterialTheme.colorScheme(Brightness.light));
+    expect(theme.textTheme.bodyLarge!.fontFamily, 'Noto Sans JP');
+    expect(theme.colorScheme, MaterialTheme.colorScheme(Brightness.dark));
     for (var index = 0; index < ltPages.length; index++) {
       if (index > 0) {
         await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);

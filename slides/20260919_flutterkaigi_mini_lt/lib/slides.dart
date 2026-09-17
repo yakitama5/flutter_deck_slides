@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import 'backdrop.dart';
+
 /// The presentation artwork lives on a 1920 × 1080 logical canvas.
 ///
 /// The parent supplies navigation, theme, transitions, and the live mascot.
@@ -12,14 +14,15 @@ class LtSlide extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final tinted = slideIndex == 0 || slideIndex == 7 || slideIndex == 15;
+    final emphasized = slideIndex == 0 || slideIndex == 7 || slideIndex == 15;
     return SizedBox(
       width: 1920,
       height: 1080,
       child: ColoredBox(
-        color: tinted ? scheme.primaryContainer : scheme.surface,
+        color: scheme.surface,
         child: Stack(
           children: [
+            Positioned.fill(child: EventBackdrop(emphasized: emphasized)),
             ..._content(context, scheme),
             _At(
               x: 110,
@@ -28,27 +31,17 @@ class LtSlide extends StatelessWidget {
               child: Row(
                 children: [
                   _Copy(
-                    'FlutterKaigi mini 2026',
+                    'FlutterKaigi mini #6 / Okayama',
                     size: 22,
-                    color: tinted
-                        ? scheme.onPrimaryContainer.withValues(alpha: .65)
-                        : scheme.onSurfaceVariant,
+                    color: scheme.onSurfaceVariant,
                   ),
                   const SizedBox(width: 30),
-                  Container(
-                    width: 42,
-                    height: 1,
-                    color: tinted
-                        ? scheme.onPrimaryContainer.withValues(alpha: .4)
-                        : scheme.outlineVariant,
-                  ),
+                  Container(width: 42, height: 1, color: scheme.outlineVariant),
                   const SizedBox(width: 30),
                   _Copy(
-                    (slideIndex + 1).toString().padLeft(2, '0'),
+                    '${(slideIndex + 1).toString().padLeft(2, '0')} / 17',
                     size: 22,
-                    color: tinted
-                        ? scheme.onPrimaryContainer.withValues(alpha: .65)
-                        : scheme.onSurfaceVariant,
+                    color: scheme.onSurfaceVariant,
                   ),
                 ],
               ),
@@ -83,26 +76,19 @@ class LtSlide extends StatelessWidget {
   }
 
   List<Widget> _cover(ColorScheme c) => [
+    _At(x: 114, y: 76, width: 355, child: _EventBadge(scheme: c)),
     _At(
       x: 114,
       y: 158,
       width: 1600,
-      child: _Copy(
-        'AIと開発する中で、考えておきたいこと',
-        size: 32,
-        color: c.onPrimaryContainer,
-      ),
+      child: _Copy('AIと開発する中で、考えておきたいこと', size: 32, color: c.onSurfaceVariant),
     ),
     _At(x: 102, y: 300, width: 1740, child: _CoverTitle(c: c)),
     _At(
       x: 112,
       y: 810,
       width: 1500,
-      child: _Copy(
-        'やくらん  /  2026.09.19',
-        size: 33,
-        color: c.onPrimaryContainer,
-      ),
+      child: _Copy('やくらん  /  2026.09.19', size: 33, color: c.onSurfaceVariant),
     ),
   ];
 
@@ -330,17 +316,13 @@ class LtSlide extends StatelessWidget {
       x: 110,
       y: 240,
       width: 1650,
-      child: _Copy('技術の勉強は、\nもういらない？', size: 120, color: c.onPrimaryContainer),
+      child: _Copy('技術の勉強は、\nもういらない？', size: 120, color: c.onSurface),
     ),
     _At(
       x: 117,
       y: 692,
       width: 1300,
-      child: _Copy(
-        '作りたいものと、業務の知識があれば十分？',
-        size: 38,
-        color: c.onPrimaryContainer,
-      ),
+      child: _Copy('作りたいものと、業務の知識があれば十分？', size: 38, color: c.onSurfaceVariant),
     ),
   ];
 
@@ -538,15 +520,12 @@ class LtSlide extends StatelessWidget {
       x: 117,
       y: 720,
       width: 1290,
-      child: _Copy(
-        'AIと書いたコードに、\n自分の「なぜ」を。',
-        size: 55,
-        color: c.onPrimaryContainer,
-      ),
+      child: _Copy('AIと書いたコードに、\n自分の「なぜ」を。', size: 55, color: c.onSurface),
     ),
   ];
 
   List<Widget> _thanks(ColorScheme c) => [
+    _At(x: 114, y: 132, width: 355, child: _EventBadge(scheme: c)),
     _At(
       x: 110,
       y: 265,
@@ -593,16 +572,24 @@ class _Copy extends StatelessWidget {
   final Color? color;
 
   @override
-  Widget build(BuildContext context) => Text(
-    text,
-    style: Theme.of(context).textTheme.bodyLarge!.copyWith(
-      fontSize: size,
-      fontWeight: FontWeight.w400,
-      color: color ?? Theme.of(context).colorScheme.onSurface,
-      height: 1.48,
-      letterSpacing: 0,
-    ),
-  );
+  Widget build(BuildContext context) {
+    final weight = size >= 70
+        ? FontWeight.w700
+        : size >= 48
+        ? FontWeight.w600
+        : FontWeight.w400;
+    return Text(
+      text,
+      style: Theme.of(context).textTheme.bodyLarge!.copyWith(
+        fontSize: size,
+        fontWeight: weight,
+        fontVariations: [FontVariation('wght', weight.value.toDouble())],
+        color: color ?? Theme.of(context).colorScheme.onSurface,
+        height: 1.48,
+        letterSpacing: 0,
+      ),
+    );
+  }
 }
 
 class _CoverTitle extends StatelessWidget {
@@ -614,30 +601,67 @@ class _CoverTitle extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final style = Theme.of(context).textTheme.displayLarge!.copyWith(
-      fontSize: compact ? 111 : 123,
-      fontWeight: FontWeight.w400,
-      height: 1.5,
-      letterSpacing: -2,
-      color: c.onPrimaryContainer,
+      fontSize: compact ? 105 : 113,
+      fontWeight: FontWeight.w700,
+      fontVariations: const [FontVariation('wght', 700)],
+      height: 1.45,
+      letterSpacing: -1.5,
+      color: c.onSurface,
     );
-    return Text.rich(
-      TextSpan(
-        style: style,
-        children: [
-          const TextSpan(text: 'その'),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text.rich(
           TextSpan(
-            text: 'Flutter',
-            style: TextStyle(color: c.secondary),
+            style: style,
+            children: [
+              const TextSpan(text: 'その'),
+              TextSpan(
+                text: 'Flutter',
+                style: TextStyle(color: c.secondary),
+              ),
+              const TextSpan(text: 'コード、'),
+            ],
           ),
-          const TextSpan(text: 'コード、\n'),
-          TextSpan(
-            text: 'なぜ書いた？',
-            style: TextStyle(fontSize: compact ? 149 : 169, color: c.primary),
+        ),
+        const SizedBox(height: 18),
+        ShaderMask(
+          blendMode: BlendMode.srcIn,
+          shaderCallback: (bounds) =>
+              LinearGradient(colors: [c.primary, c.tertiary])
+                  .createShader(bounds),
+          child: Text(
+            'なぜ書いた？',
+            style: style.copyWith(fontSize: compact ? 141 : 158),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
+}
+
+class _EventBadge extends StatelessWidget {
+  const _EventBadge({required this.scheme});
+
+  final ColorScheme scheme;
+
+  @override
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 12),
+    decoration: BoxDecoration(
+      borderRadius: BorderRadius.circular(12),
+      gradient: LinearGradient(colors: [scheme.tertiary, scheme.secondary]),
+    ),
+    child: Text(
+      'FlutterKaigi mini #6',
+      style: Theme.of(context).textTheme.labelLarge!.copyWith(
+        fontSize: 27,
+        color: scheme.onSecondary,
+        fontWeight: FontWeight.w700,
+        fontVariations: const [FontVariation('wght', 700)],
+      ),
+    ),
+  );
 }
 
 class _ShowcaseImage extends StatelessWidget {

@@ -20,7 +20,7 @@ class FlutterKaigiMiniLtApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) => FlutterDeckApp(
     client: FlutterDeckWebClient(),
-    themeMode: ThemeMode.light,
+    themeMode: ThemeMode.dark,
     lightTheme: FlutterDeckThemeData(theme: const MaterialTheme().light()),
     darkTheme: FlutterDeckThemeData(theme: const MaterialTheme().dark()),
     plugins: [_DashmaruPlugin(enableRendering: enableRendering)],

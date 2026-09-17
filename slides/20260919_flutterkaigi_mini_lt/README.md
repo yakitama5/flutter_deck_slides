@@ -33,15 +33,16 @@ WebはFlutter SceneのWebGL2バックエンドで3Dモデルを描画します�
 
 ## デザインと実装
 
-- **テーマ**：`MaterialTheme`で生成するMaterial 3の`ColorScheme`を使います。ピンク（シード`#C55883`）を基調に、セカンダリーには青（シード`#438CCA`）のカラーロールを割り当てています。
-- **書体**：Kiwi MaruのRegular / Mediumを`assets/fonts/`に同梱しています。
-- **画面**：1920×1080の論理サイズを16:9で拡縮します。淡い背景、丸みのある書体、大きな問いと余白で柔らかい印象にしています。
+- **テーマ**：`MaterialTheme`で生成するMaterial 3の`ColorScheme`を使います。イベント画像に合わせた濃紺（`#082B53`）のダークテーマです。コーラルをprimary、シアンをsecondary、黄色をtertiaryへ割り当てています。
+- **書体**：Noto Sans JPの可変フォント（100–900、全字形）を`assets/fonts/`に同梱しています。本文400、見出し600–700を使い、可変ウェイトを明示しています。
+- **画面**：1920×1080の論理サイズを16:9で拡縮します。白い本文と大きな問いを濃紺に載せ、画面の端に斜めの帯・細い輪郭線・円弧・ドットを薄く配置します。タイトルの強調はコーラルから黄色のグラデーションです。
 - **図と実例**：バージョン比較、内向きの依存関係、feature firstとlayer firstの配置をFlutterのテキストと図で表現しています。05はFlutter Scene公式の実画像を使用しています。
 
 | ファイル | 役割 |
 | --- | --- |
 | [lib/main.dart](lib/main.dart) | スライド構成、画面全体の拡縮、場面をまたいで維持するだしゅまるの配置 |
-| [lib/theme.dart](lib/theme.dart) | `MaterialTheme`、Material 3のカラーロール、Kiwi Maru |
+| [lib/theme.dart](lib/theme.dart) | `MaterialTheme`、Material 3のカラーロール、Noto Sans JP |
+| [lib/backdrop.dart](lib/backdrop.dart) | 本文やモデルを邪魔しない静止した幾何学背景 |
 | [lib/slides.dart](lib/slides.dart) | 全17場面の画面レイアウトと出典リンク |
 | [lib/pages.dart](lib/pages.dart) | 各場面のルート、タイトル、秒数、発表者ノート |
 | [tool/sync_notes.dart](tool/sync_notes.dart) | `SCRIPT.md`から発表者ノートを同期 |
@@ -69,7 +70,7 @@ dart analyze
 flutter build web --no-pub
 ```
 
-2026-09-14に13件のテスト、静的解析、Webビルドを確認しました。
+2026-09-17にイベントカラー・Noto Sans JPへ更新し、13件のテスト、静的解析、Webビルドを確認しました。
 1920×1080・1280×800・390×844での文字の収まりと、全17場面の前後移動・モデル保持をテストしています。
 実ブラウザでは、素材画像、歩行・ジャンプ・一時停止、デモ操作後のページ送り、右下への移動、座位維持、最後のバイバイを確認しました。
 
@@ -162,7 +163,7 @@ feature firstでも層を設けられるので、層の有無と配置の優先�
 | `assets/showcase/scene_materials.jpg` | Flutter Scene公式サイトのPBR紹介画像。水面を含むボクセルの風景 |
 | `assets/showcase/scene_lighting.jpg` | Flutter Scene公式サイトのライティング紹介画像。照明・反射と操作UI |
 | `assets/profile/avatar.png` | [既存資料](../20260912_oso/README.md)で使用している本人のプロフィール画像 |
-| `assets/fonts/KiwiMaru-Regular.ttf` / `KiwiMaru-Medium.ttf` | [Kiwi Maru（Google Fonts）](https://fonts.google.com/specimen/Kiwi+Maru)。[SIL Open Font License](assets/fonts/OFL.txt)を同梱 |
+| `assets/fonts/NotoSansJP-Variable.ttf` | [Noto Sans JP（Google Fonts）](https://github.com/google/fonts/tree/main/ofl/notosansjp)。[SIL Open Font License](assets/fonts/OFL.txt)を同梱 |
 | だしゅまるのGLB・シーン | [既存デモのモデルと参考資料](../20260919_flutterkaigi_mini/README.md#モデルと参考資料) |
 
 ## 表記と出典

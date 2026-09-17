@@ -27,9 +27,6 @@ flutter:
     - assets/profile/
     - assets/showcase/
   fonts:
-    - family: Kiwi Maru
+    - family: Noto Sans JP
       fonts:
-        - asset: assets/fonts/KiwiMaru-Regular.ttf
-          weight: 400
-        - asset: assets/fonts/KiwiMaru-Medium.ttf
-          weight: 500
+        - asset: assets/fonts/NotoSansJP-Variable.ttf
