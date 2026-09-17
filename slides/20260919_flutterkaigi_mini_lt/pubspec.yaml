@@ -1,0 +1,35 @@
+name: flutterkaigi_mini_lt_20260919
+description: "そのFlutterコード、なぜ書いた？ だしゅまると話すFlutterKaigi mini LT。"
+publish_to: none
+resolution: workspace
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.13.1
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_deck: ^0.29.0
+  flutter_deck_web_client: ^0.4.0
+  flutterkaigi_mini_20260919: ^1.0.0
+  flutter_scene: 0.23.0
+  url_launcher: ^6.3.2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/profile/
+    - assets/showcase/
+  fonts:
+    - family: Kiwi Maru
+      fonts:
+        - asset: assets/fonts/KiwiMaru-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/KiwiMaru-Medium.ttf
+          weight: 500
