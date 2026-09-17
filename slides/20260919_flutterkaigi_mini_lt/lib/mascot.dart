@@ -6,6 +6,16 @@ import 'package:flutter_scene/scene.dart' as scene;
 import 'package:flutterkaigi_mini_20260919/dashmaru_background.dart';
 import 'package:flutterkaigi_mini_20260919/dashmaru_scene.dart';
 
+/// Placement in the deck's 1920 × 1080 logical coordinate system.
+Rect dashmaruActorBounds(int slideIndex) => switch (slideIndex) {
+  5 => const Rect.fromLTWH(900, 140, 920, 850),
+  // Celebrate's full-body hops need more space above and beside the actor.
+  // Keep its center X and bottom aligned with the usual companion frame.
+  6 => const Rect.fromLTWH(1420, 530, 470, 500),
+  16 => const Rect.fromLTWH(1110, 220, 790, 790),
+  _ => const Rect.fromLTWH(1460, 660, 390, 370),
+};
+
 /// One retained actor, placed above the deck's changing slide routes.
 ///
 /// Keep this widget mounted (with the same key) while changing [slideIndex].
@@ -68,7 +78,6 @@ class _DashmaruActorState extends State<DashmaruActor> {
         initialBackground: DashmaruBackground.night,
       );
       if (!mounted || generation != _loadGeneration) return;
-      world.distance = 10.4;
       _cues.attach(world);
       setState(() {
         _world = world;
@@ -220,7 +229,7 @@ class _DashmaruActorState extends State<DashmaruActor> {
             enabled: widget.slideIndex >= 5 && world.playing,
             child: scene.SceneView(
               world.sceneGraph,
-              cameraBuilder: world.camera,
+              cameraBuilder: _cues.camera,
               onTick: _cues.tick,
               // The small companion never needs a full Retina render target.
               pixelRatio: widget.large ? null : 1.25,
@@ -279,6 +288,7 @@ class _DashmaruActorState extends State<DashmaruActor> {
 /// or async cue callbacks that can change an actor after its slide has left.
 /// A scene attached after loading receives only the latest selected slide.
 class DashmaruCueController {
+  static const _cameraDistance = 10.4;
   DashmaruScene? _world;
   int _slideIndex = 0;
   bool _reducedMotion = false;
@@ -287,6 +297,21 @@ class DashmaruCueController {
   int _stageIndex = 0;
   double _stageElapsed = 0;
   double _riseRemaining = 0;
+
+  scene.PerspectiveCamera camera(Duration elapsed) {
+    final camera = _world!.camera(elapsed);
+    if (_slideIndex == 6) {
+      // The larger viewport keeps the same pixels per model unit because
+      // distance grows in proportion to its height. Move the view upward by
+      // half the extra world-space height, leaving the feet at the same edge.
+      final lift =
+          (_world!.distance - _cameraDistance) *
+          math.tan(camera.fovRadiansY / 2);
+      camera.position.y += lift;
+      camera.target.y += lift;
+    }
+    return camera;
+  }
 
   void selectSlide(int index, {bool reducedMotion = false}) {
     if (_disposed ||
@@ -311,12 +336,16 @@ class DashmaruCueController {
     final world = _world;
     if (world == null) return;
     world.setCamera('front');
-    world.distance = 10.4;
+    world.distance = _slideIndex == 6
+        ? _cameraDistance *
+              dashmaruActorBounds(6).height /
+              dashmaruActorBounds(9).height
+        : _cameraDistance;
     world.setSpeed(1);
     final expression = switch (_slideIndex) {
       6 || 16 => DashmaruExpression.smile,
       7 => DashmaruExpression.strain,
-      8 => DashmaruExpression.spiral,
+      8 || 10 => DashmaruExpression.spiral,
       _ => DashmaruExpression.normal,
     };
     if (_slideIndex < 5 || _reducedMotion) {
@@ -343,7 +372,10 @@ class DashmaruCueController {
       8 => const [
         _CueStage(DashmaruMotion.sit, expression: DashmaruExpression.spiral),
       ],
-      9 || 10 || 11 || 12 => const [_CueStage(DashmaruMotion.sit)],
+      10 => const [
+        _CueStage(DashmaruMotion.tilt, expression: DashmaruExpression.spiral),
+      ],
+      11 || 12 => const [_CueStage(DashmaruMotion.sit)],
       14 => [
         _CueStage(DashmaruMotion.wave, seconds: duration(DashmaruMotion.wave)),
         idle,
@@ -369,7 +401,7 @@ class DashmaruCueController {
     final retainingPose =
         stage.motion == DashmaruMotion.sit ||
         stage.motion == DashmaruMotion.idle;
-    // Keep the seated playback phase through the architecture discussion.
+    // Keep the seated playback phase through the video and QR examples.
     // Re-entering a one-shot gesture starts a fresh full clip.
     if (!unchanged || !retainingPose) {
       world.selectMotion(stage.motion, animateTransition: !unchanged);
@@ -411,7 +443,11 @@ class DashmaruCueController {
     if (_disposed || world == null || _slideIndex != 5) return;
     _stages = const [];
     world.selectMotion(motion);
-    world.selectExpression(DashmaruExpression.normal);
+    world.selectExpression(
+      motion == DashmaruMotion.run
+          ? DashmaruExpression.strain
+          : DashmaruExpression.normal,
+    );
     // Explicit demo interactions may move even with reduced motion enabled.
     world.setPlaying(true);
     world.tick(Duration.zero, 0);

@@ -108,6 +108,7 @@ class _PresentationStage extends StatelessWidget {
         final index = router.currentSlideIndex;
         final isDemo = index == 5;
         final isThanks = index == 16;
+        final actorBounds = dashmaruActorBounds(index);
         final reducedMotion = MediaQuery.disableAnimationsOf(context);
         return Stack(
           fit: StackFit.expand,
@@ -130,26 +131,10 @@ class _PresentationStage extends StatelessWidget {
                                   ? Duration.zero
                                   : const Duration(milliseconds: 650),
                               curve: Curves.easeInOutCubic,
-                              left: isDemo
-                                  ? 900
-                                  : isThanks
-                                  ? 1110
-                                  : 1460,
-                              top: isDemo
-                                  ? 140
-                                  : isThanks
-                                  ? 220
-                                  : 660,
-                              width: isDemo
-                                  ? 920
-                                  : isThanks
-                                  ? 790
-                                  : 390,
-                              height: isDemo
-                                  ? 850
-                                  : isThanks
-                                  ? 790
-                                  : 370,
+                              left: actorBounds.left,
+                              top: actorBounds.top,
+                              width: actorBounds.width,
+                              height: actorBounds.height,
                               child: Offstage(
                                 offstage: index < 5,
                                 child: Focus(

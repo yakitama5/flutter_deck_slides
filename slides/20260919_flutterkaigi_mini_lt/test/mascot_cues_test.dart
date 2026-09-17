@@ -1,3 +1,6 @@
+import 'dart:convert';
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutterkaigi_mini_20260919/dashmaru_scene.dart';
@@ -80,6 +83,7 @@ void main() {
     (6, DashmaruMotion.celebrate, DashmaruExpression.smile),
     (7, DashmaruMotion.shake, DashmaruExpression.strain),
     (8, DashmaruMotion.sit, DashmaruExpression.spiral),
+    (10, DashmaruMotion.tilt, DashmaruExpression.spiral),
   ]) {
     test('slide $slide keeps its motion and face across repeated loops', () {
       final world = _FakeWorld();
@@ -126,8 +130,14 @@ void main() {
     expect(world.expression, DashmaruExpression.spiral);
     _advance(cues, 5);
     cues.selectSlide(9);
-    expect(world.motion, DashmaruMotion.sit);
+    expect(world.motion, DashmaruMotion.idle);
     expect(world.expression, DashmaruExpression.normal);
+    _advance(cues, 10);
+    expect(world.motion, DashmaruMotion.idle);
+    cues.selectSlide(10);
+    _advance(cues, 10);
+    expect(world.motion, DashmaruMotion.tilt);
+    expect(world.expression, DashmaruExpression.spiral);
     cues.selectSlide(16);
     _advance(cues, 10);
     expect(world.motion, DashmaruMotion.wave);
@@ -143,14 +153,14 @@ void main() {
     expect(world.expression, DashmaruExpression.smile);
   });
 
-  test('the discussion retains one seated entrance and clears dizzy eyes', () {
+  test('the two seated examples retain one entrance and clear dizzy eyes', () {
     final world = _FakeWorld();
     final cues = DashmaruCueController()
-      ..selectSlide(8)
+      ..selectSlide(10)
       ..attach(world);
     expect(world.expression, DashmaruExpression.spiral);
     _advance(cues, 5);
-    for (final slide in [9, 10, 11, 12]) {
+    for (final slide in [11, 12]) {
       cues.selectSlide(slide);
       _advance(cues, 5);
       expect(world.expression, DashmaruExpression.normal);
@@ -158,10 +168,10 @@ void main() {
     cues.selectSlide(11);
 
     expect(world.motion, DashmaruMotion.sit);
-    expect(world.selections, [DashmaruMotion.sit]);
+    expect(world.selections, [DashmaruMotion.tilt, DashmaruMotion.sit]);
   });
 
-  test('after the architecture discussion the companion stands calmly', () {
+  test('after the seated examples the companion stands calmly', () {
     final world = _FakeWorld();
     final cues = DashmaruCueController()
       ..selectSlide(12)
@@ -229,6 +239,7 @@ void main() {
       (6, DashmaruExpression.smile),
       (7, DashmaruExpression.strain),
       (8, DashmaruExpression.spiral),
+      (10, DashmaruExpression.spiral),
     ]) {
       cues.selectSlide(slide, reducedMotion: true);
       _advance(cues, 10);
@@ -251,6 +262,91 @@ void main() {
     expect(world.motion, DashmaruMotion.idle);
     expect(world.expression, DashmaruExpression.smile);
   });
+
+  test('running in the demo strains, then changing motion resets the face', () {
+    final world = _FakeWorld();
+    final cues = DashmaruCueController()
+      ..selectSlide(5)
+      ..attach(world);
+    for (final next in [
+      DashmaruMotion.wave,
+      DashmaruMotion.shake,
+      DashmaruMotion.jump,
+    ]) {
+      cues.selectDemoMotion(DashmaruMotion.run);
+      _advance(cues, 5);
+      expect(world.displayedExpression, DashmaruExpression.strain);
+      cues.selectDemoMotion(next);
+      expect(world.expression, DashmaruExpression.normal);
+    }
+    cues.selectDemoMotion(DashmaruMotion.run);
+    cues.selectSlide(9);
+    _advance(cues, 5);
+    expect(world.motion, DashmaruMotion.idle);
+    expect(world.expression, DashmaruExpression.normal);
+  });
+
+  test(
+    'the complete Celebrate loop fits its frame without shrinking',
+    () async {
+      final result = await Process.run('python3', [
+        '-B',
+        'test/support/model_motion_bounds.py',
+      ]);
+      expect(result.exitCode, 0, reason: result.stderr.toString());
+      final data = jsonDecode(result.stdout as String) as Map<String, dynamic>;
+      final bounds = data['Celebrate'] as Map<String, dynamic>;
+      final minimum = List<num>.from(bounds['min'] as List);
+      final maximum = List<num>.from(bounds['max'] as List);
+      expect(bounds['samples'], greaterThan(300));
+
+      final world = _FakeWorld();
+      final cues = DashmaruCueController()..attach(world);
+      List<Offset> project(int slide) {
+        cues.selectSlide(slide);
+        final camera = cues.camera(Duration.zero);
+        final size = dashmaruActorBounds(slide).size;
+        return [
+          for (final x in [minimum[0], maximum[0]])
+            for (final y in [minimum[1], maximum[1]])
+              for (final z in [minimum[2], maximum[2]])
+                camera.worldToScreen(
+                  camera.target.clone()
+                    ..setValues(x.toDouble(), y.toDouble(), z.toDouble()),
+                  size,
+                )!,
+        ];
+      }
+
+      // Check the measured, skinned animation envelope rather than only its
+      // neutral pose. The old frame really does cut into this same envelope.
+      final ordinaryFrame = dashmaruActorBounds(9);
+      expect(
+        project(
+          9,
+        ).any((point) => !(Offset.zero & ordinaryFrame.size).contains(point)),
+        isTrue,
+      );
+      final normalScale = ordinaryFrame.height / world.distance;
+      final ideasFrame = dashmaruActorBounds(6);
+      final safeArea = (Offset.zero & ideasFrame.size).deflate(8);
+      for (final point in project(6)) {
+        expect(safeArea.contains(point), isTrue, reason: '$point / $safeArea');
+      }
+      expect(ideasFrame.height / world.distance, closeTo(normalScale, 1e-9));
+      expect(ideasFrame.bottom, ordinaryFrame.bottom);
+      expect(ideasFrame.center.dx, ordinaryFrame.center.dx);
+
+      // Returning to the deck/demo restores their original camera framing.
+      for (final slide in [5, 7, 9, 10, 16]) {
+        cues.selectSlide(slide);
+        final camera = cues.camera(Duration.zero);
+        expect(world.distance, closeTo(10.4, 1e-9));
+        expect(camera.target.y, closeTo(1.5, 1e-9));
+      }
+    },
+    timeout: const Timeout(Duration(seconds: 60)),
+  );
 
   test('demo pause freezes the same animation clock and can resume', () {
     final world = _FakeWorld();

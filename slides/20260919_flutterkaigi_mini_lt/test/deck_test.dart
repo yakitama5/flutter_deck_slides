@@ -54,6 +54,7 @@ void main() {
             final context = boundaryKey.currentContext!;
             for (final asset in [
               'assets/profile/avatar.png',
+              'assets/showcase/flutter_scene_202603.png',
               'assets/showcase/scene_materials.jpg',
               'assets/showcase/scene_lighting.jpg',
             ]) {

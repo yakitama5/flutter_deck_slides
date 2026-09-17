@@ -68,9 +68,9 @@ class LtSlide extends StatelessWidget {
       8 => _priorities(c),
       9 => _delegate(c),
       10 => _transition(c),
-      11 => _layers(c),
-      12 => _organization(c),
-      13 => _motivation(c),
+      11 => _videoChoice(c),
+      12 => _qrChoice(c),
+      13 => _sceneChoice(c),
       14 => _sharing(c),
       15 => _closing(c),
       16 => _thanks(c),
@@ -218,46 +218,27 @@ class LtSlide extends StatelessWidget {
         ],
       ),
     ),
-    _At(
-      x: 114,
-      y: 822,
-      width: 1600,
-      child: _Copy(
-        '少し目を離すと「もう、そこまでできるの？」',
-        size: 38,
-        color: c.onSurfaceVariant,
-      ),
-    ),
   ];
 
   List<Widget> _scene(ColorScheme c) => [
     _heading('半年前に紹介したFlutter Scene'),
     _At(
       x: 115,
-      y: 296,
+      y: 273,
       width: 800,
       child: _Copy('2026/03 / 岡山.Flutter', size: 32, color: c.secondary),
     ),
     _At(
       x: 110,
-      y: 374,
+      y: 340,
       width: 800,
-      height: 450,
-      child: Container(
-        decoration: BoxDecoration(
-          color: c.surfaceContainer.withValues(alpha: .72),
-          border: Border.all(color: c.outlineVariant, width: 2),
-          borderRadius: BorderRadius.circular(28),
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.image_outlined, size: 72, color: c.secondary),
-            const SizedBox(height: 26),
-            const _Copy('2026/03の発表資料', size: 36),
-            const SizedBox(height: 12),
-            _Copy('画像をここに差し替え', size: 26, color: c.onSurfaceVariant),
-          ],
+      height: 582,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(22),
+        child: Image.asset(
+          'assets/showcase/flutter_scene_202603.png',
+          fit: BoxFit.contain,
+          semanticLabel: '2026年3月の岡山.Flutter発表資料。Flutter UIと3D表示の組み合わせを紹介した画面',
         ),
       ),
     ),
@@ -293,7 +274,7 @@ class LtSlide extends StatelessWidget {
     ),
     const _At(
       x: 115,
-      y: 927,
+      y: 944,
       width: 1650,
       child: _SourceLink(
         label: 'Flutter Scene 0.23.0 / pub.dev',
@@ -399,18 +380,36 @@ class LtSlide extends StatelessWidget {
   ];
 
   List<Widget> _priorities(ColorScheme c) => [
-    _heading('このアプリで「なに」を優先させるか？', size: 75),
+    _heading('「なにを優先させるか？」\nを考えるのは人', size: 84),
     _At(
       x: 118,
-      y: 442,
-      width: 730,
-      child: _ChoiceLine(text: '早く試したい？', color: c.primary),
+      y: 448,
+      width: 1270,
+      child: _PromptQuestion(
+        icon: Icons.aspect_ratio_rounded,
+        text: 'アプリの規模感は？',
+        color: c.primary,
+      ),
     ),
     _At(
-      x: 1010,
-      y: 442,
-      width: 760,
-      child: _ChoiceLine(text: '長く育てたい？', color: c.secondary),
+      x: 118,
+      y: 593,
+      width: 1270,
+      child: _PromptQuestion(
+        icon: Icons.schedule_rounded,
+        text: '今後も長く使い続ける？',
+        color: c.secondary,
+      ),
+    ),
+    _At(
+      x: 118,
+      y: 738,
+      width: 1270,
+      child: _PromptQuestion(
+        icon: Icons.people_outline_rounded,
+        text: 'だれがつかう？',
+        color: c.tertiary,
+      ),
     ),
   ];
 
@@ -419,213 +418,156 @@ class LtSlide extends StatelessWidget {
       x: 110,
       y: 182,
       width: 1660,
-      child: _Copy('「なぜ」を考える\n時間を増やしたい', size: 106, color: c.primary),
+      child: _Copy('細かい判断にも\n理由はある', size: 106, color: c.primary),
     ),
     _At(
       x: 118,
-      y: 581,
+      y: 588,
       width: 1280,
-      child: _Copy('細かいコードはもっとAIに任せて', size: 45, color: c.onSurfaceVariant),
+      child: _Copy('パッケージを入れる？\n標準機能で済ませる？', size: 49, color: c.onSurface),
     ),
     _At(
       x: 118,
-      y: 714,
+      y: 821,
       width: 1280,
-      child: _Copy('得たい効果と、引き受ける手間を考える', size: 48, color: c.secondary),
+      child: _Copy('小さな選択にも、自分の理由を', size: 43, color: c.secondary),
     ),
   ];
 
   List<Widget> _transition(ColorScheme c) => [
-    _heading('よく聞く設計の話を、3つの問いに', size: 76),
+    _heading('このLTなら、どう選ぶ？', size: 84),
     _At(
       x: 115,
-      y: 338,
+      y: 259,
+      width: 1290,
+      child: _Copy('パッケージを選ぶ理由', size: 35, color: c.primary),
+    ),
+    _At(
+      x: 115,
+      y: 366,
       width: 1290,
       child: _DesignQuestion(
-        topic: 'feature / layer first',
-        question: 'どこに置く？',
+        topic: '動画',
+        question: 'どう見せる？',
         color: c.secondary,
       ),
     ),
     _At(
       x: 115,
-      y: 522,
+      y: 550,
       width: 1290,
       child: _DesignQuestion(
-        topic: 'MVVM',
-        question: '画面の責務をどう分ける？',
+        topic: 'QRコード',
+        question: 'どう表示する？',
         color: c.primary,
       ),
     ),
     _At(
       x: 115,
-      y: 706,
+      y: 734,
       width: 1290,
       child: _DesignQuestion(
-        topic: 'Clean Architecture',
-        question: '何を変更から守る？',
+        topic: 'だしゅまる',
+        question: 'どう動かす？',
         color: c.tertiary,
       ),
     ),
   ];
 
-  List<Widget> _layers(ColorScheme c) => [
-    _heading('feature first / layer first', size: 81),
+  List<Widget> _videoChoice(ColorScheme c) => [
+    _heading('動画を、話の流れの中で見せたい', size: 77),
     _At(
       x: 115,
-      y: 267,
-      width: 600,
-      height: 342,
-      child: _OrganizationExample(
-        title: 'feature first',
-        description: '機能のまとまりを先に見る',
-        rows: const ['検索 → UI・業務ルール・データ', '詳細 → UI・業務ルール・データ'],
-        chosen: false,
-        scheme: c,
-      ),
-    ),
-    _At(
-      x: 790,
-      y: 267,
-      width: 600,
-      height: 342,
-      child: _OrganizationExample(
-        title: 'layer first',
-        description: '責務の境界を先に見る',
-        rows: const ['UI → 検索・詳細', '業務ルール → 検索・詳細'],
-        chosen: true,
-        scheme: c,
-      ),
-    ),
-    _At(
-      x: 116,
-      y: 660,
-      width: 1270,
-      child: _Copy(
-        '自分は、機能をまたぐ責務の変化を\n追いやすくしたくて layer first',
-        size: 45,
-        color: c.primary,
+      y: 324,
+      width: 1280,
+      height: 246,
+      child: _PackageChoice(
+        purpose: 'スライドの中で\n再生・停止したい',
+        package: 'video_player',
+        icon: Icons.play_circle_outline_rounded,
+        accent: c.secondary,
       ),
     ),
     _At(
       x: 118,
-      y: 858,
+      y: 668,
+      width: 1280,
+      child: _Copy('画面を切り替えず、発表を続けられる', size: 47, color: c.primary),
+    ),
+    _At(
+      x: 118,
+      y: 815,
       width: 1280,
       child: _Copy(
-        '引き受ける手間：1つの機能の変更でも複数の層をたどる',
-        size: 28,
+        '確かめること：配信元への接続と、ブラウザでの再生',
+        size: 30,
         color: c.onSurfaceVariant,
       ),
     ),
   ];
 
-  List<Widget> _organization(ColorScheme c) => [
-    _heading('MVVMで、何を分けたい？', size: 81),
-    _At(
-      x: 116,
-      y: 293,
-      width: 1260,
-      child: _Copy('表示と、画面の状態・操作を分けたい', size: 52, color: c.primary),
-    ),
+  List<Widget> _qrChoice(ColorScheme c) => [
+    _heading('QRコードを、URLから表示したい', size: 77),
     _At(
       x: 115,
-      y: 425,
-      width: 1270,
-      height: 195,
-      child: Row(
-        children: [
-          Expanded(
-            child: _ResponsibilityBox(
-              title: 'View',
-              description: '状態を表示する',
-              color: c.secondaryContainer,
-              foreground: c.onSecondaryContainer,
-            ),
-          ),
-          SizedBox(
-            width: 150,
-            child: Icon(Icons.sync_alt_rounded, size: 76, color: c.secondary),
-          ),
-          Expanded(
-            child: _ResponsibilityBox(
-              title: 'ViewModel',
-              description: '状態と操作を受け持つ',
-              color: c.primaryContainer,
-              foreground: c.onPrimaryContainer,
-            ),
-          ),
-        ],
+      y: 324,
+      width: 1280,
+      height: 246,
+      child: _PackageChoice(
+        purpose: 'URLを渡して\nそのまま描きたい',
+        package: 'qr_flutter',
+        icon: Icons.qr_code_2_rounded,
+        accent: c.primary,
       ),
     ),
     _At(
-      x: 117,
-      y: 704,
-      width: 1270,
-      child: const _Copy('Widgetの外で、画面の振る舞いを確かめる', size: 42),
+      x: 118,
+      y: 668,
+      width: 1280,
+      child: _Copy('画像を作り直す作業を減らせる', size: 49, color: c.secondary),
     ),
     _At(
-      x: 119,
-      y: 808,
-      width: 1270,
-      child: _Copy('ただし、同じ責務を二重に持たせない', size: 37, color: c.secondary),
-    ),
-    _At(
-      x: 120,
-      y: 897,
+      x: 118,
+      y: 815,
       width: 1280,
       child: _Copy(
-        'アプリ状態は Application Provider へ集約\n画面専用の ViewModel は追加しなかった',
-        size: 24,
+        '固定のQRコードなら、画像を貼るだけでも十分？',
+        size: 32,
         color: c.onSurfaceVariant,
       ),
     ),
   ];
 
-  List<Widget> _motivation(ColorScheme c) => [
-    _heading('Clean Architectureで、何を守る？', size: 75),
+  List<Widget> _sceneChoice(ColorScheme c) => [
+    _heading('だしゅまるを、話に合わせて動かしたい', size: 73),
     _At(
       x: 115,
-      y: 278,
-      width: 1290,
-      child: _Copy('業務ルールを、UIや外部の変更から守る', size: 49, color: c.primary),
-    ),
-    _At(
-      x: 115,
-      y: 395,
-      width: 1270,
-      height: 258,
-      child: _DependencyDiagram(scheme: c),
-    ),
-    _At(
-      x: 117,
-      y: 725,
-      width: 1260,
-      child: const _Copy('境界を作る効果は、その手間に見合う？', size: 45),
-    ),
-    _At(
-      x: 119,
-      y: 824,
-      width: 1260,
-      child: _Copy(
-        '引き受ける手間：境界の定義やデータの変換を保つ',
-        size: 29,
-        color: c.onSurfaceVariant,
+      y: 324,
+      width: 1280,
+      height: 246,
+      child: _PackageChoice(
+        purpose: '動きをその場で\n変えたい',
+        package: 'Flutter Scene',
+        icon: Icons.view_in_ar_rounded,
+        accent: c.tertiary,
       ),
     ),
     _At(
-      x: 119,
-      y: 903,
-      width: 1270,
-      child: _Copy(
-        '自分の採用例は、内側への依存を重視した Onion Architecture',
-        size: 25,
-        color: c.secondary,
-      ),
+      x: 118,
+      y: 668,
+      width: 1280,
+      child: _Copy('ボタンやスライド送りに合わせて反応する', size: 45, color: c.primary),
+    ),
+    _At(
+      x: 118,
+      y: 815,
+      width: 1280,
+      child: _Copy('読み込みと描画の負担も考える', size: 33, color: c.onSurfaceVariant),
     ),
   ];
 
   List<Widget> _sharing(ColorScheme c) => [
-    _heading('「なぜ？」を共有する', size: 88),
+    _heading('「なぜ」を残す', size: 88),
     _At(
       x: 111,
       y: 342,
@@ -647,7 +589,7 @@ class LtSlide extends StatelessWidget {
               color: c.secondary,
             ),
           ),
-          const Expanded(child: _Copy('別の条件や選択肢を知って、\n考えを更新する。', size: 46)),
+          const Expanded(child: _Copy('次回の判断をする際の\n参考となる', size: 46)),
         ],
       ),
     ),
@@ -659,7 +601,11 @@ class LtSlide extends StatelessWidget {
       x: 117,
       y: 720,
       width: 1290,
-      child: _Copy('AIと書いたコードに、\n自分の「なぜ」を。', size: 55, color: c.onSurface),
+      child: _Copy(
+        '判断するために、技術を学ぶ。\n選んだ理由を、自分の中に。',
+        size: 55,
+        color: c.onSurface,
+      ),
     ),
   ];
 
@@ -842,51 +788,71 @@ class _DesignQuestion extends StatelessWidget {
   );
 }
 
-class _ResponsibilityBox extends StatelessWidget {
-  const _ResponsibilityBox({
-    required this.title,
-    required this.description,
+class _PromptQuestion extends StatelessWidget {
+  const _PromptQuestion({
+    required this.icon,
+    required this.text,
     required this.color,
-    required this.foreground,
   });
-  final String title;
-  final String description;
+  final IconData icon;
+  final String text;
   final Color color;
-  final Color foreground;
   @override
-  Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 27),
-    decoration: BoxDecoration(
-      color: color,
-      borderRadius: BorderRadius.circular(24),
-    ),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        _Copy(title, size: 48, color: foreground),
-        const SizedBox(height: 10),
-        _Copy(description, size: 29, color: foreground),
-      ],
-    ),
+  Widget build(BuildContext context) => Row(
+    children: [
+      Icon(icon, size: 51, color: color),
+      const SizedBox(width: 32),
+      Expanded(child: _Copy(text, size: 57)),
+    ],
   );
 }
 
-class _ChoiceLine extends StatelessWidget {
-  const _ChoiceLine({required this.text, required this.color});
-
-  final String text;
-  final Color color;
-
+class _PackageChoice extends StatelessWidget {
+  const _PackageChoice({
+    required this.purpose,
+    required this.package,
+    required this.icon,
+    required this.accent,
+  });
+  final String purpose;
+  final String package;
+  final IconData icon;
+  final Color accent;
   @override
-  Widget build(BuildContext context) => Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      _Copy(text, size: 88, color: color),
-      const SizedBox(height: 32),
-      Container(height: 3, color: color.withValues(alpha: .36)),
-    ],
-  );
+  Widget build(BuildContext context) {
+    final c = Theme.of(context).colorScheme;
+    return Row(
+      children: [
+        Expanded(child: _Copy(purpose, size: 50)),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 40),
+          child: Icon(Icons.arrow_forward_rounded, color: c.outline, size: 56),
+        ),
+        SizedBox(
+          width: 565,
+          height: 246,
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              color: accent.withValues(alpha: .09),
+              border: Border.all(
+                color: accent.withValues(alpha: .36),
+                width: 2,
+              ),
+              borderRadius: BorderRadius.circular(26),
+            ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(icon, color: accent, size: 61),
+                const SizedBox(height: 14),
+                _Copy(package, size: 52, color: accent),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
 }
 
 class _SourceLink extends StatelessWidget {
@@ -909,104 +875,4 @@ class _SourceLink extends StatelessWidget {
     ),
     child: Text(label),
   );
-}
-
-class _DependencyDiagram extends StatelessWidget {
-  const _DependencyDiagram({required this.scheme});
-
-  final ColorScheme scheme;
-
-  @override
-  Widget build(BuildContext context) => Row(
-    children: [
-      Expanded(
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 31),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(25),
-            color: scheme.secondaryContainer,
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              _Copy('UI', size: 41, color: scheme.onSecondaryContainer),
-              const SizedBox(height: 14),
-              _Copy('外部サービスの実装', size: 31, color: scheme.onSecondaryContainer),
-            ],
-          ),
-        ),
-      ),
-      SizedBox(
-        width: 186,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            _Copy('依存の向き', size: 23, color: scheme.onSurfaceVariant),
-            Icon(
-              Icons.arrow_forward_rounded,
-              size: 81,
-              color: scheme.secondary,
-            ),
-          ],
-        ),
-      ),
-      Expanded(
-        child: Container(
-          height: 232,
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(25),
-            color: scheme.primaryContainer,
-          ),
-          child: _Copy('業務ルール', size: 49, color: scheme.onPrimaryContainer),
-        ),
-      ),
-    ],
-  );
-}
-
-class _OrganizationExample extends StatelessWidget {
-  const _OrganizationExample({
-    required this.title,
-    required this.description,
-    required this.rows,
-    required this.chosen,
-    required this.scheme,
-  });
-
-  final String title;
-  final String description;
-  final List<String> rows;
-  final bool chosen;
-  final ColorScheme scheme;
-
-  @override
-  Widget build(BuildContext context) {
-    final accent = chosen ? scheme.primary : scheme.secondary;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            _Copy(title, size: 51, color: accent),
-            if (chosen) ...[
-              const SizedBox(width: 23),
-              Icon(Icons.check_circle_outline_rounded, color: accent, size: 36),
-            ],
-          ],
-        ),
-        const SizedBox(height: 9),
-        _Copy(description, size: 32, color: scheme.onSurfaceVariant),
-        const SizedBox(height: 31),
-        Container(height: 2, color: accent.withValues(alpha: .4)),
-        const SizedBox(height: 27),
-        for (final row in rows)
-          Padding(
-            padding: const EdgeInsets.only(bottom: 15),
-            child: _Copy(row, size: 27),
-          ),
-      ],
-    );
-  }
 }
