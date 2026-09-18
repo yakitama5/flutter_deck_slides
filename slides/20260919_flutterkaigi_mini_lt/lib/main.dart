@@ -107,7 +107,7 @@ class _PresentationStage extends StatelessWidget {
       builder: (context, child) {
         final index = router.currentSlideIndex;
         final isDemo = index == 5;
-        final isThanks = index == 12;
+        final isThanks = index == 13;
         final actorBounds = dashmaruActorBounds(index);
         final reducedMotion = MediaQuery.disableAnimationsOf(context);
         return Stack(

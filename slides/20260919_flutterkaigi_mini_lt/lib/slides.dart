@@ -18,7 +18,7 @@ class LtSlide extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final emphasized = slideIndex == 0 || slideIndex == 7 || slideIndex == 11;
+    final emphasized = slideIndex == 0 || slideIndex == 7 || slideIndex == 12;
     return SizedBox(
       width: 1920,
       height: 1080,
@@ -67,10 +67,11 @@ class LtSlide extends StatelessWidget {
       6 => _idea(c),
       7 => _question(c),
       8 => _priorities(c),
-      9 => _learningChoices(c),
-      10 => _practice(c),
-      11 => _closing(c),
-      12 => _thanks(c),
+      9 => _architecture(c),
+      10 => _learningChoices(c),
+      11 => _practice(c),
+      12 => _closing(c),
+      13 => _thanks(c),
       _ => _cover(c),
     };
   }
@@ -377,82 +378,118 @@ class LtSlide extends StatelessWidget {
   ];
 
   List<Widget> _priorities(ColorScheme c) => [
-    _heading('アプリの組み立て方を学ぶ', size: 88),
-    _At(
-      x: 115,
-      y: 267,
-      width: 1660,
-      child: _Copy('アーキテクチャは、条件に合わせて考える', size: 40, color: c.primary),
-    ),
+    _heading('これから、何を学ぶ？', size: 96),
     _At(
       x: 118,
-      y: 404,
+      y: 433,
       width: 1270,
       child: _PromptQuestion(
-        icon: Icons.aspect_ratio_rounded,
-        text: 'アプリの規模感は？',
+        icon: Icons.account_tree_outlined,
+        text: 'アーキテクチャを理解する',
         color: c.primary,
       ),
     ),
     _At(
       x: 118,
-      y: 537,
+      y: 666,
+      width: 1270,
+      child: _PromptQuestion(
+        icon: Icons.explore_outlined,
+        text: '選択肢を増やす',
+        color: c.secondary,
+      ),
+    ),
+  ];
+
+  List<Widget> _architecture(ColorScheme c) => [
+    _heading('アーキテクチャを理解する', size: 88),
+    _At(
+      x: 118,
+      y: 267,
+      width: 1660,
+      child: _Copy('何を優先するかは、自分たちで決める', size: 40, color: c.primary),
+    ),
+    _At(
+      x: 118,
+      y: 430,
       width: 1270,
       child: _PromptQuestion(
         icon: Icons.schedule_rounded,
-        text: '今後も長く使い続ける？',
+        text: 'アプリの未来を見据える',
+        color: c.primary,
+      ),
+    ),
+    _At(
+      x: 118,
+      y: 580,
+      width: 1270,
+      child: _PromptQuestion(
+        icon: Icons.check_circle_outline_rounded,
+        text: '条件に合うかを考える',
         color: c.secondary,
       ),
     ),
     _At(
       x: 118,
-      y: 670,
+      y: 730,
       width: 1270,
       child: _PromptQuestion(
-        icon: Icons.people_outline_rounded,
-        text: 'だれがつかう？',
+        icon: Icons.balance_rounded,
+        text: '引き受ける負担を知る',
         color: c.tertiary,
       ),
     ),
     _At(
       x: 118,
-      y: 842,
+      y: 890,
       width: 1280,
-      child: _Copy('AIと相談しながら、何を優先するかは自分たちで決める', size: 39, color: c.secondary),
+      child: _Copy('AIと相談し、判断に責任を持つ', size: 37, color: c.secondary),
     ),
   ];
 
   List<Widget> _learningChoices(ColorScheme c) => [
-    _heading('使い方と一緒に、\n使いどころを学ぶ', size: 96),
+    _heading('知見として、選択肢を増やす', size: 88),
     _At(
       x: 118,
-      y: 459,
-      width: 1270,
-      child: _PromptQuestion(
-        icon: Icons.lightbulb_outline_rounded,
-        text: '何を解決する技術？',
-        color: c.primary,
+      y: 267,
+      width: 1650,
+      child: _Copy('たとえば、Flutterアプリに3Dを加えるなら', size: 40, color: c.primary),
+    ),
+    _At(
+      x: 118,
+      y: 430,
+      width: 1320,
+      child: Row(
+        children: [
+          Expanded(
+            child: _TechnologyOption(
+              name: 'Unity',
+              description: 'ゲームエンジンを組み込む',
+              color: c.primary,
+            ),
+          ),
+          const SizedBox(width: 36),
+          Expanded(
+            child: _TechnologyOption(
+              name: 'Flutter Scene',
+              description: 'Flutterから3Dを扱う',
+              color: c.secondary,
+            ),
+          ),
+        ],
       ),
     ),
     _At(
       x: 118,
-      y: 612,
-      width: 1270,
-      child: _PromptQuestion(
-        icon: Icons.explore_outlined,
-        text: 'どんな場面に向いている？',
-        color: c.secondary,
-      ),
+      y: 750,
+      width: 1280,
+      child: _Copy('存在を知っていれば、選べる', size: 62, color: c.secondary),
     ),
     _At(
       x: 118,
-      y: 765,
-      width: 1270,
-      child: _PromptQuestion(
-        icon: Icons.balance_rounded,
-        text: 'どんな負担が増える？',
-        color: c.tertiary,
-      ),
+      y: 870,
+      width: 1280,
+      child: _Copy('実現したい内容やアプリサイズに合わせて', size: 35, color: c.onSurfaceVariant),
     ),
   ];
 
@@ -669,6 +706,36 @@ class _PromptQuestion extends StatelessWidget {
       const SizedBox(width: 32),
       Expanded(child: _Copy(text, size: 57)),
     ],
+  );
+}
+
+class _TechnologyOption extends StatelessWidget {
+  const _TechnologyOption({
+    required this.name,
+    required this.description,
+    required this.color,
+  });
+
+  final String name;
+  final String description;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.symmetric(horizontal: 36, vertical: 34),
+    decoration: BoxDecoration(
+      color: color.withValues(alpha: 0.06),
+      border: Border.all(color: color.withValues(alpha: 0.4), width: 2),
+      borderRadius: BorderRadius.circular(24),
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _Copy(name, size: 62, color: color),
+        const SizedBox(height: 18),
+        _Copy(description, size: 30),
+      ],
+    ),
   );
 }
 

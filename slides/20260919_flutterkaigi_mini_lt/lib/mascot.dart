@@ -13,7 +13,7 @@ Rect dashmaruActorBounds(int slideIndex) => switch (slideIndex) {
   // Celebrate's full-body hops need more space above and beside the actor.
   // Keep its center X and bottom aligned with the usual companion frame.
   6 => const Rect.fromLTWH(1420, 530, 470, 500),
-  12 => const Rect.fromLTWH(1110, 220, 790, 790),
+  13 => const Rect.fromLTWH(1110, 220, 790, 790),
   _ => const Rect.fromLTWH(1460, 660, 390, 370),
 };
 
@@ -350,9 +350,9 @@ class DashmaruCueController {
     };
     world.setSpeed(1);
     final expression = switch (_slideIndex) {
-      6 || 10 || 11 || 12 => DashmaruExpression.smile,
+      6 || 11 || 12 || 13 => DashmaruExpression.smile,
       7 => DashmaruExpression.strain,
-      8 || 9 => DashmaruExpression.spiral,
+      8 || 10 => DashmaruExpression.spiral,
       _ => DashmaruExpression.normal,
     };
     if (_slideIndex < 5 || _reducedMotion) {
@@ -376,15 +376,16 @@ class DashmaruCueController {
         DashmaruMotion.sit,
         expression: DashmaruExpression.spiral,
       ),
-      9 => const _CueStage(
+      9 => const _CueStage(DashmaruMotion.idle),
+      10 => const _CueStage(
         DashmaruMotion.tilt,
         expression: DashmaruExpression.spiral,
       ),
-      10 || 11 => const _CueStage(
+      11 || 12 => const _CueStage(
         DashmaruMotion.nod,
         expression: DashmaruExpression.smile,
       ),
-      12 => const _CueStage(
+      13 => const _CueStage(
         DashmaruMotion.wave,
         expression: DashmaruExpression.smile,
       ),
