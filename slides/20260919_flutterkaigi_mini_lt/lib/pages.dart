@@ -24,13 +24,13 @@ const ltPages = <LtPage>[
   LtPage(
     route: "/about",
     title: "やくらん",
-    seconds: 15,
+    seconds: 20,
     notes: SpeakerNotes.about,
   ),
   LtPage(
     route: "/pace",
     title: "最近、進化が速すぎませんか",
-    seconds: 25,
+    seconds: 20,
     notes: SpeakerNotes.pace,
   ),
   LtPage(
@@ -42,13 +42,13 @@ const ltPages = <LtPage>[
   LtPage(
     route: "/showcase",
     title: "これもFlutterなの？",
-    seconds: 35,
+    seconds: 25,
     notes: SpeakerNotes.showcase,
   ),
   LtPage(
     route: "/dashmaru",
-    title: "知識がなくてもモデル作成からサンプルまで",
-    seconds: 60,
+    title: "3Dの知識がなくてもモデル作成からサンプルまで",
+    seconds: 45,
     notes: SpeakerNotes.dashmaru,
   ),
   LtPage(
@@ -65,56 +65,32 @@ const ltPages = <LtPage>[
   ),
   LtPage(
     route: "/priorities",
-    title: "「なにを優先させるか？」を考えるのは人",
-    seconds: 30,
+    title: "アプリの組み立て方を学ぶ",
+    seconds: 40,
     notes: SpeakerNotes.priorities,
   ),
   LtPage(
-    route: "/delegate",
-    title: "細かい判断にも理由はある",
-    seconds: 20,
-    notes: SpeakerNotes.delegate,
-  ),
-  LtPage(
     route: "/decisions",
-    title: "3つの条件から、技術を考える",
-    seconds: 20,
+    title: "使い方と一緒に、使いどころを学ぶ",
+    seconds: 25,
     notes: SpeakerNotes.decisions,
   ),
   LtPage(
     route: "/layers",
-    title: "まずは、次の開催で試したい",
-    seconds: 45,
+    title: "作りながら、「なぜ？」を考える",
+    seconds: 25,
     notes: SpeakerNotes.layers,
-  ),
-  LtPage(
-    route: "/organization",
-    title: "続けて使うなら、条件が変わる",
-    seconds: 45,
-    notes: SpeakerNotes.organization,
-  ),
-  LtPage(
-    route: "/curiosity",
-    title: "理由が分かれば、選び直せる",
-    seconds: 40,
-    notes: SpeakerNotes.curiosity,
-  ),
-  LtPage(
-    route: "/sharing",
-    title: "「なぜ」を残す",
-    seconds: 35,
-    notes: SpeakerNotes.sharing,
   ),
   LtPage(
     route: "/why",
     title: "そのFlutterコード、なぜ書いた？",
-    seconds: 25,
+    seconds: 20,
     notes: SpeakerNotes.why,
   ),
   LtPage(
     route: "/thanks",
     title: "ご清聴ありがとうございました",
-    seconds: 10,
+    seconds: 5,
     notes: SpeakerNotes.thanks,
   ),
 ];

@@ -89,7 +89,7 @@ void main() {
     }
   });
 
-  testWidgets('keyboard navigation retains one mascot through all 17 slides', (
+  testWidgets('keyboard navigation retains one mascot through all 13 slides', (
     tester,
   ) async {
     tester.view.physicalSize = const Size(1920, 1080);
@@ -113,6 +113,10 @@ void main() {
       expect(find.byKey(ValueKey(ltPages[index].route)), findsOneWidget);
       expect(tester.state(actor), same(retainedState));
       expect(tester.widget<DashmaruActor>(actor).slideIndex, index);
+      expect(
+        tester.widget<DashmaruActor>(actor).large,
+        index == 5 || ltPages[index].route == '/thanks',
+      );
       expect(tester.takeException(), isNull, reason: ltPages[index].route);
       if (index == 5) {
         // A demo button focuses the actor's subtree, outside the Navigator.

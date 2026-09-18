@@ -3,6 +3,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 
 import 'backdrop.dart';
+import 'pages.dart';
 import 'showcase_video.dart';
 
 /// The presentation artwork lives on a 1920 × 1080 logical canvas.
@@ -17,7 +18,7 @@ class LtSlide extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final emphasized = slideIndex == 0 || slideIndex == 7 || slideIndex == 15;
+    final emphasized = slideIndex == 0 || slideIndex == 7 || slideIndex == 11;
     return SizedBox(
       width: 1920,
       height: 1080,
@@ -42,7 +43,7 @@ class LtSlide extends StatelessWidget {
                   Container(width: 42, height: 1, color: scheme.outlineVariant),
                   const SizedBox(width: 30),
                   _Copy(
-                    '${(slideIndex + 1).toString().padLeft(2, '0')} / 17',
+                    '${(slideIndex + 1).toString().padLeft(2, '0')} / ${ltPages.length}',
                     size: 22,
                     color: scheme.onSurfaceVariant,
                   ),
@@ -66,14 +67,10 @@ class LtSlide extends StatelessWidget {
       6 => _idea(c),
       7 => _question(c),
       8 => _priorities(c),
-      9 => _delegate(c),
-      10 => _transition(c),
-      11 => _firstRelease(c),
-      12 => _continuedUse(c),
-      13 => _reconsider(c),
-      14 => _sharing(c),
-      15 => _closing(c),
-      16 => _thanks(c),
+      9 => _learningChoices(c),
+      10 => _practice(c),
+      11 => _closing(c),
+      12 => _thanks(c),
       _ => _cover(c),
     };
   }
@@ -347,7 +344,7 @@ class LtSlide extends StatelessWidget {
       x: 110,
       y: 200,
       width: 735,
-      child: _Copy('知識がなくても\nモデル作成から\nサンプルまで', size: 73, color: c.primary),
+      child: _Copy('3Dの知識がなくても\nモデル作成から\nサンプルまで', size: 73, color: c.primary),
     ),
   ];
 
@@ -380,10 +377,16 @@ class LtSlide extends StatelessWidget {
   ];
 
   List<Widget> _priorities(ColorScheme c) => [
-    _heading('「なにを優先させるか？」\nを考えるのは人', size: 84),
+    _heading('アプリの組み立て方を学ぶ', size: 88),
+    _At(
+      x: 115,
+      y: 267,
+      width: 1660,
+      child: _Copy('アーキテクチャは、条件に合わせて考える', size: 40, color: c.primary),
+    ),
     _At(
       x: 118,
-      y: 448,
+      y: 404,
       width: 1270,
       child: _PromptQuestion(
         icon: Icons.aspect_ratio_rounded,
@@ -393,7 +396,7 @@ class LtSlide extends StatelessWidget {
     ),
     _At(
       x: 118,
-      y: 593,
+      y: 537,
       width: 1270,
       child: _PromptQuestion(
         icon: Icons.schedule_rounded,
@@ -403,7 +406,7 @@ class LtSlide extends StatelessWidget {
     ),
     _At(
       x: 118,
-      y: 738,
+      y: 670,
       width: 1270,
       child: _PromptQuestion(
         icon: Icons.people_outline_rounded,
@@ -411,245 +414,78 @@ class LtSlide extends StatelessWidget {
         color: c.tertiary,
       ),
     ),
-  ];
-
-  List<Widget> _delegate(ColorScheme c) => [
-    _At(
-      x: 110,
-      y: 182,
-      width: 1660,
-      child: _Copy('細かい判断にも\n理由はある', size: 106, color: c.primary),
-    ),
     _At(
       x: 118,
-      y: 588,
+      y: 842,
       width: 1280,
-      child: _Copy('実装はAIと進める\n選択の理由は、自分でも考える', size: 49, color: c.onSurface),
-    ),
-    _At(
-      x: 118,
-      y: 821,
-      width: 1280,
-      child: _Copy('条件に立ち返って、技術を選ぶ', size: 43, color: c.secondary),
+      child: _Copy('AIと相談しながら、何を優先するかは自分たちで決める', size: 39, color: c.secondary),
     ),
   ];
 
-  List<Widget> _transition(ColorScheme c) => [
-    _heading('3つの条件から、技術を考える', size: 80),
+  List<Widget> _learningChoices(ColorScheme c) => [
+    _heading('使い方と一緒に、\n使いどころを学ぶ', size: 96),
     _At(
-      x: 115,
-      y: 259,
-      width: 1290,
-      child: _Copy('どんなアプリにしたいか、から考える', size: 35, color: c.primary),
-    ),
-    _At(
-      x: 115,
-      y: 366,
-      width: 1290,
-      child: _DesignQuestion(
-        topic: '規模感',
-        question: '構成と状態管理',
+      x: 118,
+      y: 459,
+      width: 1270,
+      child: _PromptQuestion(
+        icon: Icons.lightbulb_outline_rounded,
+        text: '何を解決する技術？',
         color: c.primary,
       ),
     ),
     _At(
-      x: 115,
-      y: 550,
-      width: 1290,
-      child: _DesignQuestion(
-        topic: '長く使う',
-        question: '保守のしやすさ',
+      x: 118,
+      y: 612,
+      width: 1270,
+      child: _PromptQuestion(
+        icon: Icons.explore_outlined,
+        text: 'どんな場面に向いている？',
         color: c.secondary,
       ),
     ),
     _At(
-      x: 115,
-      y: 734,
-      width: 1290,
-      child: _DesignQuestion(topic: '使う人', question: '届け方', color: c.tertiary),
+      x: 118,
+      y: 765,
+      width: 1270,
+      child: _PromptQuestion(
+        icon: Icons.balance_rounded,
+        text: 'どんな負担が増える？',
+        color: c.tertiary,
+      ),
     ),
   ];
 
-  List<Widget> _firstRelease(ColorScheme c) => _appDecision(
-    c,
-    title: 'まずは、次の開催で試したい',
-    context: '仮の例：勉強会のタイムテーブルアプリ',
-    scope: '一覧と詳細が中心',
-    lifetime: 'まず1回使ってみる',
-    people: '参加者がURLから使う',
-    choiceTitle: '今回の選択',
-    choice: 'FlutterでWeb公開\n予定データは同梱',
-    reason: 'まず公開して、使い勝手を確かめたい',
-    accent: c.primary,
-  );
-
-  List<Widget> _continuedUse(ColorScheme c) => _appDecision(
-    c,
-    title: '続けて使うなら、条件が変わる',
-    context: '同じアプリを、これからの開催でも使いたい',
-    scope: '予定を編集する機能も',
-    lifetime: 'これから毎回使う',
-    people: '参加者＋運営メンバー',
-    choiceTitle: '見直したい構成',
-    choice: '予定データの更新と\nアプリの公開を分ける',
-    reason: '使う期間と、更新する人が変わった',
-    accent: c.secondary,
-  );
-
-  List<Widget> _appDecision(
-    ColorScheme c, {
-    required String title,
-    required String context,
-    required String scope,
-    required String lifetime,
-    required String people,
-    required String choiceTitle,
-    required String choice,
-    required String reason,
-    required Color accent,
-  }) => [
-    _heading(title, size: 82),
+  List<Widget> _practice(ColorScheme c) => [
+    _heading('作りながら、\n「なぜ？」を考える', size: 96),
     _At(
-      x: 115,
-      y: 267,
-      width: 1560,
-      child: _Copy(context, size: 35, color: accent),
-    ),
-    _At(
-      x: 115,
-      y: 369,
-      width: 1280,
-      height: 390,
-      child: Row(
-        children: [
-          SizedBox(
-            width: 650,
-            child: _DecisionPanel(
-              title: '今回の条件',
-              icon: Icons.event_note_outlined,
-              accent: c.onSurfaceVariant,
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  _ScenarioFact(label: '規模感', value: scope, color: c.primary),
-                  _ScenarioFact(
-                    label: '長く使う',
-                    value: lifetime,
-                    color: c.secondary,
-                  ),
-                  _ScenarioFact(label: '使う人', value: people, color: c.tertiary),
-                ],
-              ),
-            ),
-          ),
-          SizedBox(
-            width: 80,
-            child: Icon(Icons.arrow_forward_rounded, size: 38, color: accent),
-          ),
-          Expanded(
-            child: _DecisionPanel(
-              title: choiceTitle,
-              icon: Icons.account_tree_outlined,
-              accent: accent,
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: _Copy(choice, size: 43),
-              ),
-            ),
-          ),
-        ],
+      x: 118,
+      y: 459,
+      width: 1270,
+      child: _PromptQuestion(
+        icon: Icons.question_answer_outlined,
+        text: 'AIの提案の理由を聞く',
+        color: c.primary,
       ),
     ),
     _At(
       x: 118,
-      y: 828,
-      width: 1280,
-      child: _Copy(reason, size: 44, color: c.onSurface),
-    ),
-  ];
-
-  List<Widget> _reconsider(ColorScheme c) => [
-    _heading('理由が分かれば、選び直せる', size: 82),
-    _At(
-      x: 115,
-      y: 267,
-      width: 1560,
-      child: _Copy('「まず1回試すため」が、当時の理由', size: 39, color: c.tertiary),
-    ),
-    _At(
-      x: 115,
-      y: 369,
-      width: 1280,
-      height: 390,
-      child: Row(
-        children: [
-          Expanded(
-            child: _DecisionPanel(
-              title: '見直す',
-              icon: Icons.sync_rounded,
-              accent: c.primary,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  const _Copy('予定データを\nアプリに同梱', size: 43),
-                  _Copy('まず1回試す → 毎回更新する', size: 28, color: c.primary),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(width: 28),
-          Expanded(
-            child: _DecisionPanel(
-              title: '続ける',
-              icon: Icons.link_rounded,
-              accent: c.secondary,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  const _Copy('参加者には\nURLで届ける', size: 43),
-                  _Copy('すぐ使ってもらいたい', size: 28, color: c.secondary),
-                ],
-              ),
-            ),
-          ),
-        ],
+      y: 612,
+      width: 1270,
+      child: _PromptQuestion(
+        icon: Icons.check_circle_outline_rounded,
+        text: '今回の目的・条件に合うか考える',
+        color: c.secondary,
       ),
     ),
     _At(
       x: 118,
-      y: 828,
-      width: 1280,
-      child: const _Copy('変わった条件に合わせて、必要なところを見直す', size: 43),
-    ),
-  ];
-
-  List<Widget> _sharing(ColorScheme c) => [
-    _heading('「なぜ」を残す', size: 88),
-    _At(
-      x: 111,
-      y: 342,
-      width: 1510,
-      child: _Copy('「今回は、\n  こういう理由で選びました」', size: 69, color: c.primary),
-    ),
-    _At(
-      x: 115,
-      y: 706,
-      width: 1280,
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.only(top: 9, right: 26),
-            child: Icon(
-              Icons.subdirectory_arrow_right_rounded,
-              size: 55,
-              color: c.secondary,
-            ),
-          ),
-          const Expanded(child: _Copy('次回の判断をする際の\n参考となる', size: 46)),
-        ],
+      y: 765,
+      width: 1270,
+      child: _PromptQuestion(
+        icon: Icons.edit_note_rounded,
+        text: '選んだ理由を一言残す',
+        color: c.tertiary,
       ),
     ),
   ];
@@ -817,32 +653,6 @@ class _ProfileFact extends StatelessWidget {
   );
 }
 
-class _DesignQuestion extends StatelessWidget {
-  const _DesignQuestion({
-    required this.topic,
-    required this.question,
-    required this.color,
-  });
-  final String topic;
-  final String question;
-  final Color color;
-  @override
-  Widget build(BuildContext context) => Column(
-    children: [
-      Row(
-        children: [
-          SizedBox(width: 540, child: _Copy(topic, size: 42, color: color)),
-          Icon(Icons.arrow_forward_rounded, color: color, size: 36),
-          const SizedBox(width: 28),
-          Expanded(child: _Copy(question, size: 40)),
-        ],
-      ),
-      const SizedBox(height: 32),
-      Container(height: 2, color: color.withValues(alpha: .24)),
-    ],
-  );
-}
-
 class _PromptQuestion extends StatelessWidget {
   const _PromptQuestion({
     required this.icon,
@@ -859,65 +669,6 @@ class _PromptQuestion extends StatelessWidget {
       const SizedBox(width: 32),
       Expanded(child: _Copy(text, size: 57)),
     ],
-  );
-}
-
-class _ScenarioFact extends StatelessWidget {
-  const _ScenarioFact({
-    required this.label,
-    required this.value,
-    required this.color,
-  });
-
-  final String label;
-  final String value;
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) => Row(
-    children: [
-      SizedBox(width: 116, child: _Copy(label, size: 25, color: color)),
-      const SizedBox(width: 14),
-      Expanded(child: _Copy(value, size: 36)),
-    ],
-  );
-}
-
-class _DecisionPanel extends StatelessWidget {
-  const _DecisionPanel({
-    required this.title,
-    required this.child,
-    required this.icon,
-    required this.accent,
-  });
-  final String title;
-  final Widget child;
-  final IconData icon;
-  final Color accent;
-
-  @override
-  Widget build(BuildContext context) => Container(
-    height: double.infinity,
-    padding: const EdgeInsets.all(32),
-    decoration: BoxDecoration(
-      color: accent.withValues(alpha: .07),
-      border: Border.all(color: accent.withValues(alpha: .32), width: 2),
-      borderRadius: BorderRadius.circular(26),
-    ),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Icon(icon, color: accent, size: 43),
-            const SizedBox(width: 18),
-            Expanded(child: _Copy(title, size: 37, color: accent)),
-          ],
-        ),
-        const SizedBox(height: 24),
-        Expanded(child: child),
-      ],
-    ),
   );
 }
 

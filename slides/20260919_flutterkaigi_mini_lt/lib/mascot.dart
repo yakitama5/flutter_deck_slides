@@ -13,7 +13,7 @@ Rect dashmaruActorBounds(int slideIndex) => switch (slideIndex) {
   // Celebrate's full-body hops need more space above and beside the actor.
   // Keep its center X and bottom aligned with the usual companion frame.
   6 => const Rect.fromLTWH(1420, 530, 470, 500),
-  16 => const Rect.fromLTWH(1110, 220, 790, 790),
+  12 => const Rect.fromLTWH(1110, 220, 790, 790),
   _ => const Rect.fromLTWH(1460, 660, 390, 370),
 };
 
@@ -357,9 +357,9 @@ class DashmaruCueController {
     };
     world.setSpeed(1);
     final expression = switch (_slideIndex) {
-      6 || 15 || 16 => DashmaruExpression.smile,
+      6 || 11 || 12 => DashmaruExpression.smile,
       7 => DashmaruExpression.strain,
-      8 || 10 => DashmaruExpression.spiral,
+      8 || 9 => DashmaruExpression.spiral,
       _ => DashmaruExpression.normal,
     };
     if (_slideIndex < 5 || _reducedMotion) {
@@ -386,18 +386,17 @@ class DashmaruCueController {
       8 => const [
         _CueStage(DashmaruMotion.sit, expression: DashmaruExpression.spiral),
       ],
-      10 => const [
+      9 => const [
         _CueStage(DashmaruMotion.tilt, expression: DashmaruExpression.spiral),
       ],
-      11 || 12 => const [_CueStage(DashmaruMotion.sit)],
-      14 => [
+      10 => [
         _CueStage(DashmaruMotion.wave, seconds: duration(DashmaruMotion.wave)),
         idle,
       ],
-      15 => const [
+      11 => const [
         _CueStage(DashmaruMotion.nod, expression: DashmaruExpression.smile),
       ],
-      16 => const [
+      12 => const [
         _CueStage(DashmaruMotion.wave, expression: DashmaruExpression.smile),
       ],
       _ => const [idle],
@@ -418,7 +417,7 @@ class DashmaruCueController {
     final retainingPose =
         stage.motion == DashmaruMotion.sit ||
         stage.motion == DashmaruMotion.idle;
-    // Keep the seated playback phase through the video and QR examples.
+    // Keep an unchanged seated or idle pose at its current playback phase.
     // Re-entering a one-shot gesture starts a fresh full clip.
     if (!unchanged || !retainingPose) {
       world.selectMotion(stage.motion, animateTransition: !unchanged);

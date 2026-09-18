@@ -129,8 +129,8 @@ void main() {
     (6, DashmaruMotion.celebrate, DashmaruExpression.smile),
     (7, DashmaruMotion.shake, DashmaruExpression.strain),
     (8, DashmaruMotion.sit, DashmaruExpression.spiral),
-    (10, DashmaruMotion.tilt, DashmaruExpression.spiral),
-    (15, DashmaruMotion.nod, DashmaruExpression.smile),
+    (9, DashmaruMotion.tilt, DashmaruExpression.spiral),
+    (11, DashmaruMotion.nod, DashmaruExpression.smile),
   ]) {
     test('slide $slide keeps its motion and face across repeated loops', () {
       final world = _FakeWorld();
@@ -153,8 +153,8 @@ void main() {
     final world = _FakeWorld();
     final cues = DashmaruCueController()
       ..selectSlide(7)
+      ..selectSlide(10)
       ..selectSlide(12)
-      ..selectSlide(16)
       ..attach(world);
 
     expect(world.selections, [DashmaruMotion.wave]);
@@ -177,15 +177,15 @@ void main() {
     expect(world.expression, DashmaruExpression.spiral);
     _advance(cues, 5);
     cues.selectSlide(9);
-    expect(world.motion, DashmaruMotion.idle);
-    expect(world.expression, DashmaruExpression.normal);
-    _advance(cues, 10);
-    expect(world.motion, DashmaruMotion.idle);
-    cues.selectSlide(10);
     _advance(cues, 10);
     expect(world.motion, DashmaruMotion.tilt);
     expect(world.expression, DashmaruExpression.spiral);
-    cues.selectSlide(16);
+    cues.selectSlide(10);
+    expect(world.motion, DashmaruMotion.wave);
+    expect(world.expression, DashmaruExpression.normal);
+    _advance(cues, 10);
+    expect(world.motion, DashmaruMotion.idle);
+    cues.selectSlide(12);
     _advance(cues, 10);
     expect(world.motion, DashmaruMotion.wave);
     expect(world.expression, DashmaruExpression.smile);
@@ -200,42 +200,10 @@ void main() {
     expect(world.expression, DashmaruExpression.smile);
   });
 
-  test('the two seated examples retain one entrance and clear dizzy eyes', () {
-    final world = _FakeWorld();
-    final cues = DashmaruCueController()
-      ..selectSlide(10)
-      ..attach(world);
-    expect(world.expression, DashmaruExpression.spiral);
-    _advance(cues, 5);
-    for (final slide in [11, 12]) {
-      cues.selectSlide(slide);
-      _advance(cues, 5);
-      expect(world.expression, DashmaruExpression.normal);
-    }
-    cues.selectSlide(11);
-
-    expect(world.motion, DashmaruMotion.sit);
-    expect(world.selections, [DashmaruMotion.tilt, DashmaruMotion.sit]);
-  });
-
-  test('after the seated examples the companion stands calmly', () {
-    final world = _FakeWorld();
-    final cues = DashmaruCueController()
-      ..selectSlide(12)
-      ..attach(world);
-    _advance(cues, 4);
-    cues.selectSlide(13);
-    expect(world.motion, DashmaruMotion.idle);
-    _advance(cues, 12);
-    expect(world.motion, DashmaruMotion.idle);
-    expect(world.expression, DashmaruExpression.normal);
-    expect(world.selections, [DashmaruMotion.sit, DashmaruMotion.idle]);
-  });
-
   test('leaving a one-shot cue cannot replace the next slide reaction', () {
     final world = _FakeWorld();
     final cues = DashmaruCueController()
-      ..selectSlide(14)
+      ..selectSlide(10)
       ..attach(world);
     _advance(cues, 0.5);
     cues.selectSlide(6);
@@ -244,24 +212,24 @@ void main() {
     expect(world.expression, DashmaruExpression.smile);
     expect(world.selections, [DashmaruMotion.wave, DashmaruMotion.celebrate]);
 
-    cues.selectSlide(15);
+    cues.selectSlide(11);
     _advance(cues, 10);
     expect(world.motion, DashmaruMotion.nod);
     expect(world.expression, DashmaruExpression.smile);
-    cues.selectSlide(13);
+    cues.selectSlide(10);
     _advance(cues, 10);
     expect(world.motion, DashmaruMotion.idle);
     expect(world.expression, DashmaruExpression.normal);
   });
 
-  test('sharing waves once while the closing slide keeps waving', () {
+  test('layers waves once while the closing slide keeps waving', () {
     final world = _FakeWorld();
     final cues = DashmaruCueController()
-      ..selectSlide(14)
+      ..selectSlide(10)
       ..attach(world);
     _advance(cues, 2.5);
     expect(world.motion, DashmaruMotion.idle);
-    cues.selectSlide(16);
+    cues.selectSlide(12);
     _advance(cues, 12);
     expect(world.motion, DashmaruMotion.wave);
     expect(world.expression, DashmaruExpression.smile);
@@ -270,10 +238,11 @@ void main() {
   test('jumping from a seated slide allows the full wave after standing', () {
     final world = _FakeWorld();
     final cues = DashmaruCueController()
-      ..selectSlide(11)
+      ..selectSlide(8)
       ..attach(world);
     _advance(cues, 5);
-    cues.selectSlide(14);
+    cues.selectSlide(10);
+    expect(world.expression, DashmaruExpression.normal);
     _advance(cues, 2.5);
     expect(world.motion, DashmaruMotion.wave);
     _advance(cues, 1.25);
@@ -290,8 +259,10 @@ void main() {
       (6, DashmaruExpression.smile),
       (7, DashmaruExpression.strain),
       (8, DashmaruExpression.spiral),
-      (10, DashmaruExpression.spiral),
-      (15, DashmaruExpression.smile),
+      (9, DashmaruExpression.spiral),
+      (10, DashmaruExpression.normal),
+      (11, DashmaruExpression.smile),
+      (12, DashmaruExpression.smile),
     ]) {
       cues.selectSlide(slide, reducedMotion: true);
       _advance(cues, 10);
@@ -332,7 +303,7 @@ void main() {
       expect(world.expression, DashmaruExpression.normal);
     }
     cues.selectDemoMotion(DashmaruMotion.run);
-    cues.selectSlide(9);
+    cues.selectSlide(10);
     _advance(cues, 5);
     expect(world.motion, DashmaruMotion.idle);
     expect(world.expression, DashmaruExpression.normal);
@@ -376,7 +347,7 @@ void main() {
       expect(ideasFrame.center.dx, ordinaryFrame.center.dx);
 
       // Returning to the deck restores its original camera framing.
-      for (final slide in [7, 9, 10, 15, 16]) {
+      for (final slide in [7, 9, 10, 11, 12]) {
         cues.selectSlide(slide);
         final camera = cues.camera(Duration.zero);
         expect(world.distance, closeTo(10.4, 1e-9));
@@ -461,7 +432,7 @@ void main() {
     cues.selectSlide(7);
     cues.dispose();
     _advance(cues, 10);
-    cues.selectSlide(16);
+    cues.selectSlide(12);
     expect(world.advancedFrames, 0);
     expect(world.playing, isFalse);
     final lateWorld = _FakeWorld();

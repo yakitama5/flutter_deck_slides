@@ -13,12 +13,8 @@ void main(List<String> arguments) {
     '/ideas',
     '/learning',
     '/priorities',
-    '/delegate',
     '/decisions',
     '/layers',
-    '/organization',
-    '/curiosity',
-    '/sharing',
     '/why',
     '/thanks',
   ];
@@ -28,7 +24,7 @@ void main(List<String> arguments) {
     multiLine: true,
   ).allMatches(script).toList();
   if (sections.length != routes.length) {
-    throw StateError('Expected 17 scenes in SCRIPT.md.');
+    throw StateError('Expected ${routes.length} scenes in SCRIPT.md.');
   }
   String literal(String value) => jsonEncode(value).replaceAll(r'$', r'\$');
   final output = StringBuffer(
