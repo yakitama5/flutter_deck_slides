@@ -11384,8 +11384,8 @@ break
 case 4:s=l.a
 s===$&&A.a()
 s=A.bm(s,200)
-r=A.bm(A.a2H(l,B.oL,B.Jw),24)
-q=A.bm(A.a2H(l,B.oL,B.Lq),32)
+r=A.bm(A.a2H(l,B.oM,B.Jw),24)
+q=A.bm(A.a2H(l,B.oM,B.Lq),32)
 p=A.bm(l.a,10)
 o=A.bm(l.a,12)
 l.d===$&&A.a()
@@ -11395,8 +11395,8 @@ break
 case 5:s=l.a
 s===$&&A.a()
 s=A.bm(A.Ac(s+240),40)
-r=A.bm(A.a2H(l,B.oN,B.MG),24)
-q=A.bm(A.a2H(l,B.oN,B.MH),32)
+r=A.bm(A.a2H(l,B.oO,B.MG),24)
+q=A.bm(A.a2H(l,B.oO,B.MH),32)
 p=A.bm(l.a+15,8)
 o=A.bm(l.a+15,12)
 l.d===$&&A.a()
@@ -11795,7 +11795,7 @@ aAV(a,b,c){if(b!=null&&!b.i(0,B.C))return A.aKJ(b.bV(A.aLW(c)),a)
 return a},
 aLW(a){var s,r,q,p,o,n
 if(a<0)return 0
-for(s=0;r=B.oM[s],q=r.a,a>=q;){if(a===q||s+1===6)return r.b;++s}p=B.oM[s-1]
+for(s=0;r=B.oN[s],q=r.a,a>=q;){if(a===q||s+1===6)return r.b;++s}p=B.oN[s-1]
 o=p.a
 n=p.b
 return n+(a-o)/(q-o)*(r.b-n)},
@@ -38748,11 +38748,11 @@ gYp(){var s=this.a
 if(s instanceof A.es)return s
 return this.a=new A.es(s)},
 gat5(){var s,r,q,p,o,n=this
-if(n.c===1)return B.oQ
+if(n.c===1)return B.oR
 s=n.d
 r=J.bg(s)
 q=r.gH(s)-J.d1(n.e)-n.f
-if(q===0)return B.oQ
+if(q===0)return B.oR
 p=[]
 for(o=0;o<q;++o)p.push(r.j(s,o))
 p.$flags=3
@@ -41467,7 +41467,7 @@ if(o>0)return s
 return null}}
 A.aka.prototype={
 D(a,b){this.Ny(b,0,b.length,!1)},
-ba(){this.Ny(B.oP,0,0,!0)}}
+ba(){this.Ny(B.oQ,0,0,!0)}}
 A.atb.prototype={
 Ny(a,b,c,d){var s=this.b.anW(a,b,c,d)
 if(s!=null)this.a.nn(s,0,s.length,d)}}
@@ -57800,8 +57800,8 @@ s=r.O
 r.cN=s==null?null:s.gKv()
 a.a=!1},
 np(a,b,c){var s,r,q,p,o=this
-o.iD=A.aD0(o.iD,B.oT)
-o.eU=A.aD0(o.eU,B.oT)
+o.iD=A.aD0(o.iD,B.oU)
+o.eU=A.aD0(o.eU,B.oU)
 s=o.iD
 r=s!=null&&!s.gX(s)
 s=o.eU
@@ -74981,7 +74981,7 @@ b=r?a1:a3.fr
 if(b==null)b=a2.b.c.z
 a3=r?a1:a3.fx
 if(a3==null)a3=a2.b.c.Q
-a=new A.Ae(a4,s,q,p,m,o,n,a5,g===!0,a6,a7,i,h,l,k,j,f,new A.oB(a1),B.oR,e===!0,d,c,b,a3,A.aNj(a2))
+a=new A.Ae(a4,s,q,p,m,o,n,a5,g===!0,a6,a7,i,h,l,k,j,f,new A.oB(a1),B.oS,e===!0,d,c,b,a3,A.aNj(a2))
 if(!a.i(0,a0.e))a0.am(new A.aom(a0,a))},
 yN(){if(this.d==null)this.pt()},
 GU(){this.pt()},
@@ -84871,8 +84871,8 @@ k.Q=n
 s=o.d
 s===$&&A.a()
 if(!s)n.o0()
-k.at=new A.Kv(k.a.d,k.d,j,k.r,k.w,k.y,k.z,k.Q,k.as,j,B.hq,B.oS,j)
-for(l=0;!1;++l)B.oS[l].avj(k.at)},
+k.at=new A.Kv(k.a.d,k.d,j,k.r,k.w,k.y,k.z,k.Q,k.as,j,B.hq,B.oT,j)
+for(l=0;!1;++l)B.oT[l].avj(k.at)},
 aP(a){var s,r,q=this
 q.aZ(a)
 if(!A.c3(a.e,q.a.e)){s=q.a.e
@@ -85378,7 +85378,7 @@ else{k=o.b
 k.toString
 d.toString
 l=new A.E(k,d)}j=l.ag(0,n)
-d=A.aCd(!1,!1,!1,n,!1,null,B.oR,B.Ep,!1,!1,null,null,B.dx,!1,B.ap,null,B.a3,l,!1,!1,B.ap,B.mW,B.ap,B.ap,null)
+d=A.aCd(!1,!1,!1,n,!1,null,B.oS,B.Ep,!1,!1,null,null,B.dx,!1,B.ap,null,B.a3,l,!1,!1,B.ap,B.mW,B.ap,B.ap,null)
 k=e.y
 i=e.z
 h=A.a6(a)
@@ -85801,7 +85801,7 @@ E(a){var s,r,q=null,p=A.aDD(q,t.dm),o=$.azF(),n=o.ax,m=A.aB5(n.a),l=o.ok.z
 l=l==null?q:l.d
 l=m.a9(A.aB6(o,m.as.j8(n.k3,l)))
 n=A.b([],t.p)
-for(s=0;s<9;++s){r=B.oU[s]
+for(s=0;s<9;++s){r=B.oL[s]
 n.push(new A.tu(new A.abz(r),q,A.aB4(r.b,""+r.d+"\u79d2\n\n"+r.e+"\n\n\u51fa\u5178\n"+B.b.b9(r.f,"\n"),r.c),q))}return new A.yU(new A.KZ(p),B.Ft,n,l,B.iu,q)}}
 A.abz.prototype={
 $1(a){var s=this.a
@@ -85837,7 +85837,7 @@ case 8:p=B.a26
 break
 default:p=r}l.push(A.ax2(0,new A.bL(B.Fc,p,r)))
 p=A.cm("FlutterKaigi mini #6 @Okayama",r,r,r,r,r,r,r,A.iO(r,r,o?B.N:B.bH,r,r,r,r,r,r,r,r,18,r,r,r,r,r,!0,r,r,r,r,r,r,r,r),r,r,r)
-q=B.c.kd(B.e.k(B.b.fF(B.oU,q)+1),2,"0")
+q=B.c.kd(B.e.k(B.b.fF(B.oL,q)+1),2,"0")
 s=B.c.kd(B.e.k(9),2,"0")
 l.push(A.Nc(30,A.de(A.b([p,B.ba,A.cm(q+" / "+s,r,r,r,r,r,r,r,A.iO(r,r,o?B.N:B.bH,r,r,r,r,r,r,r,r,18,r,r,r,r,r,!0,r,r,r,r,r,r,r,r),r,r,r)],m),B.E,B.r,B.q),r,r,64,64,r,r))
 return new A.P7(A.t7(A.jK(B.bS,l,B.K,B.cp),new A.d6(n,r,r,r,r,r,B.ay),B.bI),r)}}
@@ -91102,7 +91102,7 @@ B.CF=new A.aj_()
 B.ae=new A.aj3()
 B.bW=new A.aj5()
 B.dS=new A.Q5(0,0,0,0)
-B.oR=s([],A.aj("v<a2i>"))
+B.oS=s([],A.aj("v<a2i>"))
 B.a3U=new A.aja()
 B.aN={}
 B.aS=new A.bB(B.aN,[],t.li)
@@ -91855,21 +91855,48 @@ B.Jt=s(["-apple-system","BlinkMacSystemFont"],t.s)
 B.oK=s(["BlinkMacSystemFont"],t.s)
 B.Jw=s([18,15,10,12,15,18,15,12,12],t.n)
 B.JQ=s(["Noto Color Emoji","Noto Sans Symbols","Noto Sans SC","Noto Sans TC","Noto Sans HK","Noto Sans JP","Noto Sans KR"],t.s)
+B.v8=new A.iC(0,"cover")
+B.MT=s(["\u78ba\u8a8d\u65e5: 2026-09-17",u.E],t.s)
+B.Q2=new A.hU(B.v8,"/cover","FlutterKaigi mini #6 @Okayama",15,"\u5927\u5909\u9577\u3089\u304f\u304a\u5f85\u305f\u305b\u3057\u307e\u3057\u305f\u3001FlutterKaigi mini\u59cb\u3081\u3066\u307e\u3044\u308a\u307e\u3059\uff01\n\u307f\u306a\u3055\u3093\u3001\u672c\u65e5\u306f\u3054\u53c2\u52a0\u3044\u305f\u3060\u304d\u3042\u308a\u304c\u3068\u3046\u3054\u3056\u3044\u307e\u3059\u3002\n\u6700\u521d\u306bFlutterKaigi\u904b\u55b6\u304b\u3089\u3001\u79c1\u305f\u3061\u306e\u6d3b\u52d5\u3068\u3001\u4eca\u65e5\u306e\u6d41\u308c\u30925\u5206\u307b\u3069\u3067\u3054\u7d39\u4ecb\u3057\u307e\u3059\u3002",B.MT)
+B.PT=new A.iC(1,"about")
+B.Le=s(["\u78ba\u8a8d\u65e5: 2026-09-17","https://docs.flutterkaigi.jp/","https://flutterkaigi.connpass.com/","\u5199\u771f: FlutterKaigi 2025 \u516c\u5f0f\u30a2\u30eb\u30d0\u30e0 https://photos.app.goo.gl/D6VmWbVwtYhqaZWH8"],t.s)
+B.Q5=new A.hU(B.PT,"/about","FlutterKaigi\u3068\u306f",40,"\u307e\u305a\u306fFlutterKaigi\u306e\u7d39\u4ecb\u3092\u3055\u305b\u3066\u304f\u3060\u3055\u3044\u3002\n\nFlutterKaigi\u3068\u306f\u3001Flutter\u306b\u95a2\u3059\u308b\u65e5\u672c\u6700\u5927\u7d1a\u306e\u30ab\u30f3\u30d5\u30a1\u30ec\u30f3\u30b9\u3067\u3059\u3002\n\u3053\u308c\u307e\u30672021\u5e74\u306e\u521d\u56de\u304b\u30895\u5ea6\u958b\u50ac\u3057\u3066\u304d\u307e\u3057\u305f\u3002\n\nFlutter\u3084Dart\u306e\u77e5\u898b\u3084Flutter\u611b\u306b\u3064\u3044\u3066\u71b1\u304f\u8a9e\u308a\u5408\u3046\u5834\u3067\u3059\u3002\n\nFlutter\u30a8\u30f3\u30b8\u30cb\u30a2\u540c\u58eb\u306e\u30b3\u30df\u30e5\u30cb\u30b1\u30fc\u30b7\u30e7\u30f3\u306e\u5834\u3092\u63d0\u4f9b\u3057\u3001\u4e92\u3044\u306b\u77e5\u8b58\u3092\u5171\u6709\u3057\u5408\u3046\u3053\u3068\u3067\u958b\u767a\u8005\u4eba\u751f\u3092\u3088\u308a\u3088\u304f\u3057\u305f\u3044\u3001\u3068\u3044\u3046\u7406\u5ff5\u3092\u57fa\u306b\u904b\u55b6\u3057\u3066\u3044\u307e\u3059\u3002\n\u4eca\u65e5\u306emini\u3067\u3082\u3001\u305d\u3093\u306a\u30ef\u30af\u30ef\u30af\u3092\u307f\u3093\u306a\u3067\u5206\u304b\u3061\u5408\u3048\u305f\u3089\u3046\u308c\u3057\u3044\u3067\u3059\u3002",B.Le)
+B.PU=new A.iC(2,"event")
+B.JC=s(["\u78ba\u8a8d\u65e5: 2026-09-17","https://2026.flutterkaigi.jp/",u.z,"\u4f1a\u5834\u5199\u771f: \u6d5c\u677e\u753a\u30b3\u30f3\u30d9\u30f3\u30b7\u30e7\u30f3\u30db\u30fc\u30eb \u516c\u5f0f\u30d5\u30a9\u30c8\u30ae\u30e3\u30e9\u30ea\u30fc\uff08\u30e1\u30a4\u30f3\u30db\u30fc\u30eb\u306e\u30ec\u30a4\u30a2\u30a6\u30c8\u4f8b\uff09 https://www.hmc.conventionhall.jp/facility/#photo"],t.s)
+B.Q0=new A.hU(B.PU,"/event","FlutterKaigi 2026",45,"\u4eca\u5e74\u306eFlutterKaigi\u306f\u300110\u670829\u65e5\u3001\u6728\u66dc\u65e5\u3068\u300130\u65e5\u3001\u91d1\u66dc\u65e5\u306e2\u65e5\u9593\u3067\u3059\u3002\u4f1a\u5834\u306f\u6771\u4eac\u306e\u6d5c\u677e\u753a\u30b3\u30f3\u30d9\u30f3\u30b7\u30e7\u30f3\u30db\u30fc\u30eb\u3067\u3059\u3002\n\n\u30c6\u30fc\u30de\u306f\u300c\u4f1a\u3063\u3066\u3001\u8a71\u3057\u3066\u3001\u71b1\u304f\u306a\u308b\u3002Assemble\u300d\u3002\n\u4eca\u5e74\u306fFlutterNinjas\u3068\u5408\u6d41\u3057\u3066\u3001\u56fd\u5185\u5916\u306eFlutter\u30a8\u30f3\u30b8\u30cb\u30a2\u304c\u96c6\u307e\u308b\u30a4\u30d9\u30f3\u30c8\u306b\u306a\u308a\u307e\u3059\u3002\n\n\u30bb\u30c3\u30b7\u30e7\u30f3\u3092\u805e\u3044\u3066\u7d42\u308f\u308a\u3067\u306f\u306a\u304f\u3001\u305d\u306e\u5834\u3067\u6c17\u306b\u306a\u3063\u305f\u3053\u3068\u3092\u8a71\u3057\u305f\u308a\u3001\u958b\u767a\u306e\u7d4c\u9a13\u3092\u4ea4\u63db\u3057\u305f\u308a\u3001\u4f1a\u5834\u3060\u304b\u3089\u3053\u305d\u751f\u307e\u308c\u308b\u3064\u306a\u304c\u308a\u3092\u697d\u3057\u3093\u3067\u3044\u305f\u3060\u304d\u305f\u3044\u3068\u601d\u3063\u3066\u3044\u307e\u3059\u3002\n\u4eca\u65e5\u3001\u5ca1\u5c71\u3067\u51fa\u4f1a\u3063\u305f\u307f\u306a\u3055\u3093\u3068\u3001\u79cb\u306b\u306f\u6d5c\u677e\u753a\u3067\u3082\u304a\u4f1a\u3044\u3067\u304d\u308b\u3068\u3046\u308c\u3057\u3044\u3067\u3059\u3002\n\u8a73\u3057\u3044\u30d7\u30ed\u30b0\u30e9\u30e0\u306f\u516c\u5f0f\u30b5\u30a4\u30c8\u3067\u3054\u89a7\u3044\u305f\u3060\u3051\u307e\u3059\u3002",B.JC)
+B.PV=new A.iC(3,"tickets")
+B.Jo=s(["\u78ba\u8a8d\u65e5: 2026-09-17",u.z,"https://2026.flutterkaigi.jp/"],t.s)
+B.Q3=new A.hU(B.PV,"/tickets","\u30c1\u30b1\u30c3\u30c8\u306e\u3054\u6848\u5185",40,"\u30c1\u30b1\u30c3\u30c8\u306b\u3064\u3044\u3066\u3082\u5ba3\u4f1d\u3055\u305b\u3066\u304f\u3060\u3055\u3044\u3002\n\u4eca\u65e5\u306e\u30a4\u30d9\u30f3\u30c8\u3092\u53d7\u3051\u3066\u3001\u53c2\u52a0\u3092\u8003\u3048\u3066\u304f\u3060\u3055\u308b\u65b9\u306f\u3001\u3053\u3061\u3089\u306eQR\u30b3\u30fc\u30c9\u304b\u3089\u8ca9\u58f2\u30da\u30fc\u30b8\u3092\u3054\u78ba\u8a8d\u304f\u3060\u3055\u3044\u3002\n\n\u5b66\u751f\u306e\u307f\u306a\u3055\u3093\u306b\u306f\u3001\u7121\u6599\u3067\u53c2\u52a0\u3067\u304d\u308b\u30b9\u30ab\u30e9\u30b7\u30c3\u30d7\u5236\u5ea6\u304c\u3042\u308a\u307e\u3059\u3002\u5229\u7528\u6761\u4ef6\u3084\u7533\u3057\u8fbc\u307f\u65b9\u6cd5\u304c\u3042\u308a\u307e\u3059\u306e\u3067\u3001\u8ca9\u58f2\u30da\u30fc\u30b8\u304b\u3089\u5236\u5ea6\u306e\u8a73\u7d30\u3092\u3054\u89a7\u304f\u3060\u3055\u3044\u3002",B.Jo)
+B.PW=new A.iC(4,"volunteer")
+B.JT=s(["\u78ba\u8a8d\u65e5: 2026-09-17","https://2026.flutterkaigi.jp/",u.Z,"\u5199\u771f: \u30e6\u30fc\u30b6\u30fc\u63d0\u4f9b /Users/yakuran/Downloads/IMG_0936.jpg"],t.s)
+B.Q1=new A.hU(B.PW,"/volunteer","\u30dc\u30e9\u30f3\u30c6\u30a3\u30a2\u30b9\u30bf\u30c3\u30d5\u52df\u96c6\u4e2d",40,"\u305d\u3057\u3066\u73fe\u5728\u3001\u4eca\u5e74\u306eFlutterKaigi\u3092\u4e00\u7dd2\u306b\u3064\u304f\u308b\u5f53\u65e5\u30dc\u30e9\u30f3\u30c6\u30a3\u30a2\u30b9\u30bf\u30c3\u30d5\u3092\u52df\u96c6\u3057\u3066\u3044\u307e\u3059\u3002\n\n\u53c2\u52a0\u8005\u3068\u3057\u3066\u697d\u3057\u3080\u3053\u3068\u306b\u52a0\u3048\u3066\u3001\u30a4\u30d9\u30f3\u30c8\u3092\u652f\u3048\u308b\u5074\u306b\u3082\u8208\u5473\u304c\u3042\u308b\u3001\u904b\u55b6\u306e\u4eba\u305f\u3061\u3068\u95a2\u308f\u3063\u3066\u307f\u305f\u3044\u3002\n\u305d\u3093\u306a\u65b9\u306b\u3001\u305c\u3072\u77e5\u3063\u3066\u3044\u305f\u3060\u304d\u305f\u3044\u52df\u96c6\u3067\u3059\u3002\n\u307f\u3093\u306a\u3067\u96c6\u307e\u308b\u5834\u3092\u3001\u4e00\u7dd2\u306b\u3064\u304f\u3063\u3066\u3044\u3051\u305f\u3089\u3068\u601d\u3063\u3066\u3044\u307e\u3059\u3002\n\n\u52df\u96c6\u306e\u8a73\u3057\u3044\u5185\u5bb9\u3084\u5fdc\u52df\u65b9\u6cd5\u306f\u3001\u3053\u3061\u3089\u306eQR\u30b3\u30fc\u30c9\u304b\u3089\u516c\u5f0f\u306e\u6848\u5185\u3092\u3054\u89a7\u304f\u3060\u3055\u3044\u3002\n\u5c11\u3057\u3067\u3082\u6c17\u306b\u306a\u3063\u305f\u3068\u3044\u3046\u65b9\u306f\u3001\u4eca\u65e5\u306eFlutterKaigi\u904b\u55b6\u306b\u3082\u3001\u305c\u3072\u58f0\u3092\u304b\u3051\u3066\u304f\u3060\u3055\u3044\u3002",B.JT)
+B.PX=new A.iC(5,"mini")
+B.Lv=s(["\u78ba\u8a8d\u65e5: 2026-09-17",u.E,u.J,"\u30a4\u30d9\u30f3\u30c8\u8868\u7d19: \u30e6\u30fc\u30b6\u30fc\u63d0\u4f9b FlutterKaigi mini #6 @Okayama \u753b\u50cf"],t.s)
+B.Q7=new A.hU(B.PX,"/mini","FlutterKaigi mini\u3068\u306f",45,"\u3053\u3053\u304b\u3089\u306f\u3001\u672c\u65e5\u3082\u958b\u50ac\u3057\u3066\u3044\u308b\u300cFlutterKaigi mini\u300d\u306b\u3064\u3044\u3066\u3067\u3059\u3002\nmini\u30a4\u30d9\u30f3\u30c8\u306f\u3001\u5e74\u306b\u4e00\u5ea6\u306e\u30ab\u30f3\u30d5\u30a1\u30ec\u30f3\u30b9\u3060\u3051\u3067\u306a\u304f\u3001\u5e74\u9593\u3092\u901a\u3057\u3066\u3001\u3044\u308d\u3044\u308d\u306a\u5730\u57df\u3067\u96c6\u307e\u308b\u3053\u3068\u3092\u76ee\u6307\u3057\u3066\u3044\u308b\u30df\u30cb\u30a4\u30d9\u30f3\u30c8\u3067\u3059\u3002\n\n\u521d\u56de\u306e\u5927\u962a\u304b\u3089\u4eca\u56de\u30676\u56de\u76ee\u3068\u306a\u308a\u307e\u3059\u3002\n\u5ca1\u5c71.Flutter\u306e\u307f\u306a\u3055\u3093\u3068\u306e\u5171\u50ac\u3067\u3001\u3053\u3053\u3001\u80fd\u697d\u5802\u30db\u30fc\u30ebtenjin9\u3067\u958b\u50ac\u3057\u307e\u3059\u3002\n\u4eca\u65e5\u306f\u80fd\u821e\u53f0\u306e\u4e0a\u3067\u767a\u8868\u3092\u805e\u3051\u308b\u3001\u3061\u3087\u3063\u3068\u7279\u5225\u306a\u6a5f\u4f1a\u3067\u3082\u3042\u308a\u307e\u3059\u3002\n\n\u8a73\u3057\u3044\u304b\u3069\u3046\u304b\u3092\u6c17\u306b\u305b\u305a\u3001\u6c17\u306b\u306a\u3063\u305f\u3053\u3068\u3092\u8a71\u3057\u3066\u307f\u3066\u304f\u3060\u3055\u3044\u3002\n\u30bb\u30c3\u30b7\u30e7\u30f3\u3084LT\u3001\u4f11\u61a9\u306e\u6642\u9593\u3092\u901a\u3057\u3066\u3001\u5730\u57df\u306e\u4e2d\u3067\u3082\u8a71\u304c\u3067\u304d\u308b\u4ef2\u9593\u3068\u51fa\u4f1a\u3063\u3066\u3082\u3089\u3048\u305f\u3089\u3046\u308c\u3057\u3044\u3067\u3059\u3002",B.Lv)
+B.PY=new A.iC(6,"timeline")
+B.oV=s(["\u78ba\u8a8d\u65e5: 2026-09-17\uff08\u516c\u5f0fconnpass\u672c\u6587\u3092\u30d6\u30e9\u30a6\u30b6\u3067\u78ba\u8a8d\uff09",u.E],t.s)
+B.Q6=new A.hU(B.PY,"/timeline","\u4eca\u65e5\u306e\u30bf\u30a4\u30e0\u30e9\u30a4\u30f3 \xb7 \u524d\u534a",30,"\u6700\u5f8c\u306b\u3001\u4eca\u65e5\u306e\u30bf\u30a4\u30e0\u30e9\u30a4\u30f3\u306e\u3054\u7d39\u4ecb\u3067\u3059\u3002\n\u3053\u306e\u3042\u3068\u5354\u8cdb\u306e\u3054\u7d39\u4ecb\u3092\u631f\u307f\u300114\u664215\u5206\u304b\u3089\u30d5\u30ca\u30e2\u30c8\u3055\u3093\u306e\u30bb\u30c3\u30b7\u30e7\u30f3\u3067\u3059\u3002\n\n14\u664240\u5206\u304b\u3089\u306f\u30014\u540d\u306eLT\u3092\u884c\u3044\u307e\u3059\u3002\n",B.oV)
+B.PZ=new A.iC(7,"timelineLater")
+B.Q_=new A.hU(B.PZ,"/timeline-later","\u4eca\u65e5\u306e\u30bf\u30a4\u30e0\u30e9\u30a4\u30f3 \xb7 \u5f8c\u534a",25,"\u305d\u306e\u5f8c\u3001\u4f11\u61a9\u3092\u631f\u3093\u3067\u304b\u3089FlutterKaigi/\u5ca1\u5c71.Flutter/Flutter\u306b\u95a2\u3059\u308b\u30ab\u30f3\u30bf\u30f3\u306a\u30af\u30a4\u30ba\u30a4\u30d9\u30f3\u30c8\u3092\u884c\u3044\u307e\u3059\u3002\n\n\u30af\u30a4\u30ba\u30a4\u30d9\u30f3\u30c8\u5f8c\u306b\u3001\u4e2d\u6d25\u5ddd\u3055\u3093\u304b\u3089\u306e\u30bb\u30c3\u30b7\u30e7\u30f3\u3092\u8074\u8b1b\u3057\u3001\u6700\u5f8c\u306b\u30a2\u30f3\u30b1\u30fc\u30c8\u3068\u5199\u771f\u64ae\u5f71\u3092\u884c\u3044\u300117\u6642\u306b\u5b8c\u5168\u64a4\u53ce\u3057\u307e\u3059\u3002\n",B.oV)
+B.v9=new A.iC(8,"handoff")
+B.M0=s(["\u78ba\u8a8d\u65e5: 2026-09-17",u.E,u.J],t.s)
+B.Q4=new A.hU(B.v9,"/handoff","Over to you, \u5ca1\u5c71.Flutter!",20,"FlutterKaigi\u304b\u3089\u306e\u3054\u7d39\u4ecb\u306f\u4ee5\u4e0a\u3067\u3059\u3002\n\u3053\u3053\u304b\u3089\u306e\u9032\u884c\u306f\u3001\u5171\u50ac\u30b3\u30df\u30e5\u30cb\u30c6\u30a3\u3067\u3042\u308b\u5ca1\u5c71.Flutter\u306e\u307f\u306a\u3055\u3093\u306b\u304a\u6e21\u3057\u3057\u307e\u3059\u3002\n\n\u4eca\u65e5\u306fFlutter\u3092\u304d\u3063\u304b\u3051\u306b\u3001\u305f\u304f\u3055\u3093\u8a71\u3057\u3066\u3001\u65b0\u3057\u3044\u3064\u306a\u304c\u308a\u3092\u3064\u304f\u3063\u3066\u3082\u3089\u3048\u305f\u3089\u3046\u308c\u3057\u3044\u3067\u3059\u3002\n\u305d\u308c\u3067\u306f\u3001\u5ca1\u5c71.Flutter\u306e\u307f\u306a\u3055\u3093\u3001\u3088\u308d\u3057\u304f\u304a\u9858\u3044\u3057\u307e\u3059\uff01",B.M0)
+B.oL=s([B.Q2,B.Q5,B.Q0,B.Q3,B.Q1,B.Q7,B.Q6,B.Q_,B.Q4],A.aj("v<hU>"))
 B.RZ=new A.lh("14:15\u201314:40","Flutter \xd7 \u30d8\u30eb\u30b9\u30b1\u30a2 \u301c \u30cd\u30a4\u30c6\u30a3\u30d6\u30b3\u30fc\u30c9\uff10\u3078\u306e\u6311\u6226 \u301c","\u30d5\u30ca\u30e2\u30c8 \u3055\u3093","SESSION")
 B.S1=new A.lh("14:40\u201314:50","\u30c0\u30a4\u30e4\u304c\u6b32\u3057\u304b\u3063\u305f\u3060\u3051\u306a\u306e\u306b\u3001\u306a\u305c\u304bFlutter\u3092\u66f8\u3044\u3066\u3044\u307e\u3059\u3002","\u306f\u308a\u306d\u305a\u307f \u3055\u3093","LT")
 B.S_=new A.lh("14:50\u201315:00","Flutter\u521d\u5b66\u8005\u304c\u77e5\u3063\u3066\u304a\u304f\u3079\u304d\u25ef\u500b\u306e\u3053\u3068","\u3088\u308f\u3088\u308f\u30a8\u30f3\u30b8\u30cb\u30a2 \u3055\u3093","LT")
 B.JR=s([B.RZ,B.S1,B.S_],t.zi)
 B.oY=new A.iw("en",null,"US")
 B.hq=s([B.oY],t.ss)
-B.oL=s([0,41,61,101,131,181,251,301,360],t.n)
+B.oM=s([0,41,61,101,131,181,251,301,360],t.n)
 B.a1V=new A.lM(0,0)
 B.a2_=new A.lM(1,0.05)
 B.a1Y=new A.lM(3,0.08)
 B.a1Z=new A.lM(6,0.11)
 B.a1X=new A.lM(8,0.12)
 B.a1W=new A.lM(12,0.14)
-B.oM=s([B.a1V,B.a2_,B.a1Y,B.a1Z,B.a1X,B.a1W],A.aj("v<lM>"))
-B.oP=s([],t.t)
+B.oN=s([B.a1V,B.a2_,B.a1Y,B.a1Z,B.a1X,B.a1W],A.aj("v<lM>"))
+B.oQ=s([],t.t)
 B.IQ=s([6,18],t.t)
 B.IR=s([6,22],t.t)
 B.IU=s([6,26],t.t)
@@ -91909,8 +91936,8 @@ B.Kx=s([6,28,54,80,106,132,158],t.t)
 B.Ld=s([6,32,58,84,110,136,162],t.t)
 B.Ho=s([6,26,54,82,110,138,166],t.t)
 B.JY=s([6,30,58,86,114,142,170],t.t)
-B.Kg=s([B.oP,B.IQ,B.IR,B.IU,B.J_,B.J5,B.IS,B.IT,B.IV,B.IZ,B.J0,B.J4,B.J6,B.IW,B.IX,B.IY,B.J1,B.J2,B.J3,B.J7,B.IL,B.L0,B.Mi,B.Kf,B.Lk,B.JX,B.JH,B.Nc,B.LI,B.MI,B.L6,B.N0,B.Jj,B.MC,B.L4,B.Lt,B.Kx,B.Ld,B.Ho,B.JY],t.Zb)
-B.oN=s([0,21,51,121,151,191,271,321,360],t.n)
+B.Kg=s([B.oQ,B.IQ,B.IR,B.IU,B.J_,B.J5,B.IS,B.IT,B.IV,B.IZ,B.J0,B.J4,B.J6,B.IW,B.IX,B.IY,B.J1,B.J2,B.J3,B.J7,B.IL,B.L0,B.Mi,B.Kf,B.Lk,B.JX,B.JH,B.Nc,B.LI,B.MI,B.L6,B.N0,B.Jj,B.MC,B.L4,B.Lt,B.Kx,B.Ld,B.Ho,B.JY],t.Zb)
+B.oO=s([0,21,51,121,151,191,271,321,360],t.n)
 B.Ku=s([-1,0,0,1,0,0,-1,0,1,0,0,0,-1,1,0,1,1,1,1,0],t.n)
 B.Bq=new A.IK(2,"outer")
 B.n7=new A.G(0.09803921568627451,0,0,0,B.i)
@@ -92117,9 +92144,9 @@ B.JN=s([34,54,24,34,55,25],t.t)
 B.Ke=s([20,45,15,61,46,16],t.t)
 B.hr=s([B.HD,B.HC,B.HB,B.HE,B.HI,B.HH,B.HG,B.HF,B.HK,B.HJ,B.HT,B.HS,B.Hz,B.HV,B.HU,B.Ir,B.HA,B.HW,B.K0,B.JP,B.HX,B.Iu,B.It,B.Is,B.HY,B.Iv,B.L1,B.KA,B.HQ,B.Lf,B.Ml,B.MA,B.HR,B.HP,B.KK,B.Mr,B.Lm,B.JK,B.N2,B.Ll,B.Ip,B.Lr,B.K9,B.LE,B.Mm,B.Jz,B.Kl,B.JB,B.Iq,B.MM,B.MW,B.N8,B.KD,B.Ja,B.M1,B.KB,B.KW,B.Lg,B.K7,B.Hs,B.JU,B.M5,B.KC,B.Kb,B.KS,B.Hp,B.Ly,B.JJ,B.Lb,B.Kk,B.KL,B.Mc,B.Ka,B.N1,B.Ju,B.I1,B.JI,B.JV,B.MD,B.MX,B.HM,B.Hu,B.Jl,B.KG,B.Kw,B.Hv,B.Jm,B.I_,B.Ln,B.LB,B.Kh,B.Hq,B.MP,B.K5,B.HN,B.KT,B.JS,B.In,B.Mt,B.Jp,B.MR,B.KM,B.JF,B.L8,B.JD,B.Lj,B.Mp,B.K3,B.JA,B.My,B.KH,B.Mb,B.L5,B.N9,B.KN,B.KE,B.N4,B.Kd,B.Mv,B.Mq,B.N6,B.M3,B.J9,B.JM,B.Ht,B.Me,B.Io,B.Lz,B.KZ,B.Nd,B.JW,B.M4,B.JL,B.M7,B.LG,B.M_,B.LF,B.K_,B.Jg,B.LH,B.Kc,B.Hx,B.LZ,B.K4,B.MV,B.J8,B.Lx,B.MF,B.L2,B.Li,B.K1,B.Na,B.MZ,B.ML,B.MO,B.Lp,B.JE,B.Ks,B.JN,B.Ke],t.Zb)
 B.LT=s([],t.QP)
-B.oT=s([],A.aj("v<aWr>"))
+B.oU=s([],A.aj("v<aWr>"))
 B.LW=s([],t.D)
-B.oS=s([],A.aj("v<aWU>"))
+B.oT=s([],A.aj("v<aWU>"))
 B.LN=s([],t.fJ)
 B.LX=s([],t.ER)
 B.LV=s([],t.NL)
@@ -92138,35 +92165,8 @@ B.LO=s([],t.AS)
 B.a45=s([],t.p)
 B.LP=s([],A.aj("v<fl>"))
 B.LM=s([],t.n)
-B.oQ=s([],t.ee)
+B.oR=s([],t.ee)
 B.LQ=s([],t.XS)
-B.v8=new A.iC(0,"cover")
-B.MT=s(["\u78ba\u8a8d\u65e5: 2026-09-17",u.E],t.s)
-B.Q2=new A.hU(B.v8,"/cover","FlutterKaigi mini #6 @Okayama",15,"\u307f\u306a\u3055\u3093\u3001\u3053\u3093\u306b\u3061\u306f\u3002FlutterKaigi mini\u3001\u5ca1\u5c71\u3078\u3088\u3046\u3053\u305d\uff01\n\u4eca\u65e5\u306f\u3054\u53c2\u52a0\u3044\u305f\u3060\u304d\u3001\u3042\u308a\u304c\u3068\u3046\u3054\u3056\u3044\u307e\u3059\u3002\u6700\u521d\u306bFlutterKaigi\u904b\u55b6\u304b\u3089\u3001\u79c1\u305f\u3061\u306e\u6d3b\u52d5\u3068\u3001\u4eca\u65e5\u306e\u6d41\u308c\u30925\u5206\u307b\u3069\u3067\u3054\u7d39\u4ecb\u3057\u307e\u3059\u3002",B.MT)
-B.PT=new A.iC(1,"about")
-B.Le=s(["\u78ba\u8a8d\u65e5: 2026-09-17","https://docs.flutterkaigi.jp/","https://flutterkaigi.connpass.com/","\u5199\u771f: FlutterKaigi 2025 \u516c\u5f0f\u30a2\u30eb\u30d0\u30e0 https://photos.app.goo.gl/D6VmWbVwtYhqaZWH8"],t.s)
-B.Q4=new A.hU(B.PT,"/about","FlutterKaigi\u3068\u306f",40,"\u307e\u305a\u3001FlutterKaigi\u306b\u3064\u3044\u3066\u3067\u3059\u3002Flutter\u3084Dart\u306e\u77e5\u898b\u3092\u5171\u6709\u3057\u3001\u30a8\u30f3\u30b8\u30cb\u30a2\u540c\u58eb\u304c\u4ea4\u6d41\u3059\u308b\u3001\u65e5\u672c\u306e\u6280\u8853\u30ab\u30f3\u30d5\u30a1\u30ec\u30f3\u30b9\u3067\u3059\u3002Flutter\u30a8\u30f3\u30b8\u30cb\u30a2\u306e\u6709\u5fd7\u306b\u3088\u308b\u5b9f\u884c\u59d4\u54e1\u4f1a\u304c\u904b\u55b6\u3057\u3066\u3044\u307e\u3059\u3002\n\n\u767a\u8868\u304b\u3089\u65b0\u3057\u3044\u6280\u8853\u3084\u958b\u767a\u306e\u5de5\u592b\u3092\u77e5\u308b\u697d\u3057\u3055\u3002\u305d\u3057\u3066\u3001Flutter\u304c\u597d\u304d\u306a\u4ef2\u9593\u3068\u3001\u3064\u304f\u3063\u305f\u3082\u306e\u3084\u8a66\u3057\u3066\u307f\u305f\u3053\u3068\u3092\u8a9e\u3063\u3066\u76db\u308a\u4e0a\u304c\u308b\u697d\u3057\u3055\u3002\u305d\u3093\u306a\u697d\u3057\u3055\u304c\u8a70\u307e\u3063\u305f\u5834\u6240\u3067\u3059\u3002\u300c\u305d\u308c\u3001\u9762\u767d\u3044\u306d\uff01\u300d\u3068\u8a71\u3057\u3066\u3044\u308b\u3046\u3061\u306b\u3001\u5468\u308a\u306e\u71b1\u3092\u611f\u3058\u3066\u3001\u81ea\u5206\u3082\u4f55\u304b\u3064\u304f\u308a\u305f\u304f\u306a\u308b\u3002\u4eca\u65e5\u306emini\u3067\u3082\u3001\u305d\u3093\u306a\u30ef\u30af\u30ef\u30af\u3092\u307f\u3093\u306a\u3067\u5206\u304b\u3061\u5408\u3048\u305f\u3089\u3046\u308c\u3057\u3044\u3067\u3059\u3002",B.Le)
-B.PU=new A.iC(2,"event")
-B.JC=s(["\u78ba\u8a8d\u65e5: 2026-09-17","https://2026.flutterkaigi.jp/",u.z,"\u4f1a\u5834\u5199\u771f: \u6d5c\u677e\u753a\u30b3\u30f3\u30d9\u30f3\u30b7\u30e7\u30f3\u30db\u30fc\u30eb \u516c\u5f0f\u30d5\u30a9\u30c8\u30ae\u30e3\u30e9\u30ea\u30fc\uff08\u30e1\u30a4\u30f3\u30db\u30fc\u30eb\u306e\u30ec\u30a4\u30a2\u30a6\u30c8\u4f8b\uff09 https://www.hmc.conventionhall.jp/facility/#photo"],t.s)
-B.Q0=new A.hU(B.PU,"/event","FlutterKaigi 2026",45,"\u4eca\u5e74\u306eFlutterKaigi\u306f\u300110\u670829\u65e5\u3001\u6728\u66dc\u65e5\u3068\u300130\u65e5\u3001\u91d1\u66dc\u65e5\u306e2\u65e5\u9593\u3067\u3059\u3002\u4f1a\u5834\u306f\u6771\u4eac\u306e\u6d5c\u677e\u753a\u30b3\u30f3\u30d9\u30f3\u30b7\u30e7\u30f3\u30db\u30fc\u30eb\u3067\u3059\u3002\n\n\u30c6\u30fc\u30de\u306f\u300c\u4f1a\u3063\u3066\u3001\u8a71\u3057\u3066\u3001\u71b1\u304f\u306a\u308b\u3002Assemble\u300d\u3002\u4eca\u5e74\u306fFlutterNinjas\u3068\u5408\u6d41\u3057\u3066\u3001\u56fd\u5185\u5916\u306eFlutter\u30a8\u30f3\u30b8\u30cb\u30a2\u304c\u96c6\u307e\u308b\u30a4\u30d9\u30f3\u30c8\u306b\u306a\u308a\u307e\u3059\u3002\n\n\u30bb\u30c3\u30b7\u30e7\u30f3\u3092\u805e\u3044\u3066\u7d42\u308f\u308a\u3067\u306f\u306a\u304f\u3001\u305d\u306e\u5834\u3067\u6c17\u306b\u306a\u3063\u305f\u3053\u3068\u3092\u8a71\u3057\u305f\u308a\u3001\u958b\u767a\u306e\u7d4c\u9a13\u3092\u4ea4\u63db\u3057\u305f\u308a\u3001\u4f1a\u5834\u3060\u304b\u3089\u3053\u305d\u751f\u307e\u308c\u308b\u3064\u306a\u304c\u308a\u3092\u697d\u3057\u3093\u3067\u3044\u305f\u3060\u304d\u305f\u3044\u3068\u601d\u3063\u3066\u3044\u307e\u3059\u3002\u4eca\u65e5\u3001\u5ca1\u5c71\u3067\u51fa\u4f1a\u3063\u305f\u307f\u306a\u3055\u3093\u3068\u3001\u79cb\u306b\u306f\u6d5c\u677e\u753a\u3067\u3082\u304a\u4f1a\u3044\u3067\u304d\u308b\u3068\u3046\u308c\u3057\u3044\u3067\u3059\u3002\u8a73\u3057\u3044\u30d7\u30ed\u30b0\u30e9\u30e0\u306f\u516c\u5f0f\u30b5\u30a4\u30c8\u3067\u3054\u89a7\u3044\u305f\u3060\u3051\u307e\u3059\u3002",B.JC)
-B.PV=new A.iC(3,"tickets")
-B.Jo=s(["\u78ba\u8a8d\u65e5: 2026-09-17",u.z,"https://2026.flutterkaigi.jp/"],t.s)
-B.Q3=new A.hU(B.PV,"/tickets","\u30c1\u30b1\u30c3\u30c8\u306e\u3054\u6848\u5185",40,"\u30c1\u30b1\u30c3\u30c8\u306f\u73fe\u5728\u8ca9\u58f2\u4e2d\u3067\u3059\u3002\u4e00\u822c\u30c1\u30b1\u30c3\u30c8\u306f\u7a0e\u629c\u304d1\u4e072,000\u5186\u3067\u3059\u3002\u53c2\u52a0\u3092\u8003\u3048\u3066\u3044\u308b\u65b9\u306f\u3001\u3053\u3061\u3089\u306eQR\u30b3\u30fc\u30c9\u304b\u3089\u8ca9\u58f2\u30da\u30fc\u30b8\u3092\u3054\u78ba\u8a8d\u304f\u3060\u3055\u3044\u3002\n\n\u5b66\u751f\u306e\u307f\u306a\u3055\u3093\u306b\u306f\u3001\u7121\u6599\u3067\u53c2\u52a0\u3067\u304d\u308b\u30b9\u30ab\u30e9\u30b7\u30c3\u30d7\u5236\u5ea6\u304c\u3042\u308a\u307e\u3059\u3002\u5229\u7528\u6761\u4ef6\u3084\u7533\u3057\u8fbc\u307f\u65b9\u6cd5\u304c\u3042\u308a\u307e\u3059\u306e\u3067\u3001\u8ca9\u58f2\u30da\u30fc\u30b8\u304b\u3089\u5236\u5ea6\u306e\u8a73\u7d30\u3092\u3054\u89a7\u304f\u3060\u3055\u3044\u3002\n\n\u307e\u305f\u3001FlutterKaigi\u3092\u5fdc\u63f4\u3057\u3066\u304f\u3060\u3055\u308b\u65b9\u5411\u3051\u306b\u3001\u7a0e\u629c\u304d1\u4e075,000\u5186\u304b\u3089\u306e\u500b\u4eba\u30b9\u30dd\u30f3\u30b5\u30fc\u30c1\u30b1\u30c3\u30c8\u3082\u7528\u610f\u3057\u3066\u3044\u307e\u3059\u3002\u3069\u306e\u30c1\u30b1\u30c3\u30c8\u304c\u81ea\u5206\u306b\u5408\u3046\u304b\u3001\u305c\u3072\u4e00\u5ea6\u30c1\u30a7\u30c3\u30af\u3057\u3066\u307f\u3066\u304f\u3060\u3055\u3044\u3002\u5468\u308a\u306b\u8208\u5473\u306e\u3042\u308a\u305d\u3046\u306a\u65b9\u304c\u3044\u308c\u3070\u3001\u958b\u50ac\u60c5\u5831\u3092\u5171\u6709\u3057\u3066\u3082\u3089\u3048\u308b\u3068\u3046\u308c\u3057\u3044\u3067\u3059\u3002",B.Jo)
-B.PW=new A.iC(4,"volunteer")
-B.JT=s(["\u78ba\u8a8d\u65e5: 2026-09-17","https://2026.flutterkaigi.jp/",u.Z,"\u5199\u771f: \u30e6\u30fc\u30b6\u30fc\u63d0\u4f9b /Users/yakuran/Downloads/IMG_0936.jpg"],t.s)
-B.Q_=new A.hU(B.PW,"/volunteer","\u30dc\u30e9\u30f3\u30c6\u30a3\u30a2\u30b9\u30bf\u30c3\u30d5\u52df\u96c6\u4e2d",40,"\u305d\u3057\u3066\u3001\u4eca\u5e74\u306eFlutterKaigi\u3092\u4e00\u7dd2\u306b\u3064\u304f\u308b\u5f53\u65e5\u30dc\u30e9\u30f3\u30c6\u30a3\u30a2\u30b9\u30bf\u30c3\u30d5\u3092\u52df\u96c6\u3057\u3066\u3044\u307e\u3059\u3002\n\n\u53c2\u52a0\u8005\u3068\u3057\u3066\u697d\u3057\u3080\u3053\u3068\u306b\u52a0\u3048\u3066\u3001\u30a4\u30d9\u30f3\u30c8\u3092\u652f\u3048\u308b\u5074\u306b\u3082\u8208\u5473\u304c\u3042\u308b\u3001\u904b\u55b6\u306e\u4eba\u305f\u3061\u3068\u95a2\u308f\u3063\u3066\u307f\u305f\u3044\u3002\u305d\u3093\u306a\u65b9\u306b\u3001\u305c\u3072\u77e5\u3063\u3066\u3044\u305f\u3060\u304d\u305f\u3044\u52df\u96c6\u3067\u3059\u3002\u307f\u3093\u306a\u3067\u96c6\u307e\u308b\u5834\u3092\u3001\u4e00\u7dd2\u306b\u3064\u304f\u3063\u3066\u3044\u3051\u305f\u3089\u3068\u601d\u3063\u3066\u3044\u307e\u3059\u3002\n\n\u52df\u96c6\u306e\u8a73\u3057\u3044\u5185\u5bb9\u3084\u5fdc\u52df\u65b9\u6cd5\u306f\u3001\u3053\u3061\u3089\u306eQR\u30b3\u30fc\u30c9\u304b\u3089\u516c\u5f0f\u306e\u6848\u5185\u3092\u3054\u89a7\u304f\u3060\u3055\u3044\u3002\u307e\u305a\u306f\u5185\u5bb9\u3092\u8aad\u3093\u3067\u3001\u81ea\u5206\u306b\u5408\u3044\u305d\u3046\u304b\u898b\u3066\u3082\u3089\u3048\u308c\u3070\u5927\u4e08\u592b\u3067\u3059\u3002\u5c11\u3057\u6c17\u306b\u306a\u3063\u305f\u3068\u3044\u3046\u65b9\u306f\u3001\u4eca\u65e5\u306eFlutterKaigi\u904b\u55b6\u306b\u3082\u3001\u305c\u3072\u58f0\u3092\u304b\u3051\u3066\u304f\u3060\u3055\u3044\u3002",B.JT)
-B.PX=new A.iC(5,"mini")
-B.Lv=s(["\u78ba\u8a8d\u65e5: 2026-09-17",u.E,u.J,"\u30a4\u30d9\u30f3\u30c8\u8868\u7d19: \u30e6\u30fc\u30b6\u30fc\u63d0\u4f9b FlutterKaigi mini #6 @Okayama \u753b\u50cf"],t.s)
-B.Q7=new A.hU(B.PX,"/mini","FlutterKaigi mini\u3068\u306f",45,"\u3053\u3053\u304b\u3089\u306f\u3001\u4eca\u65e5\u306eFlutterKaigi mini\u306b\u3064\u3044\u3066\u3067\u3059\u3002mini\u306f\u3001\u5e74\u306b\u4e00\u5ea6\u306e\u30ab\u30f3\u30d5\u30a1\u30ec\u30f3\u30b9\u3060\u3051\u3067\u306a\u304f\u3001\u5e74\u9593\u3092\u901a\u3057\u3066\u3001\u3044\u308d\u3044\u308d\u306a\u5730\u57df\u3067\u96c6\u307e\u308b\u3053\u3068\u3092\u76ee\u6307\u3057\u3066\u3044\u308b\u30df\u30cb\u30a4\u30d9\u30f3\u30c8\u3067\u3059\u3002\n\n\u4eca\u56de\u306f\u7b2c6\u56de\u3002\u5ca1\u5c71.Flutter\u306e\u307f\u306a\u3055\u3093\u3068\u306e\u5171\u50ac\u3067\u3001\u3053\u3053\u3001\u80fd\u697d\u5802\u30db\u30fc\u30ebtenjin9\u3067\u958b\u50ac\u3057\u307e\u3059\u3002\u4eca\u65e5\u306f\u80fd\u821e\u53f0\u306e\u4e0a\u3067\u767a\u8868\u3092\u805e\u3051\u308b\u3001\u3061\u3087\u3063\u3068\u7279\u5225\u306a\u6a5f\u4f1a\u3067\u3082\u3042\u308a\u307e\u3059\u3002\n\nFlutter\u3092\u666e\u6bb5\u306e\u4ed5\u4e8b\u3067\u4f7f\u3063\u3066\u3044\u308b\u65b9\u3082\u3001\u8da3\u5473\u3067\u89e6\u3063\u3066\u3044\u308b\u65b9\u3082\u3001\u3053\u308c\u304b\u3089\u59cb\u3081\u305f\u3044\u65b9\u3082\u3001\u5b66\u751f\u306e\u307f\u306a\u3055\u3093\u3082\u6b53\u8fce\u3067\u3059\u3002\u8a73\u3057\u3044\u304b\u3069\u3046\u304b\u3092\u6c17\u306b\u305b\u305a\u3001\u6c17\u306b\u306a\u3063\u305f\u3053\u3068\u3092\u8a71\u3057\u3066\u307f\u3066\u304f\u3060\u3055\u3044\u3002\u30bb\u30c3\u30b7\u30e7\u30f3\u3084LT\u3001\u4f11\u61a9\u306e\u6642\u9593\u3092\u901a\u3057\u3066\u3001\u3053\u306e\u5730\u57df\u3067Flutter\u306e\u8a71\u304c\u3067\u304d\u308b\u4ef2\u9593\u3068\u51fa\u4f1a\u3063\u3066\u3082\u3089\u3048\u305f\u3089\u3046\u308c\u3057\u3044\u3067\u3059\u3002",B.Lv)
-B.PY=new A.iC(6,"timeline")
-B.oV=s(["\u78ba\u8a8d\u65e5: 2026-09-17\uff08\u516c\u5f0fconnpass\u672c\u6587\u3092\u30d6\u30e9\u30a6\u30b6\u3067\u78ba\u8a8d\uff09",u.E],t.s)
-B.Q6=new A.hU(B.PY,"/timeline","\u4eca\u65e5\u306e\u30bf\u30a4\u30e0\u30e9\u30a4\u30f3 \xb7 \u524d\u534a",30,"\u4eca\u65e5\u306e\u524d\u534a\u306e\u6d41\u308c\u3067\u3059\u3002\u3053\u306e\u3042\u3068\u5354\u8cdb\u306e\u3054\u7d39\u4ecb\u3092\u631f\u307f\u300114\u664215\u5206\u304b\u3089\u30d5\u30ca\u30e2\u30c8\u3055\u3093\u306e\u3001Flutter\u3068\u30d8\u30eb\u30b9\u30b1\u30a2\u306e\u30bb\u30c3\u30b7\u30e7\u30f3\u3067\u3059\u3002\n\n14\u664240\u5206\u304b\u3089\u306f\u3001\u306f\u308a\u306d\u305a\u307f\u3055\u3093\u306e\u300c\u30c0\u30a4\u30e4\u304c\u6b32\u3057\u304b\u3063\u305f\u3060\u3051\u306a\u306e\u306b\u3001\u306a\u305c\u304bFlutter\u3092\u66f8\u3044\u3066\u3044\u307e\u3059\u3002\u300d\u3002\u7d9a\u3044\u3066\u3001\u3088\u308f\u3088\u308f\u30a8\u30f3\u30b8\u30cb\u30a2\u3055\u3093\u306e\u3001Flutter\u521d\u5b66\u8005\u304c\u77e5\u3063\u3066\u304a\u304f\u3079\u304d\u3053\u3068\u306b\u3064\u3044\u3066\u306eLT\u3067\u3059\u3002\n\n\u3010\u9032\u884c\u78ba\u8a8d\u7528\u30fb\u8aad\u307f\u4e0a\u3052\u4e0d\u8981\u3011\n13:30 \u958b\u5834\n14:00\u201314:10 \u30aa\u30fc\u30d7\u30cb\u30f3\u30b0\uff08\u4f1a\u5834\u6848\u5185 / FlutterKaigi \u4e26\u3073\u306b FlutterKaigi mini \u306b\u3064\u3044\u3066\u30fb\u904b\u55b6\uff09\n14:10\u201314:15 \u5354\u8cdb\u306e\u3054\u7d39\u4ecb\n14:15\u201314:40 Flutter \xd7 \u30d8\u30eb\u30b9\u30b1\u30a2 \u301c \u30cd\u30a4\u30c6\u30a3\u30d6\u30b3\u30fc\u30c9\uff10\u3078\u306e\u6311\u6226 \u301c / \u30d5\u30ca\u30e2\u30c8 \u3055\u3093\n14:40\u201314:50 \u30c0\u30a4\u30e4\u304c\u6b32\u3057\u304b\u3063\u305f\u3060\u3051\u306a\u306e\u306b\u3001\u306a\u305c\u304bFlutter\u3092\u66f8\u3044\u3066\u3044\u307e\u3059\u3002 / \u306f\u308a\u306d\u305a\u307f \u3055\u3093\n14:50\u201315:00 Flutter\u521d\u5b66\u8005\u304c\u77e5\u3063\u3066\u304a\u304f\u3079\u304d\u25ef\u500b\u306e\u3053\u3068 / \u3088\u308f\u3088\u308f\u30a8\u30f3\u30b8\u30cb\u30a2 \u3055\u3093",B.oV)
-B.PZ=new A.iC(7,"timelineLater")
-B.Q5=new A.hU(B.PZ,"/timeline-later","\u4eca\u65e5\u306e\u30bf\u30a4\u30e0\u30e9\u30a4\u30f3 \xb7 \u5f8c\u534a",25,"\u7d9a\u3044\u3066\u3001kishisuke\u3055\u3093\u306eFlutter\u3068iOS 27\u3068iPhone Duo\u3001yakuran\u306e\u300c\u305d\u306eFlutter\u30b3\u30fc\u30c9\u3001\u306a\u305c\u66f8\u3044\u305f\uff1f\u300d\u3067\u3059\u3002\n\n\u4f11\u61a9\u5f8c\u306f\u30af\u30a4\u30ba\u30a4\u30d9\u30f3\u30c8\u300116\u6642\u304b\u3089\u306f\u30a2\u30c4\u30b7@CodeRabbit\u3055\u3093\u306e\u3001AI\u30b3\u30fc\u30c7\u30a3\u30f3\u30b0\u30a8\u30fc\u30b8\u30a7\u30f3\u30c8\u3068CodeRabbit\u306e\u30bb\u30c3\u30b7\u30e7\u30f3\u3067\u3059\u3002\u6700\u5f8c\u306b\u30a2\u30f3\u30b1\u30fc\u30c8\u3068\u5199\u771f\u64ae\u5f71\u3092\u884c\u3044\u300117\u6642\u306b\u5b8c\u5168\u64a4\u53ce\u3057\u307e\u3059\u3002\n\n\u3010\u9032\u884c\u78ba\u8a8d\u7528\u30fb\u8aad\u307f\u4e0a\u3052\u4e0d\u8981\u3011\n15:00\u201315:10 Flutter\u3068iOS 27\u3068iPhone Duo / kishisuke \u3055\u3093\n15:10\u201315:20 \u305d\u306eFlutter\u30b3\u30fc\u30c9\u3001\u306a\u305c\u66f8\u3044\u305f\uff1f / yakuran \u3055\u3093\n15:20\u201315:40 \u4f11\u61a9\n15:40\u201316:00 \u30af\u30a4\u30ba\u30a4\u30d9\u30f3\u30c8\uff08FlutterKaigi / \u5ca1\u5c71.Flutter / Flutter\u306b\u95a2\u3059\u308b\u30af\u30a4\u30ba\u30fb\u904b\u55b6\uff09\n16:00\u201316:25 \u958b\u767a\u3092\u9ad8\u901f\u5316\u3002AI\u30b3\u30fc\u30c7\u30a3\u30f3\u30b0\u30a8\u30fc\u30b8\u30a7\u30f3\u30c8\u3068CodeRabbit\u3067\u30eb\u30fc\u30d7\u30a8\u30f3\u30b8\u30cb\u30a2\u30ea\u30f3\u30b0 / \u30a2\u30c4\u30b7@CodeRabbit \u3055\u3093\n16:25\u201316:30 \u30a2\u30f3\u30b1\u30fc\u30c8\u30bf\u30a4\u30e0\n16:30\u2013 \u30af\u30ed\u30fc\u30b8\u30f3\u30b0\u30fb\u5199\u771f\u64ae\u5f71\uff08\u904b\u55b6\uff09\n17:00 \u5b8c\u5168\u64a4\u53ce",B.oV)
-B.v9=new A.iC(8,"handoff")
-B.M0=s(["\u78ba\u8a8d\u65e5: 2026-09-17",u.E,u.J],t.s)
-B.Q1=new A.hU(B.v9,"/handoff","Over to you, \u5ca1\u5c71.Flutter!",20,"FlutterKaigi\u304b\u3089\u306e\u3054\u7d39\u4ecb\u306f\u4ee5\u4e0a\u3067\u3059\u3002\u3053\u3053\u304b\u3089\u306e\u9032\u884c\u306f\u3001\u5730\u5143\u30b3\u30df\u30e5\u30cb\u30c6\u30a3\u306e\u5ca1\u5c71.Flutter\u306e\u307f\u306a\u3055\u3093\u306b\u304a\u6e21\u3057\u3057\u307e\u3059\u3002\n\n\u4eca\u65e5\u306fFlutter\u3092\u304d\u3063\u304b\u3051\u306b\u3001\u305f\u304f\u3055\u3093\u8a71\u3057\u3066\u3001\u65b0\u3057\u3044\u3064\u306a\u304c\u308a\u3092\u3064\u304f\u3063\u3066\u3082\u3089\u3048\u305f\u3089\u3046\u308c\u3057\u3044\u3067\u3059\u3002\u305d\u308c\u3067\u306f\u3001\u5ca1\u5c71.Flutter\u306e\u307f\u306a\u3055\u3093\u3001\u3088\u308d\u3057\u304f\u304a\u9858\u3044\u3057\u307e\u3059\uff01",B.M0)
-B.oU=s([B.Q2,B.Q4,B.Q0,B.Q3,B.Q_,B.Q7,B.Q6,B.Q5,B.Q1],A.aj("v<hU>"))
 B.Po=new A.h(0,2)
 B.BH=new A.e_(0.75,B.fn,B.n7,B.Po,1.5)
 B.Mg=s([B.BH],t.sq)
@@ -92811,9 +92811,9 @@ B.kA=s(["Noto Sans TC"],t.s)
 B.L_=s(["Noto Sans HK","Noto Sans TC"],t.s)
 B.II=s(["Noto Sans JP"],t.s)
 B.HZ=s(["Noto Sans KR"],t.s)
-B.oO=s(["Noto Sans SC"],t.s)
+B.oP=s(["Noto Sans SC"],t.s)
 B.N_=s(["Noto Sans SC","Noto Sans TC"],t.s)
-B.hB=new A.bB(B.Pg,[B.kA,B.kA,B.kA,B.L_,B.II,B.HZ,B.oO,B.oO,B.N_],t.VJ)
+B.hB=new A.bB(B.Pg,[B.kA,B.kA,B.kA,B.L_,B.II,B.HZ,B.oP,B.oP,B.N_],t.VJ)
 B.Pc={Abort:0,Again:1,AltLeft:2,AltRight:3,ArrowDown:4,ArrowLeft:5,ArrowRight:6,ArrowUp:7,AudioVolumeDown:8,AudioVolumeMute:9,AudioVolumeUp:10,Backquote:11,Backslash:12,Backspace:13,BracketLeft:14,BracketRight:15,BrightnessDown:16,BrightnessUp:17,BrowserBack:18,BrowserFavorites:19,BrowserForward:20,BrowserHome:21,BrowserRefresh:22,BrowserSearch:23,BrowserStop:24,CapsLock:25,Comma:26,ContextMenu:27,ControlLeft:28,ControlRight:29,Convert:30,Copy:31,Cut:32,Delete:33,Digit0:34,Digit1:35,Digit2:36,Digit3:37,Digit4:38,Digit5:39,Digit6:40,Digit7:41,Digit8:42,Digit9:43,DisplayToggleIntExt:44,Eject:45,End:46,Enter:47,Equal:48,Escape:49,Esc:50,F1:51,F10:52,F11:53,F12:54,F13:55,F14:56,F15:57,F16:58,F17:59,F18:60,F19:61,F2:62,F20:63,F21:64,F22:65,F23:66,F24:67,F3:68,F4:69,F5:70,F6:71,F7:72,F8:73,F9:74,Find:75,Fn:76,FnLock:77,GameButton1:78,GameButton10:79,GameButton11:80,GameButton12:81,GameButton13:82,GameButton14:83,GameButton15:84,GameButton16:85,GameButton2:86,GameButton3:87,GameButton4:88,GameButton5:89,GameButton6:90,GameButton7:91,GameButton8:92,GameButton9:93,GameButtonA:94,GameButtonB:95,GameButtonC:96,GameButtonLeft1:97,GameButtonLeft2:98,GameButtonMode:99,GameButtonRight1:100,GameButtonRight2:101,GameButtonSelect:102,GameButtonStart:103,GameButtonThumbLeft:104,GameButtonThumbRight:105,GameButtonX:106,GameButtonY:107,GameButtonZ:108,Help:109,Home:110,Hyper:111,Insert:112,IntlBackslash:113,IntlRo:114,IntlYen:115,KanaMode:116,KeyA:117,KeyB:118,KeyC:119,KeyD:120,KeyE:121,KeyF:122,KeyG:123,KeyH:124,KeyI:125,KeyJ:126,KeyK:127,KeyL:128,KeyM:129,KeyN:130,KeyO:131,KeyP:132,KeyQ:133,KeyR:134,KeyS:135,KeyT:136,KeyU:137,KeyV:138,KeyW:139,KeyX:140,KeyY:141,KeyZ:142,KeyboardLayoutSelect:143,Lang1:144,Lang2:145,Lang3:146,Lang4:147,Lang5:148,LaunchApp1:149,LaunchApp2:150,LaunchAssistant:151,LaunchControlPanel:152,LaunchMail:153,LaunchScreenSaver:154,MailForward:155,MailReply:156,MailSend:157,MediaFastForward:158,MediaPause:159,MediaPlay:160,MediaPlayPause:161,MediaRecord:162,MediaRewind:163,MediaSelect:164,MediaStop:165,MediaTrackNext:166,MediaTrackPrevious:167,MetaLeft:168,MetaRight:169,MicrophoneMuteToggle:170,Minus:171,NonConvert:172,NumLock:173,Numpad0:174,Numpad1:175,Numpad2:176,Numpad3:177,Numpad4:178,Numpad5:179,Numpad6:180,Numpad7:181,Numpad8:182,Numpad9:183,NumpadAdd:184,NumpadBackspace:185,NumpadClear:186,NumpadClearEntry:187,NumpadComma:188,NumpadDecimal:189,NumpadDivide:190,NumpadEnter:191,NumpadEqual:192,NumpadMemoryAdd:193,NumpadMemoryClear:194,NumpadMemoryRecall:195,NumpadMemoryStore:196,NumpadMemorySubtract:197,NumpadMultiply:198,NumpadParenLeft:199,NumpadParenRight:200,NumpadSubtract:201,Open:202,PageDown:203,PageUp:204,Paste:205,Pause:206,Period:207,Power:208,PrintScreen:209,PrivacyScreenToggle:210,Props:211,Quote:212,Resume:213,ScrollLock:214,Select:215,SelectTask:216,Semicolon:217,ShiftLeft:218,ShiftRight:219,ShowAllWindows:220,Slash:221,Sleep:222,Space:223,Super:224,Suspend:225,Tab:226,Turbo:227,Undo:228,WakeUp:229,ZoomToggle:230}
 B.xV=new A.m(458907)
 B.xB=new A.m(458873)
