@@ -14,6 +14,11 @@ FlutterKaigi mini 向けの [だしゅまる3Dデモ](slides/20260919_flutterkai
 歩行・ジャンプ・バイバイ・まばたきを再生できます。GLBと生成ソースは暗号化して管理し、
 [モデルの復元手順](docs/private-assets.md)に沿って準備するとWeb / macOSで起動できます。
 
+同イベントのLT「そのFlutterコード、なぜ書いた？」は、
+[構成と起動方法](slides/20260919_flutterkaigi_mini_lt/README.md)・
+[読み上げ原稿](slides/20260919_flutterkaigi_mini_lt/SCRIPT.md)から確認できます。
+Noto Sans JPとイベントカラーの濃紺を基調にしたMaterialテーマで、全17場面に3Dだしゅまるのデモと演出を組み込んでいます。
+
 技術選定の絵本LT「リスくんと ぴったりのかご」は、
 [スライド](https://yakitama5.github.io/flutter_deck_slides/202609_technologychoice/)と
 [読み上げ原稿・時間配分](slides/202609_technologychoice/SCRIPT.md)から確認できます。
