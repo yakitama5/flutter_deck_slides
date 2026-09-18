@@ -46,11 +46,12 @@ WebはFlutter SceneのWebGL2バックエンドで3Dモデルを描画します�
 | [lib/backdrop.dart](lib/backdrop.dart) | 本文やモデルを邪魔しない静止した幾何学背景 |
 | [lib/slides.dart](lib/slides.dart) | 全17場面の画面レイアウト、自己紹介のQRコード、出典リンク |
 | [lib/showcase_video.dart](lib/showcase_video.dart) | 公式紹介動画のサムネイルと、クリック後の動画再生 |
-| [lib/pages.dart](lib/pages.dart) | 各場面のルート、タイトル、秒数、発表者ノート |
+| [lib/pages.dart](lib/pages.dart) | 各場面のルート、タイトル、秒数、発表者ノートへの参照 |
+| [lib/speaker_notes.dart](lib/speaker_notes.dart) | `SCRIPT.md`から生成する発表者ノートの本文 |
 | [tool/sync_notes.dart](tool/sync_notes.dart) | `SCRIPT.md`から発表者ノートを同期 |
 | [lib/mascot.dart](lib/mascot.dart) | 3Dシーンの事前読み込み、デモ操作、スライドに合わせた動作と表情 |
 
-原稿を編集したら、このスライドのディレクトリで`dart tool/sync_notes.dart`を実行して発表者ノートへ反映します。
+原稿は`SCRIPT.md`で編集し、このスライドのディレクトリで`dart tool/sync_notes.dart`を実行して`lib/pages.dart`と`lib/speaker_notes.dart`へ反映します。
 画面の文案・レイアウトは`lib/slides.dart`で編集します。
 
 ## 共有モデルとビルドフック
