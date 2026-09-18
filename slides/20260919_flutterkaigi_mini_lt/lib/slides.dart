@@ -457,14 +457,14 @@ class LtSlide extends StatelessWidget {
   ];
 
   List<Widget> _practice(ColorScheme c) => [
-    _heading('作りながら、\n「なぜ？」を考える', size: 96),
+    _heading('作るときも、「なぜ？」', size: 96),
     _At(
       x: 118,
       y: 459,
       width: 1270,
       child: _PromptQuestion(
         icon: Icons.question_answer_outlined,
-        text: 'AIの提案の理由を聞く',
+        text: '理由を聞く',
         color: c.primary,
       ),
     ),
@@ -474,7 +474,7 @@ class LtSlide extends StatelessWidget {
       width: 1270,
       child: _PromptQuestion(
         icon: Icons.check_circle_outline_rounded,
-        text: '今回の目的・条件に合うか考える',
+        text: '目的に合う？',
         color: c.secondary,
       ),
     ),
@@ -484,7 +484,7 @@ class LtSlide extends StatelessWidget {
       width: 1270,
       child: _PromptQuestion(
         icon: Icons.edit_note_rounded,
-        text: '選んだ理由を一言残す',
+        text: '理由を残す',
         color: c.tertiary,
       ),
     ),

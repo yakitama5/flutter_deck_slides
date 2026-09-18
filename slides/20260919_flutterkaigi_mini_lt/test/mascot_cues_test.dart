@@ -17,6 +17,7 @@ class _FakeWorld extends DashmaruScene {
   double advancedSeconds = 0;
   int advancedFrames = 0;
   final List<DashmaruMotion> selections = [];
+  final List<bool> animatedTransitions = [];
 
   @override
   DashmaruMotion get motion => selectedMotion;
@@ -27,6 +28,7 @@ class _FakeWorld extends DashmaruScene {
   @override
   void selectMotion(DashmaruMotion value, {bool animateTransition = true}) {
     selections.add(value);
+    animatedTransitions.add(animateTransition);
     selectedMotion = value;
     isPlaying = true;
   }
@@ -130,6 +132,7 @@ void main() {
     (7, DashmaruMotion.shake, DashmaruExpression.strain),
     (8, DashmaruMotion.sit, DashmaruExpression.spiral),
     (9, DashmaruMotion.tilt, DashmaruExpression.spiral),
+    (10, DashmaruMotion.nod, DashmaruExpression.smile),
     (11, DashmaruMotion.nod, DashmaruExpression.smile),
   ]) {
     test('slide $slide keeps its motion and face across repeated loops', () {
@@ -140,7 +143,10 @@ void main() {
 
       // Let many complete clip durations pass. The cue must not fall back to
       // idle, clear the face, or keep restarting the seated entrance.
-      _advance(cues, 40);
+      _advance(cues, 25);
+      expect(world.motion, motion);
+      expect(world.displayedExpression, expression);
+      _advance(cues, 15);
       expect(world.motion, motion);
       expect(world.displayedExpression, expression);
       expect(world.playing, isTrue);
@@ -181,10 +187,10 @@ void main() {
     expect(world.motion, DashmaruMotion.tilt);
     expect(world.expression, DashmaruExpression.spiral);
     cues.selectSlide(10);
-    expect(world.motion, DashmaruMotion.wave);
-    expect(world.expression, DashmaruExpression.normal);
-    _advance(cues, 10);
-    expect(world.motion, DashmaruMotion.idle);
+    expect(world.motion, DashmaruMotion.nod);
+    expect(world.expression, DashmaruExpression.smile);
+    _advance(cues, 25);
+    expect(world.motion, DashmaruMotion.nod);
     cues.selectSlide(12);
     _advance(cues, 10);
     expect(world.motion, DashmaruMotion.wave);
@@ -200,53 +206,44 @@ void main() {
     expect(world.expression, DashmaruExpression.smile);
   });
 
-  test('leaving a one-shot cue cannot replace the next slide reaction', () {
+  test('layers and why keep nodding before and after the final wave', () {
     final world = _FakeWorld();
     final cues = DashmaruCueController()
       ..selectSlide(10)
       ..attach(world);
-    _advance(cues, 0.5);
-    cues.selectSlide(6);
-    _advance(cues, 10);
-    expect(world.motion, DashmaruMotion.celebrate);
-    expect(world.expression, DashmaruExpression.smile);
-    expect(world.selections, [DashmaruMotion.wave, DashmaruMotion.celebrate]);
-
-    cues.selectSlide(11);
-    _advance(cues, 10);
-    expect(world.motion, DashmaruMotion.nod);
-    expect(world.expression, DashmaruExpression.smile);
-    cues.selectSlide(10);
-    _advance(cues, 10);
-    expect(world.motion, DashmaruMotion.idle);
-    expect(world.expression, DashmaruExpression.normal);
+    for (final (slide, motion) in [
+      (10, DashmaruMotion.nod),
+      (11, DashmaruMotion.nod),
+      (12, DashmaruMotion.wave),
+      (11, DashmaruMotion.nod),
+      (10, DashmaruMotion.nod),
+    ]) {
+      cues.selectSlide(slide);
+      _advance(cues, 25);
+      expect(world.motion, motion);
+      expect(world.displayedExpression, DashmaruExpression.smile);
+      expect(world.playing, isTrue);
+    }
   });
 
-  test('layers waves once while the closing slide keeps waving', () {
-    final world = _FakeWorld();
-    final cues = DashmaruCueController()
-      ..selectSlide(10)
-      ..attach(world);
-    _advance(cues, 2.5);
-    expect(world.motion, DashmaruMotion.idle);
-    cues.selectSlide(12);
-    _advance(cues, 12);
-    expect(world.motion, DashmaruMotion.wave);
-    expect(world.expression, DashmaruExpression.smile);
-  });
-
-  test('jumping from a seated slide allows the full wave after standing', () {
+  test('leaving priorities stands before the persistent smiling nod', () {
     final world = _FakeWorld();
     final cues = DashmaruCueController()
       ..selectSlide(8)
       ..attach(world);
     _advance(cues, 5);
     cues.selectSlide(10);
-    expect(world.expression, DashmaruExpression.normal);
+    expect(world.motion, DashmaruMotion.nod);
+    expect(world.expression, DashmaruExpression.smile);
+    // The shared scene owns the grounded stand-up transition. Keep it enabled
+    // instead of snapping from Sit straight to the nod's standing pose.
+    expect(world.animatedTransitions.last, isTrue);
     _advance(cues, 2.5);
-    expect(world.motion, DashmaruMotion.wave);
-    _advance(cues, 1.25);
-    expect(world.motion, DashmaruMotion.idle);
+    expect(world.motion, DashmaruMotion.nod);
+    _advance(cues, 25);
+    expect(world.motion, DashmaruMotion.nod);
+    expect(world.expression, DashmaruExpression.smile);
+    expect(world.selections, [DashmaruMotion.sit, DashmaruMotion.nod]);
   });
 
   test('reduced motion freezes cues but allows an explicit demo gesture', () {
@@ -260,7 +257,7 @@ void main() {
       (7, DashmaruExpression.strain),
       (8, DashmaruExpression.spiral),
       (9, DashmaruExpression.spiral),
-      (10, DashmaruExpression.normal),
+      (10, DashmaruExpression.smile),
       (11, DashmaruExpression.smile),
       (12, DashmaruExpression.smile),
     ]) {
@@ -305,8 +302,8 @@ void main() {
     cues.selectDemoMotion(DashmaruMotion.run);
     cues.selectSlide(10);
     _advance(cues, 5);
-    expect(world.motion, DashmaruMotion.idle);
-    expect(world.expression, DashmaruExpression.normal);
+    expect(world.motion, DashmaruMotion.nod);
+    expect(world.expression, DashmaruExpression.smile);
   });
 
   test(

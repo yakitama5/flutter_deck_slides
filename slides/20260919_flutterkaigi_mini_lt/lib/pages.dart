@@ -77,7 +77,7 @@ const ltPages = <LtPage>[
   ),
   LtPage(
     route: "/layers",
-    title: "作りながら、「なぜ？」を考える",
+    title: "作るときも、「なぜ？」",
     seconds: 25,
     notes: SpeakerNotes.layers,
   ),
