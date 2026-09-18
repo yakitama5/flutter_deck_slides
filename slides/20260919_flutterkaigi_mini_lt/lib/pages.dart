@@ -18,13 +18,13 @@ const ltPages = <LtPage>[
   LtPage(
     route: "/title",
     title: "そのFlutterコード、なぜ書いた？",
-    seconds: 10,
+    seconds: 15,
     notes: SpeakerNotes.title,
   ),
   LtPage(
     route: "/about",
     title: "やくらん",
-    seconds: 15,
+    seconds: 30,
     notes: SpeakerNotes.about,
   ),
   LtPage(
@@ -36,25 +36,25 @@ const ltPages = <LtPage>[
   LtPage(
     route: "/flutter-scene",
     title: "半年前に紹介したFlutter Scene",
-    seconds: 25,
+    seconds: 40,
     notes: SpeakerNotes.flutterScene,
   ),
   LtPage(
     route: "/showcase",
     title: "これもFlutterなの？",
-    seconds: 35,
+    seconds: 45,
     notes: SpeakerNotes.showcase,
   ),
   LtPage(
     route: "/dashmaru",
-    title: "知識がなくてもモデル作成からサンプルまで",
-    seconds: 60,
+    title: "3Dの知識がなくてもモデル作成からサンプルまで",
+    seconds: 50,
     notes: SpeakerNotes.dashmaru,
   ),
   LtPage(
     route: "/ideas",
     title: "アイデアがそのまま動くものに",
-    seconds: 20,
+    seconds: 25,
     notes: SpeakerNotes.ideas,
   ),
   LtPage(
@@ -65,45 +65,27 @@ const ltPages = <LtPage>[
   ),
   LtPage(
     route: "/priorities",
-    title: "「なにを優先させるか？」を考えるのは人",
-    seconds: 30,
+    title: "これから、何を学ぶ？",
+    seconds: 20,
     notes: SpeakerNotes.priorities,
   ),
   LtPage(
     route: "/delegate",
-    title: "細かい判断にも理由はある",
-    seconds: 20,
+    title: "アーキテクチャを理解する",
+    seconds: 45,
     notes: SpeakerNotes.delegate,
   ),
   LtPage(
     route: "/decisions",
-    title: "3つの条件から、技術を考える",
-    seconds: 20,
+    title: "知見として、選択肢を増やす",
+    seconds: 65,
     notes: SpeakerNotes.decisions,
   ),
   LtPage(
     route: "/layers",
-    title: "どこまで設計するか？",
-    seconds: 45,
+    title: "作るときも、「なぜ？」",
+    seconds: 30,
     notes: SpeakerNotes.layers,
-  ),
-  LtPage(
-    route: "/organization",
-    title: "保守を続けられる技術か？",
-    seconds: 45,
-    notes: SpeakerNotes.organization,
-  ),
-  LtPage(
-    route: "/curiosity",
-    title: "使う人へ、どう届けるか？",
-    seconds: 40,
-    notes: SpeakerNotes.curiosity,
-  ),
-  LtPage(
-    route: "/sharing",
-    title: "「なぜ」を残す",
-    seconds: 35,
-    notes: SpeakerNotes.sharing,
   ),
   LtPage(
     route: "/why",
@@ -114,7 +96,7 @@ const ltPages = <LtPage>[
   LtPage(
     route: "/thanks",
     title: "ご清聴ありがとうございました",
-    seconds: 10,
+    seconds: 5,
     notes: SpeakerNotes.thanks,
   ),
 ];

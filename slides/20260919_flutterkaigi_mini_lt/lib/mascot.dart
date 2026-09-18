@@ -13,7 +13,7 @@ Rect dashmaruActorBounds(int slideIndex) => switch (slideIndex) {
   // Celebrate's full-body hops need more space above and beside the actor.
   // Keep its center X and bottom aligned with the usual companion frame.
   6 => const Rect.fromLTWH(1420, 530, 470, 500),
-  16 => const Rect.fromLTWH(1110, 220, 790, 790),
+  13 => const Rect.fromLTWH(1110, 220, 790, 790),
   _ => const Rect.fromLTWH(1460, 660, 390, 370),
 };
 
@@ -288,8 +288,8 @@ class _DashmaruActorState extends State<DashmaruActor> {
 
 /// Slide cues advance on the same clock as the actual animation clips.
 ///
-/// Navigation replaces the whole sequence synchronously. There are no timers
-/// or async cue callbacks that can change an actor after its slide has left.
+/// Navigation replaces the motion and expression synchronously. No timers or
+/// async cue callbacks can change an actor after its slide has left.
 /// A scene attached after loading receives only the latest selected slide.
 class DashmaruCueController {
   static const _cameraDistance = 10.4;
@@ -301,10 +301,6 @@ class DashmaruCueController {
   int _slideIndex = 0;
   bool _reducedMotion = false;
   bool _disposed = false;
-  List<_CueStage> _stages = const [];
-  int _stageIndex = 0;
-  double _stageElapsed = 0;
-  double _riseRemaining = 0;
 
   scene.PerspectiveCamera camera(Duration elapsed) {
     final camera = _world!.camera(elapsed);
@@ -341,9 +337,6 @@ class DashmaruCueController {
   }
 
   void _applySlide() {
-    _stages = const [];
-    _stageIndex = 0;
-    _stageElapsed = 0;
     final world = _world;
     if (world == null) return;
     world.setCamera('front');
@@ -357,69 +350,60 @@ class DashmaruCueController {
     };
     world.setSpeed(1);
     final expression = switch (_slideIndex) {
-      6 || 15 || 16 => DashmaruExpression.smile,
+      6 || 11 || 12 || 13 => DashmaruExpression.smile,
       7 => DashmaruExpression.strain,
       8 || 10 => DashmaruExpression.spiral,
       _ => DashmaruExpression.normal,
     };
     if (_slideIndex < 5 || _reducedMotion) {
-      _riseRemaining = 0;
       world.selectMotion(DashmaruMotion.idle, animateTransition: false);
       world.selectExpression(expression);
       world.setPlaying(false);
       world.tick(Duration.zero, 0);
       return;
     }
-    double duration(DashmaruMotion motion) => world.durations[motion] ?? 2.5;
-    const idle = _CueStage(DashmaruMotion.idle);
-    _stages = switch (_slideIndex) {
-      5 => const [_CueStage(DashmaruMotion.wave)],
-      6 => const [
-        _CueStage(
-          DashmaruMotion.celebrate,
-          expression: DashmaruExpression.smile,
-        ),
-      ],
-      7 => const [
-        _CueStage(DashmaruMotion.shake, expression: DashmaruExpression.strain),
-      ],
-      8 => const [
-        _CueStage(DashmaruMotion.sit, expression: DashmaruExpression.spiral),
-      ],
-      10 => const [
-        _CueStage(DashmaruMotion.tilt, expression: DashmaruExpression.spiral),
-      ],
-      11 || 12 => const [_CueStage(DashmaruMotion.sit)],
-      14 => [
-        _CueStage(DashmaruMotion.wave, seconds: duration(DashmaruMotion.wave)),
-        idle,
-      ],
-      15 => const [
-        _CueStage(DashmaruMotion.nod, expression: DashmaruExpression.smile),
-      ],
-      16 => const [
-        _CueStage(DashmaruMotion.wave, expression: DashmaruExpression.smile),
-      ],
-      _ => const [idle],
+    final stage = switch (_slideIndex) {
+      5 => const _CueStage(DashmaruMotion.wave),
+      6 => const _CueStage(
+        DashmaruMotion.celebrate,
+        expression: DashmaruExpression.smile,
+      ),
+      7 => const _CueStage(
+        DashmaruMotion.shake,
+        expression: DashmaruExpression.strain,
+      ),
+      8 => const _CueStage(
+        DashmaruMotion.sit,
+        expression: DashmaruExpression.spiral,
+      ),
+      9 => const _CueStage(DashmaruMotion.idle),
+      10 => const _CueStage(
+        DashmaruMotion.tilt,
+        expression: DashmaruExpression.spiral,
+      ),
+      11 || 12 => const _CueStage(
+        DashmaruMotion.nod,
+        expression: DashmaruExpression.smile,
+      ),
+      13 => const _CueStage(
+        DashmaruMotion.wave,
+        expression: DashmaruExpression.smile,
+      ),
+      _ => const _CueStage(DashmaruMotion.idle),
     };
-    _applyStage();
+    _applyStage(stage);
     world.tick(Duration.zero, 0);
   }
 
-  void _applyStage() {
+  void _applyStage(_CueStage stage) {
     final world = _world!;
-    final stage = _stages[_stageIndex];
     final unchanged = world.motion == stage.motion;
-    if (stage.motion == DashmaruMotion.sit) {
-      _riseRemaining = 0;
-    } else if (world.motion == DashmaruMotion.sit) {
-      _riseRemaining = 1.25;
-    }
     final retainingPose =
         stage.motion == DashmaruMotion.sit ||
         stage.motion == DashmaruMotion.idle;
-    // Keep the seated playback phase through the video and QR examples.
-    // Re-entering a one-shot gesture starts a fresh full clip.
+    // Keep an unchanged seated or idle pose at its current playback phase.
+    // Re-entering another gesture starts a fresh full clip. The shared scene
+    // handles the grounded standing transition when leaving a seated pose.
     if (!unchanged || !retainingPose) {
       world.selectMotion(stage.motion, animateTransition: !unchanged);
     }
@@ -434,31 +418,11 @@ class DashmaruCueController {
     // DashmaruScene samples and applies the scene graph itself. Advancing the
     // graph a second time here would double the authored animation speed.
     world.tick(elapsed, delta);
-    final risingDelta = math.min(_riseRemaining, delta);
-    _riseRemaining = math.max(0, _riseRemaining - delta);
-    if (_stages.isEmpty) return;
-    final motion = _stages[_stageIndex].motion;
-    final gesture =
-        motion == DashmaruMotion.jump ||
-        motion == DashmaruMotion.wave ||
-        motion == DashmaruMotion.blink;
-    // Jumping straight from a seated slide still gets a full gesture after
-    // the source scene has finished its grounded standing transition.
-    _stageElapsed += gesture ? delta - risingDelta : delta;
-    final seconds = _stages[_stageIndex].seconds;
-    if (seconds != null &&
-        _stageElapsed + 1e-9 >= seconds &&
-        _stageIndex + 1 < _stages.length) {
-      _stageIndex++;
-      _stageElapsed = 0;
-      _applyStage();
-    }
   }
 
   void selectDemoMotion(DashmaruMotion motion) {
     final world = _world;
     if (_disposed || world == null || _slideIndex != 5) return;
-    _stages = const [];
     world.selectMotion(motion);
     world.selectExpression(
       motion == DashmaruMotion.run
@@ -478,20 +442,14 @@ class DashmaruCueController {
 
   void dispose() {
     _disposed = true;
-    _stages = const [];
     _world?.setPlaying(false);
     _world = null;
   }
 }
 
 class _CueStage {
-  const _CueStage(
-    this.motion, {
-    this.expression = DashmaruExpression.normal,
-    this.seconds,
-  });
+  const _CueStage(this.motion, {this.expression = DashmaruExpression.normal});
 
   final DashmaruMotion motion;
   final DashmaruExpression expression;
-  final double? seconds;
 }
