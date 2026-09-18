@@ -4,7 +4,5 @@
     "sha": "0804ce53db0a010a01a740cbf8a429672ed8e0cc",
     "run_id": 35340435491
   },
-  "pending_cleanup": [
-    72
-  ]
+  "pending_cleanup": []
 }
