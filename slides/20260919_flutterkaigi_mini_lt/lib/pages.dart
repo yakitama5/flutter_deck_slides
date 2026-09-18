@@ -83,19 +83,19 @@ const ltPages = <LtPage>[
   ),
   LtPage(
     route: "/layers",
-    title: "どこまで設計するか？",
+    title: "まずは、次の開催で試したい",
     seconds: 45,
     notes: SpeakerNotes.layers,
   ),
   LtPage(
     route: "/organization",
-    title: "保守を続けられる技術か？",
+    title: "続けて使うなら、条件が変わる",
     seconds: 45,
     notes: SpeakerNotes.organization,
   ),
   LtPage(
     route: "/curiosity",
-    title: "使う人へ、どう届けるか？",
+    title: "理由が分かれば、選び直せる",
     seconds: 40,
     notes: SpeakerNotes.curiosity,
   ),

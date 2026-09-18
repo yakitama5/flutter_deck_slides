@@ -68,9 +68,9 @@ class LtSlide extends StatelessWidget {
       8 => _priorities(c),
       9 => _delegate(c),
       10 => _transition(c),
-      11 => _scopeChoice(c),
-      12 => _maintenanceChoice(c),
-      13 => _deliveryChoice(c),
+      11 => _firstRelease(c),
+      12 => _continuedUse(c),
+      13 => _reconsider(c),
       14 => _sharing(c),
       15 => _closing(c),
       16 => _thanks(c),
@@ -470,58 +470,41 @@ class LtSlide extends StatelessWidget {
     ),
   ];
 
-  List<Widget> _scopeChoice(ColorScheme c) => _conditionExample(
+  List<Widget> _firstRelease(ColorScheme c) => _appDecision(
     c,
-    title: 'どこまで設計するか？',
-    condition: 'アプリの規模感は？',
-    firstTitle: '小さく試す',
-    firstBody: '画面の近くに\n状態と処理を置く',
-    firstIcon: Icons.science_outlined,
-    secondTitle: '機能が増えていく',
-    secondBody: '状態・処理を\n役割ごとに分ける',
-    secondIcon: Icons.account_tree_outlined,
-    reason: '将来への備えと、今の実装負担を考える',
+    title: 'まずは、次の開催で試したい',
+    context: '仮の例：勉強会のタイムテーブルアプリ',
+    scope: '一覧と詳細が中心',
+    lifetime: 'まず1回使ってみる',
+    people: '参加者がURLから使う',
+    choiceTitle: '今回の選択',
+    choice: 'FlutterでWeb公開\n予定データは同梱',
+    reason: 'まず公開して、使い勝手を確かめたい',
     accent: c.primary,
   );
 
-  List<Widget> _maintenanceChoice(ColorScheme c) => _conditionExample(
+  List<Widget> _continuedUse(ColorScheme c) => _appDecision(
     c,
-    title: '保守を続けられる技術か？',
-    condition: '今後も長く使い続ける？',
-    firstTitle: '短期間で試す',
-    firstBody: '導入しやすさ\n慣れた技術',
-    firstIcon: Icons.bolt_rounded,
-    secondTitle: '長く育てていく',
-    secondBody: '更新・不具合調査\n引き継ぎのしやすさ',
-    secondIcon: Icons.build_outlined,
-    reason: '作るときの便利さと、その後の手間',
+    title: '続けて使うなら、条件が変わる',
+    context: '同じアプリを、これからの開催でも使いたい',
+    scope: '予定を編集する機能も',
+    lifetime: 'これから毎回使う',
+    people: '参加者＋運営メンバー',
+    choiceTitle: '見直したい構成',
+    choice: '予定データの更新と\nアプリの公開を分ける',
+    reason: '使う期間と、更新する人が変わった',
     accent: c.secondary,
   );
 
-  List<Widget> _deliveryChoice(ColorScheme c) => _conditionExample(
-    c,
-    title: '使う人へ、どう届けるか？',
-    condition: 'だれがつかう？',
-    firstTitle: 'すぐ触ってほしい',
-    firstBody: 'URLから使える\nWebを候補に',
-    firstIcon: Icons.link_rounded,
-    secondTitle: '端末と機能が大事',
-    secondBody: '対象端末に合わせて\nアプリの配布を考える',
-    secondIcon: Icons.devices_rounded,
-    reason: '使う場面に合うか。そこでFlutterを選ぶ理由は？',
-    accent: c.tertiary,
-  );
-
-  List<Widget> _conditionExample(
+  List<Widget> _appDecision(
     ColorScheme c, {
     required String title,
-    required String condition,
-    required String firstTitle,
-    required String firstBody,
-    required IconData firstIcon,
-    required String secondTitle,
-    required String secondBody,
-    required IconData secondIcon,
+    required String context,
+    required String scope,
+    required String lifetime,
+    required String people,
+    required String choiceTitle,
+    required String choice,
     required String reason,
     required Color accent,
   }) => [
@@ -529,31 +512,49 @@ class LtSlide extends StatelessWidget {
     _At(
       x: 115,
       y: 267,
-      width: 1280,
-      child: _Copy(condition, size: 39, color: accent),
+      width: 1560,
+      child: _Copy(context, size: 35, color: accent),
     ),
     _At(
       x: 115,
-      y: 383,
+      y: 369,
       width: 1280,
-      height: 326,
+      height: 390,
       child: Row(
         children: [
-          Expanded(
-            child: _ConditionChoice(
-              title: firstTitle,
-              body: firstBody,
-              icon: firstIcon,
-              accent: accent,
+          SizedBox(
+            width: 650,
+            child: _DecisionPanel(
+              title: '今回の条件',
+              icon: Icons.event_note_outlined,
+              accent: c.onSurfaceVariant,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  _ScenarioFact(label: '規模感', value: scope, color: c.primary),
+                  _ScenarioFact(
+                    label: '長く使う',
+                    value: lifetime,
+                    color: c.secondary,
+                  ),
+                  _ScenarioFact(label: '使う人', value: people, color: c.tertiary),
+                ],
+              ),
             ),
           ),
-          const SizedBox(width: 28),
+          SizedBox(
+            width: 80,
+            child: Icon(Icons.arrow_forward_rounded, size: 38, color: accent),
+          ),
           Expanded(
-            child: _ConditionChoice(
-              title: secondTitle,
-              body: secondBody,
-              icon: secondIcon,
+            child: _DecisionPanel(
+              title: choiceTitle,
+              icon: Icons.account_tree_outlined,
               accent: accent,
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: _Copy(choice, size: 43),
+              ),
             ),
           ),
         ],
@@ -561,9 +562,66 @@ class LtSlide extends StatelessWidget {
     ),
     _At(
       x: 118,
-      y: 813,
+      y: 828,
       width: 1280,
-      child: _Copy(reason, size: 43, color: c.onSurface),
+      child: _Copy(reason, size: 44, color: c.onSurface),
+    ),
+  ];
+
+  List<Widget> _reconsider(ColorScheme c) => [
+    _heading('理由が分かれば、選び直せる', size: 82),
+    _At(
+      x: 115,
+      y: 267,
+      width: 1560,
+      child: _Copy('「まず1回試すため」が、当時の理由', size: 39, color: c.tertiary),
+    ),
+    _At(
+      x: 115,
+      y: 369,
+      width: 1280,
+      height: 390,
+      child: Row(
+        children: [
+          Expanded(
+            child: _DecisionPanel(
+              title: '見直す',
+              icon: Icons.sync_rounded,
+              accent: c.primary,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  const _Copy('予定データを\nアプリに同梱', size: 43),
+                  _Copy('まず1回試す → 毎回更新する', size: 28, color: c.primary),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(width: 28),
+          Expanded(
+            child: _DecisionPanel(
+              title: '続ける',
+              icon: Icons.link_rounded,
+              accent: c.secondary,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  const _Copy('参加者には\nURLで届ける', size: 43),
+                  _Copy('すぐ使ってもらいたい', size: 28, color: c.secondary),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    ),
+    _At(
+      x: 118,
+      y: 828,
+      width: 1280,
+      child: const _Copy('変わった条件に合わせて、必要なところを見直す', size: 43),
     ),
   ];
 
@@ -804,22 +862,43 @@ class _PromptQuestion extends StatelessWidget {
   );
 }
 
-class _ConditionChoice extends StatelessWidget {
-  const _ConditionChoice({
+class _ScenarioFact extends StatelessWidget {
+  const _ScenarioFact({
+    required this.label,
+    required this.value,
+    required this.color,
+  });
+
+  final String label;
+  final String value;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) => Row(
+    children: [
+      SizedBox(width: 116, child: _Copy(label, size: 25, color: color)),
+      const SizedBox(width: 14),
+      Expanded(child: _Copy(value, size: 36)),
+    ],
+  );
+}
+
+class _DecisionPanel extends StatelessWidget {
+  const _DecisionPanel({
     required this.title,
-    required this.body,
+    required this.child,
     required this.icon,
     required this.accent,
   });
   final String title;
-  final String body;
+  final Widget child;
   final IconData icon;
   final Color accent;
 
   @override
   Widget build(BuildContext context) => Container(
     height: double.infinity,
-    padding: const EdgeInsets.all(34),
+    padding: const EdgeInsets.all(32),
     decoration: BoxDecoration(
       color: accent.withValues(alpha: .07),
       border: Border.all(color: accent.withValues(alpha: .32), width: 2),
@@ -835,9 +914,8 @@ class _ConditionChoice extends StatelessWidget {
             Expanded(child: _Copy(title, size: 37, color: accent)),
           ],
         ),
-        const Spacer(),
-        _Copy(body, size: 43),
-        const SizedBox(height: 8),
+        const SizedBox(height: 24),
+        Expanded(child: child),
       ],
     ),
   );
