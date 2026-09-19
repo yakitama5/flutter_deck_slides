@@ -72,7 +72,7 @@ const ltPages = <LtPage>[
   LtPage(
     route: "/delegate",
     title: "アーキテクチャを理解する",
-    seconds: 45,
+    seconds: 80,
     notes: SpeakerNotes.delegate,
   ),
   LtPage(

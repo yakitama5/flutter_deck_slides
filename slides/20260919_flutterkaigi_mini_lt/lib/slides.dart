@@ -407,15 +407,15 @@ class LtSlide extends StatelessWidget {
       x: 118,
       y: 267,
       width: 1660,
-      child: _Copy('何を優先するかは、自分たちで決める', size: 40, color: c.primary),
+      child: _Copy('身近な「なぜ？」から考える', size: 40, color: c.primary),
     ),
     _At(
       x: 118,
       y: 430,
       width: 1270,
       child: _PromptQuestion(
-        icon: Icons.schedule_rounded,
-        text: 'アプリの未来を見据える',
+        icon: Icons.folder_open_rounded,
+        text: 'なぜ、この場所に書く？',
         color: c.primary,
       ),
     ),
@@ -424,26 +424,16 @@ class LtSlide extends StatelessWidget {
       y: 580,
       width: 1270,
       child: _PromptQuestion(
-        icon: Icons.check_circle_outline_rounded,
-        text: '条件に合うかを考える',
+        icon: Icons.account_tree_outlined,
+        text: 'なぜ、Repositoryを作る？',
         color: c.secondary,
       ),
     ),
     _At(
       x: 118,
-      y: 730,
-      width: 1270,
-      child: _PromptQuestion(
-        icon: Icons.balance_rounded,
-        text: '引き受ける負担を知る',
-        color: c.tertiary,
-      ),
-    ),
-    _At(
-      x: 118,
-      y: 890,
+      y: 815,
       width: 1280,
-      child: _Copy('AIと相談し、判断に責任を持つ', size: 37, color: c.secondary),
+      child: _Copy('条件と未来を見据えて、設計を選ぶ', size: 45, color: c.secondary),
     ),
   ];
 
@@ -453,43 +443,43 @@ class LtSlide extends StatelessWidget {
       x: 118,
       y: 267,
       width: 1650,
-      child: _Copy('たとえば、Flutterアプリに3Dを加えるなら', size: 40, color: c.primary),
+      child: _Copy('今回、Flutter Sceneを選んだ理由', size: 40, color: c.primary),
     ),
     _At(
       x: 118,
       y: 430,
-      width: 1320,
-      child: Row(
-        children: [
-          Expanded(
-            child: _TechnologyOption(
-              name: 'Unity',
-              description: 'ゲームエンジンを組み込む',
-              color: c.primary,
-            ),
-          ),
-          const SizedBox(width: 36),
-          Expanded(
-            child: _TechnologyOption(
-              name: 'Flutter Scene',
-              description: 'Flutterから3Dを扱う',
-              color: c.secondary,
-            ),
-          ),
-        ],
+      width: 1270,
+      child: _PromptQuestion(
+        icon: Icons.public_rounded,
+        text: 'Webで動かしたい',
+        color: c.primary,
       ),
     ),
     _At(
       x: 118,
-      y: 750,
-      width: 1280,
-      child: _Copy('存在を知っていれば、選べる', size: 62, color: c.secondary),
+      y: 580,
+      width: 1270,
+      child: _PromptQuestion(
+        icon: Icons.widgets_outlined,
+        text: 'Flutterとの親和性',
+        color: c.secondary,
+      ),
     ),
     _At(
       x: 118,
-      y: 870,
+      y: 730,
       width: 1280,
-      child: _Copy('実現したい内容やアプリサイズに合わせて', size: 35, color: c.onSurfaceVariant),
+      child: _PromptQuestion(
+        icon: Icons.trending_up_rounded,
+        text: '進化した姿を伝えたい',
+        color: c.tertiary,
+      ),
+    ),
+    _At(
+      x: 118,
+      y: 890,
+      width: 1280,
+      child: _Copy('存在を知っていれば、目的に合わせて選べる', size: 37, color: c.secondary),
     ),
   ];
 
@@ -706,36 +696,6 @@ class _PromptQuestion extends StatelessWidget {
       const SizedBox(width: 32),
       Expanded(child: _Copy(text, size: 57)),
     ],
-  );
-}
-
-class _TechnologyOption extends StatelessWidget {
-  const _TechnologyOption({
-    required this.name,
-    required this.description,
-    required this.color,
-  });
-
-  final String name;
-  final String description;
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.symmetric(horizontal: 36, vertical: 34),
-    decoration: BoxDecoration(
-      color: color.withValues(alpha: 0.06),
-      border: Border.all(color: color.withValues(alpha: 0.4), width: 2),
-      borderRadius: BorderRadius.circular(24),
-    ),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _Copy(name, size: 62, color: color),
-        const SizedBox(height: 18),
-        _Copy(description, size: 30),
-      ],
-    ),
   );
 }
 
