@@ -69,7 +69,7 @@ const scheduleFirst = <ScheduleEntry>[
   ),
   ScheduleEntry(
     time: '14:50–15:00',
-    title: 'Flutter初学者が知っておくべき◯個のこと',
+    title: 'Flutter初学者が知っておくべき4つのこと',
     speaker: 'よわよわエンジニア さん',
     category: 'LT',
   ),
